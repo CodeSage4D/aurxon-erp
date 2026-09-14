@@ -180,8 +180,25 @@ export const FALLBACK_USERS: Record<string, FallbackAccount> = {
   },
 };
 
+// Global in-memory dynamic caches across serverless invocations
+const dynamicUsers = new Map<string, FallbackAccount>();
+const dynamicOrgs = new Map<string, any>();
+
+export function registerFallbackUser(user: FallbackAccount) {
+  const clean = user.email.toLowerCase().trim();
+  dynamicUsers.set(clean, user);
+}
+
+export function registerFallbackOrganization(org: any) {
+  const cleanSlug = org.slug.toLowerCase().trim();
+  dynamicOrgs.set(cleanSlug, org);
+}
+
 export function getFallbackUser(email: string): FallbackAccount | null {
   const clean = email.toLowerCase().trim();
+  if (dynamicUsers.has(clean)) {
+    return dynamicUsers.get(clean)!;
+  }
   return FALLBACK_USERS[clean] || null;
 }
 
@@ -232,3 +249,16 @@ export const FALLBACK_ORGANIZATIONS = [
     logoUrl: null,
   },
 ];
+
+export function getFallbackOrganizations(): any[] {
+  const dynList = Array.from(dynamicOrgs.values());
+  return [...dynList, ...FALLBACK_ORGANIZATIONS];
+}
+
+export function getFallbackOrganization(slug: string): any | null {
+  const clean = slug.toLowerCase().trim();
+  if (dynamicOrgs.has(clean)) {
+    return dynamicOrgs.get(clean);
+  }
+  return FALLBACK_ORGANIZATIONS.find((o) => o.slug.toLowerCase() === clean) || null;
+}
