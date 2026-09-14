@@ -57,6 +57,13 @@ interface EnrolledOrg {
   code: string;
   primaryColor: string;
   status: string;
+  logoUrl?: string | null;
+  licenseTier?: string;
+  licenseKey?: string;
+  licenseValidUntil?: string;
+  maxStudents?: number;
+  maxStaff?: number;
+  maxCampuses?: number;
   createdAt: string;
   institutions: Array<{
     id: string;
@@ -117,6 +124,130 @@ export default function AurxonHQControlPlanePage() {
   // Utility feedback
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [refreshingDb, setRefreshingDb] = useState(false);
+
+  // Logo & Crest Management States
+  const [editLogoUrl, setEditLogoUrl] = useState('');
+  const [savingLogo, setSavingLogo] = useState(false);
+  const [logoMsg, setLogoMsg] = useState('');
+
+  // License & Quota Controls States
+  const [editTier, setEditTier] = useState('PROFESSIONAL');
+  const [editKey, setEditKey] = useState('');
+  const [editValidUntil, setEditValidUntil] = useState('2027-03-31');
+  const [editMaxStudents, setEditMaxStudents] = useState('1500');
+  const [editMaxStaff, setEditMaxStaff] = useState('120');
+  const [editMaxCampuses, setEditMaxCampuses] = useState('3');
+  const [savingLicense, setSavingLicense] = useState(false);
+  const [licenseMsg, setLicenseMsg] = useState('');
+
+  useEffect(() => {
+    if (selectedOrg) {
+      setEditLogoUrl(selectedOrg.logoUrl || '');
+      setEditTier(selectedOrg.licenseTier || 'PROFESSIONAL');
+      setEditKey(selectedOrg.licenseKey || `AURXON-LIC-${selectedOrg.code}-2026`);
+      setEditValidUntil(
+        selectedOrg.licenseValidUntil
+          ? new Date(selectedOrg.licenseValidUntil).toISOString().split('T')[0]
+          : '2027-03-31'
+      );
+      setEditMaxStudents(String(selectedOrg.maxStudents || 1500));
+      setEditMaxStaff(String(selectedOrg.maxStaff || 120));
+      setEditMaxCampuses(String(selectedOrg.maxCampuses || 3));
+      setLogoMsg('');
+      setLicenseMsg('');
+    }
+  }, [selectedOrg]);
+
+  const handleSaveLogo = async () => {
+    if (!selectedOrg) return;
+    setSavingLogo(true);
+    setLogoMsg('');
+    try {
+      const res = await fetch('/api/v1/aurxon/control-plane', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'UPDATE_ORG_LOGO',
+          orgId: selectedOrg.id,
+          logoUrl: editLogoUrl,
+        }),
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        setLogoMsg('Institutional logo updated successfully');
+        setOrgs((prev) =>
+          prev.map((o) => (o.id === selectedOrg.id ? { ...o, logoUrl: editLogoUrl } : o))
+        );
+        setSelectedOrg((prev) => (prev ? { ...prev, logoUrl: editLogoUrl } : null));
+        setTimeout(() => setLogoMsg(''), 3000);
+      } else {
+        alert(json.error || 'Failed to update logo');
+      }
+    } catch (e: any) {
+      alert(e?.message || 'Error updating logo');
+    } finally {
+      setSavingLogo(false);
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (uploadEvent) => {
+      const result = uploadEvent.target?.result as string;
+      if (result) setEditLogoUrl(result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveLicense = async () => {
+    if (!selectedOrg) return;
+    setSavingLicense(true);
+    setLicenseMsg('');
+    try {
+      const res = await fetch('/api/v1/aurxon/control-plane', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'UPDATE_ORG_LICENSE',
+          orgId: selectedOrg.id,
+          licenseTier: editTier,
+          licenseKey: editKey,
+          licenseValidUntil: editValidUntil,
+          maxStudents: editMaxStudents,
+          maxStaff: editMaxStaff,
+          maxCampuses: editMaxCampuses,
+        }),
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        setLicenseMsg('License tiers and quota limits updated');
+        setOrgs((prev) =>
+          prev.map((o) =>
+            o.id === selectedOrg.id
+              ? {
+                  ...o,
+                  licenseTier: editTier,
+                  licenseKey: editKey,
+                  licenseValidUntil: editValidUntil,
+                  maxStudents: parseInt(editMaxStudents),
+                  maxStaff: parseInt(editMaxStaff),
+                  maxCampuses: parseInt(editMaxCampuses),
+                }
+              : o
+          )
+        );
+        setTimeout(() => setLicenseMsg(''), 3000);
+      } else {
+        alert(json.error || 'Failed to update license');
+      }
+    } catch (e: any) {
+      alert(e?.message || 'Error updating license');
+    } finally {
+      setSavingLicense(false);
+    }
+  };
 
   // Security: Invalidate bfcache on back button navigation
   useEffect(() => {
@@ -2513,6 +2644,114 @@ export default function AurxonHQControlPlanePage() {
                     </div>
                   </div>
 
+                  {/* Institutional Crest & Brand Logo Upload */}
+                  <div
+                    style={{
+                      backgroundColor: '#0a1128',
+                      borderRadius: '10px',
+                      padding: '16px',
+                      border: '1px solid #1d2f5a',
+                      marginBottom: '20px',
+                    }}
+                  >
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF', marginBottom: '4px' }}>
+                      Official Institutional Crest & Logo
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '14px' }}>
+                      Displayed on student fee receipts, staff verification badges, and official CBSE marksheets.
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '14px' }}>
+                      <div
+                        style={{
+                          width: '60px',
+                          height: '60px',
+                          borderRadius: '12px',
+                          backgroundColor: '#101b38',
+                          border: '1px solid #1d2f5a',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          overflow: 'hidden',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {editLogoUrl ? (
+                          <img src={editLogoUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                        ) : (
+                          <span style={{ fontSize: '24px' }}>🏫</span>
+                        )}
+                      </div>
+
+                      <div style={{ flex: 1 }}>
+                        <label
+                          style={{
+                            display: 'inline-block',
+                            padding: '6px 12px',
+                            borderRadius: '6px',
+                            backgroundColor: '#192D55',
+                            color: '#FFFFFF',
+                            fontSize: '11.5px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            border: '1px solid #2270AF',
+                            marginBottom: '6px',
+                          }}
+                        >
+                          <span>Choose Logo Image</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileUpload}
+                            style={{ display: 'none' }}
+                          />
+                        </label>
+                        <div style={{ fontSize: '10px', color: '#64748b' }}>PNG, SVG or JPEG (Max 2MB)</div>
+                      </div>
+                    </div>
+
+                    <div style={{ marginBottom: '12px' }}>
+                      <input
+                        type="text"
+                        placeholder="Or enter image URL (https://...)"
+                        value={editLogoUrl}
+                        onChange={(e) => setEditLogoUrl(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '8px 10px',
+                          borderRadius: '6px',
+                          border: '1px solid #1d2f5a',
+                          backgroundColor: '#101b38',
+                          color: '#FFFFFF',
+                          fontSize: '12px',
+                        }}
+                      />
+                    </div>
+
+                    {logoMsg && (
+                      <div style={{ fontSize: '11.5px', color: '#10b981', fontWeight: 600, marginBottom: '10px' }}>
+                        ✓ {logoMsg}
+                      </div>
+                    )}
+
+                    <button
+                      onClick={handleSaveLogo}
+                      disabled={savingLogo}
+                      style={{
+                        padding: '7px 16px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        backgroundColor: '#2270AF',
+                        color: '#FFFFFF',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        cursor: savingLogo ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      {savingLogo ? 'Saving...' : 'Save Institutional Logo'}
+                    </button>
+                  </div>
+
                   {/* Destructive / Status Actions */}
                   <div
                     style={{
@@ -2662,22 +2901,164 @@ export default function AurxonHQControlPlanePage() {
 
               {orgDrawerTab === 'license' && (
                 <div>
-                  <div style={{ backgroundColor: '#0a1128', padding: '16px', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '11.5px', color: '#64748b' }}>Commercial Plan</div>
+                  <div style={{ backgroundColor: '#0a1128', padding: '18px', borderRadius: '10px', border: '1px solid #1d2f5a', marginBottom: '16px' }}>
+                    <div style={{ fontSize: '11.5px', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>
+                      Institutional Commercial Licensing Controls
+                    </div>
                     <div style={{ fontSize: '18px', fontWeight: 800, color: '#9E3BB3', marginTop: '4px' }}>
-                      Professional Academy Plan
+                      {editTier} Subscription
                     </div>
 
-                    <div style={{ margin: '14px 0', borderTop: '1px solid #1d2f5a', paddingTop: '10px' }}>
-                      <div style={{ fontSize: '12px', color: '#f8fafc', marginBottom: '6px' }}>
-                        • Student Capacity: <strong>1,500 Pupils</strong>
+                    <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '11.5px', color: '#94a3b8', marginBottom: '4px' }}>
+                          License Tier
+                        </label>
+                        <select
+                          value={editTier}
+                          onChange={(e) => setEditTier(e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '8px 10px',
+                            borderRadius: '6px',
+                            border: '1px solid #1d2f5a',
+                            backgroundColor: '#101b38',
+                            color: '#FFFFFF',
+                            fontSize: '12.5px',
+                          }}
+                        >
+                          <option value="STARTER">Starter Academy</option>
+                          <option value="PROFESSIONAL">Professional Institution</option>
+                          <option value="ENTERPRISE">Enterprise Multi-Campus Directorate</option>
+                        </select>
                       </div>
-                      <div style={{ fontSize: '12px', color: '#f8fafc', marginBottom: '6px' }}>
-                        • Campus Quota: <strong>3 Campuses</strong>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '11.5px', color: '#94a3b8', marginBottom: '4px' }}>
+                          License Activation Key
+                        </label>
+                        <input
+                          type="text"
+                          value={editKey}
+                          onChange={(e) => setEditKey(e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '8px 10px',
+                            borderRadius: '6px',
+                            border: '1px solid #1d2f5a',
+                            backgroundColor: '#101b38',
+                            color: '#FFFFFF',
+                            fontSize: '12.5px',
+                            fontFamily: 'monospace',
+                          }}
+                        />
                       </div>
-                      <div style={{ fontSize: '12px', color: '#f8fafc' }}>
-                        • Auto-Renewal: <strong style={{ color: '#10b981' }}>Active</strong>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '11.5px', color: '#94a3b8', marginBottom: '4px' }}>
+                          Valid Until Expiry Date
+                        </label>
+                        <input
+                          type="date"
+                          value={editValidUntil}
+                          onChange={(e) => setEditValidUntil(e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '8px 10px',
+                            borderRadius: '6px',
+                            border: '1px solid #1d2f5a',
+                            backgroundColor: '#101b38',
+                            color: '#FFFFFF',
+                            fontSize: '12.5px',
+                          }}
+                        />
                       </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '10.5px', color: '#94a3b8', marginBottom: '4px' }}>
+                            Max Students
+                          </label>
+                          <input
+                            type="number"
+                            value={editMaxStudents}
+                            onChange={(e) => setEditMaxStudents(e.target.value)}
+                            style={{
+                              width: '100%',
+                              padding: '8px 8px',
+                              borderRadius: '6px',
+                              border: '1px solid #1d2f5a',
+                              backgroundColor: '#101b38',
+                              color: '#FFFFFF',
+                              fontSize: '12px',
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '10.5px', color: '#94a3b8', marginBottom: '4px' }}>
+                            Max Staff
+                          </label>
+                          <input
+                            type="number"
+                            value={editMaxStaff}
+                            onChange={(e) => setEditMaxStaff(e.target.value)}
+                            style={{
+                              width: '100%',
+                              padding: '8px 8px',
+                              borderRadius: '6px',
+                              border: '1px solid #1d2f5a',
+                              backgroundColor: '#101b38',
+                              color: '#FFFFFF',
+                              fontSize: '12px',
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '10.5px', color: '#94a3b8', marginBottom: '4px' }}>
+                            Campuses
+                          </label>
+                          <input
+                            type="number"
+                            value={editMaxCampuses}
+                            onChange={(e) => setEditMaxCampuses(e.target.value)}
+                            style={{
+                              width: '100%',
+                              padding: '8px 8px',
+                              borderRadius: '6px',
+                              border: '1px solid #1d2f5a',
+                              backgroundColor: '#101b38',
+                              color: '#FFFFFF',
+                              fontSize: '12px',
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {licenseMsg && (
+                        <div style={{ fontSize: '11.5px', color: '#10b981', fontWeight: 600, marginTop: '4px' }}>
+                          ✓ {licenseMsg}
+                        </div>
+                      )}
+
+                      <button
+                        onClick={handleSaveLicense}
+                        disabled={savingLicense}
+                        style={{
+                          marginTop: '6px',
+                          padding: '8px 16px',
+                          borderRadius: '6px',
+                          border: 'none',
+                          background: 'linear-gradient(135deg, #2270AF 0%, #9E3BB3 100%)',
+                          color: '#FFFFFF',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          cursor: savingLicense ? 'not-allowed' : 'pointer',
+                        }}
+                      >
+                        {savingLicense ? 'Updating License...' : 'Save License & Quota Controls'}
+                      </button>
                     </div>
                   </div>
                 </div>

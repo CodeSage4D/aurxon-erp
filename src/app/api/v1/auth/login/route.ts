@@ -96,6 +96,8 @@ export async function POST(req: Request) {
       organizationId: user.organizationId,
       institutionId: user.institutionId,
       branchId: user.branchId,
+      mustResetPassword: !!user.mustResetPassword,
+      isTemporaryPassword: !!user.isTemporaryPassword,
     });
 
     // 5. Update lastLoginAt safely without throwing on read-only serverless filesystems
@@ -135,6 +137,8 @@ export async function POST(req: Request) {
         role: user.role,
         organizationName: user.organization?.name || 'Delhi Public School Society',
         institutionName: user.institution?.name || 'Delhi Public School, R.K. Puram',
+        mustResetPassword: !!user.mustResetPassword,
+        isTemporaryPassword: !!user.isTemporaryPassword,
       },
     });
 

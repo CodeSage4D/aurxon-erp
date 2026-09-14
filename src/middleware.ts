@@ -25,7 +25,7 @@ function applySecurityHeaders(res: NextResponse, isProtected = false): NextRespo
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Allow static files, api auth endpoints, public assets, portal routes, onboarding & access directory
+  // Allow static files, api auth endpoints, public assets, portal routes, onboarding, verification & access directory
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon.ico') ||
@@ -33,6 +33,8 @@ export async function middleware(req: NextRequest) {
     pathname === '/api/v1/auth/logout' ||
     pathname.startsWith('/api/v1/portal') ||
     pathname.startsWith('/api/v1/onboard') ||
+    pathname.startsWith('/api/v1/verify') ||
+    pathname.startsWith('/verify') ||
     pathname.startsWith('/s/') ||
     pathname === '/access' ||
     pathname === '/onboard'

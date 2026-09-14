@@ -29,6 +29,7 @@ import {
 import ContextSwitcher from '@/components/layout/ContextSwitcher';
 import CommandPalette from '@/components/ui/CommandPalette';
 import LiveClockWidget from '@/components/ui/LiveClockWidget';
+import MandatoryPasswordResetModal from '@/components/auth/MandatoryPasswordResetModal';
 import { Search, Server } from 'lucide-react';
 
 export interface AppShellUser {
@@ -38,6 +39,8 @@ export interface AppShellUser {
   role: string;
   organizationName: string;
   institutionName?: string;
+  mustResetPassword?: boolean;
+  isTemporaryPassword?: boolean;
 }
 
 interface AppShellProps {
@@ -50,6 +53,7 @@ export const AppShell: React.FC<AppShellProps> = ({ user, children }) => {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cmdOpen, setCmdOpen] = useState(false);
+  const [mustReset, setMustReset] = useState(!!user.mustResetPassword);
 
   // Security: Invalidate bfcache if user navigates back after logout
   React.useEffect(() => {
@@ -351,6 +355,14 @@ export const AppShell: React.FC<AppShellProps> = ({ user, children }) => {
 
         {/* Global Command Palette */}
         <CommandPalette isOpen={cmdOpen} onClose={() => setCmdOpen(false)} />
+
+        {/* Mandatory Password Reset Modal Interceptor */}
+        {mustReset && (
+          <MandatoryPasswordResetModal
+            userEmail={user.email}
+            onSuccess={() => setMustReset(false)}
+          />
+        )}
       </div>
 
       {/* Mobile Bottom Navigation Bar (< 768px) */}

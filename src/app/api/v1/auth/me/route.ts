@@ -52,6 +52,8 @@ export async function GET() {
       institutionId: sessionUser.institutionId,
       institutionName: dbUser?.institution?.name || fallback?.institutionName || 'Delhi Public School, R.K. Puram',
       branchName: dbUser?.branch?.name || fallback?.branchName || 'Senior Wing Campus',
+      mustResetPassword: !!dbUser?.mustResetPassword,
+      isTemporaryPassword: !!dbUser?.isTemporaryPassword,
     },
   });
 }

@@ -17,6 +17,8 @@ export interface AuthUser {
   organizationId: string;
   institutionId?: string | null;
   branchId?: string | null;
+  mustResetPassword?: boolean;
+  isTemporaryPassword?: boolean;
 }
 
 export async function hashPassword(password: string): Promise<string> {

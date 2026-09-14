@@ -25,6 +25,14 @@ model Organization {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  // License & SaaS Subscription Metadata
+  licenseKey          String?
+  licenseTier         String   @default("ENTERPRISE") // STARTER, GROWTH, ENTERPRISE
+  licenseValidUntil   DateTime?
+  maxStudents         Int      @default(5000)
+  maxStaff            Int      @default(500)
+  maxCampuses         Int      @default(10)
+
   institutions        Institution[]
   users               User[]
   moduleEntitlements  ModuleEntitlement[]
@@ -50,6 +58,10 @@ model Organization {
   announcements       Announcement[]
   notifications       Notification[]
   auditLogs           AuditLog[]
+  staffProfiles       StaffProfile[]
+  staffDocuments      StaffDocument[]
+  staffLeaveRequests  StaffLeaveRequest[]
+  approvalRequests    ApprovalRequest[]
 }
 
 model ModuleEntitlement {
@@ -110,6 +122,7 @@ model Institution {
   financialRecords   FinancialTransaction[]
   announcements      Announcement[]
   auditLogs          AuditLog[]
+  staffProfiles      StaffProfile[]
 
   @@unique([organizationId, code])
   @@index([organizationId])
@@ -130,6 +143,7 @@ model Branch {
   institution Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
   users       User[]
   students    Student[]
+  staffProfiles StaffProfile[]
 
   @@index([institutionId])
 }
@@ -147,22 +161,28 @@ model User {
   passwordHash   String
   firstName      String
   lastName       String
-  phone          String?
-  role           String    // SUPER_ADMIN, ORG_ADMIN, PRINCIPAL, TEACHER, FACULTY, ACCOUNTANT, PARENT, STUDENT
-  status         String    @default("ACTIVE") // ACTIVE, INACTIVE, SUSPENDED
-  avatarUrl      String?
-  lastLoginAt    DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  phone               String?
+  role                String    // SUPER_ADMIN, ORG_ADMIN, PRINCIPAL, VICE_PRINCIPAL, BRANCH_HEAD, ACADEMIC_COORDINATOR, EXAM_COORDINATOR, TEACHER, FACULTY, ACCOUNTANT, FINANCE_MANAGER, HR_MANAGER, FRONT_OFFICE, LIBRARIAN, TRANSPORT_MANAGER, PARENT, STUDENT
+  status              String    @default("ACTIVE") // ACTIVE, INACTIVE, SUSPENDED
+  avatarUrl           String?
+  mustResetPassword   Boolean   @default(false)
+  isTemporaryPassword Boolean   @default(false)
+  lastLoginAt         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   institution  Institution?  @relation(fields: [institutionId], references: [id], onDelete: Cascade)
   branch       Branch?       @relation(fields: [branchId], references: [id], onDelete: SetNull)
 
-  subjectAssignments SubjectAssignment[]
-  parentProfile      ParentGuardian?
-  timetableSlots     TimetableSlot[]
-  notifications      Notification[]
+  subjectAssignments  SubjectAssignment[]
+  parentProfile       ParentGuardian?
+  timetableSlots      TimetableSlot[]
+  notifications       Notification[]
+  staffProfile        StaffProfile?
+  staffResponsibilities StaffResponsibility[]
+  approvalsRequested  ApprovalRequest[] @relation("ApprovalsRequested")
+  approvalsActed      ApprovalRequest[] @relation("ApprovalsActed")
 
   @@index([organizationId])
   @@index([institutionId])
@@ -765,4 +785,274 @@ model AuditLog {
 
   @@index([organizationId, timestamp])
   @@index([resource, recordId])
+}
+
+// -------------------------------------------------------------
+// 13. STAFF ONBOARDING, PROFESSIONAL PROFILES & HR MANAGEMENT
+// -------------------------------------------------------------
+
+model StaffProfile {
+  id                     String    @id @default(cuid())
+  organizationId         String
+  institutionId          String
+  branchId               String?
+  userId                 String?   @unique
+  employeeId             String    // e.g. "EMP-DPS-2026-001"
+  firstName              String
+  lastName               String
+  preferredName          String?
+  dob                    DateTime
+  gender                 String    // MALE, FEMALE, OTHER
+  bloodGroup             String?
+  email                  String
+  phone                  String
+  avatarUrl              String?
+  qrCodeDataUrl          String?   // Scannable verification QR Code data URL
+  address                String?
+  city                   String?
+  state                  String?
+  pincode                String?
+  emergencyContactName   String?
+  emergencyContactPhone  String?
+  emergencyContactRelation String?
+
+  department             String    // "Mathematics", "Sciences", "Humanities", "Administration", "Accounts & Finance"
+  designation            String    // "Principal", "Vice Principal", "PGT Physics", "TGT Mathematics", "Bursar", "Librarian"
+  employmentType         String    @default("FULL_TIME") // FULL_TIME, PART_TIME, CONTRACT, VISITING, GUEST, INTERN, PROBATION
+  joiningDate            DateTime  @default(now())
+  reportingManagerId     String?
+  status                 String    @default("ACTIVE") // APPLICANT, ONBOARDING, PROBATION, ACTIVE, ON_LEAVE, SUSPENDED, TRANSFERRED, RESIGNED, TERMINATED, RETIRED
+  profileCompleteness    Int       @default(0) // 0 - 100 percentage
+
+  // Sensitive Financial & Identity Fields (Strictly Restricted Access)
+  basicSalary            Float?
+  bankName               String?
+  bankAccountNumber      String?
+  bankIfsc               String?
+  panNumber              String?
+  aadhaarNumber          String?
+
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  organization           Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  institution            Institution           @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  branch                 Branch?               @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  user                   User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  education              StaffEducation[]
+  experience             StaffExperience[]
+  teachingExperience     StaffTeachingExperience[]
+  skills                 StaffSkill[]
+  certifications         StaffCertification[]
+  documents              StaffDocument[]
+  careerTimeline         StaffCareerEvent[]
+  responsibilities       StaffResponsibility[]
+  leaveRequests          StaffLeaveRequest[]
+
+  @@unique([organizationId, employeeId])
+  @@index([organizationId, institutionId])
+  @@index([department, status])
+}
+
+model StaffEducation {
+  id              String   @id @default(cuid())
+  staffId         String
+  qualification   String   // "Post Graduate", "Graduate", "Doctorate", "Diploma", "Secondary"
+  degree          String   // "M.Sc.", "B.Ed.", "Ph.D.", "B.Tech", "M.Com"
+  specialization  String   // "Mathematics", "Theoretical Physics", "English Literature"
+  institution     String   // "St. Stephen's College", "Delhi University"
+  universityBoard String   // "Delhi University", "CBSE"
+  passingYear     Int
+  percentageGrade String   // "88.5%", "A Grade", "CGPA 9.2"
+  certificateUrl  String?
+  createdAt       DateTime @default(now())
+
+  staff           StaffProfile @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([staffId])
+}
+
+model StaffExperience {
+  id                    String    @id @default(cuid())
+  staffId               String
+  organizationName      String
+  designation           String
+  startDate             DateTime
+  endDate               DateTime?
+  yearsOfExperience     Float
+  rolesResponsibilities String?
+  reasonForLeaving      String?
+  documentUrl           String?
+  createdAt             DateTime  @default(now())
+
+  staff                 StaffProfile @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([staffId])
+}
+
+model StaffTeachingExperience {
+  id               String   @id @default(cuid())
+  staffId          String
+  subjectsTaught   String   // "Advanced Mathematics, Calculus, Trigonometry"
+  classesTaught    String   // "Class 10, Class 11, Class 12"
+  curricula        String   // "CBSE, ICSE, JEE Advanced, NEET, Foundation"
+  yearsExperience  Float
+  isCoaching       Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  staff            StaffProfile @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([staffId])
+}
+
+model StaffSkill {
+  id          String   @id @default(cuid())
+  staffId     String
+  category    String   // "SUBJECT", "TECHNOLOGY", "PEDAGOGY", "LANGUAGE", "LEADERSHIP"
+  name        String   // "Calculus", "Smartboard Software", "Python", "Hindi", "Classroom Management"
+  proficiency String   @default("INTERMEDIATE") // "BEGINNER", "INTERMEDIATE", "ADVANCED", "EXPERT"
+  createdAt   DateTime @default(now())
+
+  staff       StaffProfile @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([staffId])
+}
+
+model StaffCertification {
+  id                String    @id @default(cuid())
+  staffId           String
+  title             String    // "CTET Qualified (Level 2)", "Google Certified Educator", "First Aid Specialist"
+  issuingAuthority  String    // "CBSE", "Google for Education", "Red Cross"
+  issueDate         DateTime
+  expiryDate        DateTime?
+  certificateNumber String?
+  documentUrl       String?
+  createdAt         DateTime  @default(now())
+
+  staff             StaffProfile @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([staffId])
+}
+
+model StaffDocument {
+  id                String    @id @default(cuid())
+  staffId           String
+  organizationId    String
+  documentType      String    // "RESUME", "DEGREE_CERTIFICATE", "EXPERIENCE_LETTER", "IDENTITY_PROOF", "ADDRESS_PROOF", "OFFER_LETTER", "POLICE_VERIFICATION", "MEDICAL_FITNESS"
+  title             String
+  fileUrl           String
+  fileSize          Int?
+  mimeType          String?
+  status            String    @default("SUBMITTED") // "NOT_SUBMITTED", "SUBMITTED", "UNDER_REVIEW", "VERIFIED", "REJECTED", "EXPIRED"
+  rejectionReason   String?
+  verifiedByUserId  String?
+  verifiedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  staff             StaffProfile @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([staffId])
+  @@index([organizationId, status])
+}
+
+model StaffCareerEvent {
+  id            String   @id @default(cuid())
+  staffId       String
+  eventType     String   // "JOINED", "PROMOTED", "TRANSFERRED", "ROLE_CHANGE", "RESPONSIBILITY_ASSIGNED", "RESPONSIBILITY_EXPIRED", "SUSPENDED", "REINSTATED", "EXIT"
+  title         String
+  description   String
+  fromBranchId  String?
+  toBranchId    String?
+  fromRole      String?
+  toRole        String?
+  effectiveDate DateTime @default(now())
+  createdById   String
+  createdAt     DateTime @default(now())
+
+  staff         StaffProfile @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([staffId, effectiveDate])
+}
+
+model StaffResponsibility {
+  id                 String    @id @default(cuid())
+  staffId            String
+  userId             String?
+  responsibilityType String    // "CLASS_TEACHER", "SUBJECT_TEACHER", "EXAM_COORDINATOR", "ACADEMIC_COORDINATOR", "BRANCH_HEAD", "HOD", "TRANSPORT_INCHARGE", "CLASS_MONITOR"
+  title              String    // e.g. "Class Teacher - Section 10A"
+  scopeLevel         String    // "ORGANIZATION", "INSTITUTION", "BRANCH", "CLASS", "SECTION", "BATCH", "SUBJECT"
+  scopeId            String?
+  classLevelId       String?
+  sectionId          String?
+  batchId            String?
+  subjectId          String?
+  validFrom          DateTime  @default(now())
+  validUntil         DateTime?
+  isTemporary        Boolean   @default(false)
+  status             String    @default("ACTIVE") // "ACTIVE", "EXPIRED", "REVOKED"
+  assignedById       String
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  staff              StaffProfile @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  user               User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([staffId, status])
+  @@index([userId, status])
+}
+
+model StaffLeaveRequest {
+  id                String    @id @default(cuid())
+  staffId           String
+  organizationId    String
+  leaveType         String    // "CASUAL", "SICK", "MATERNITY", "PATERNITY", "EARNED", "UNPAID"
+  startDate         DateTime
+  endDate           DateTime
+  totalDays         Float
+  reason            String
+  substituteStaffId String?
+  status            String    @default("PENDING") // "PENDING", "APPROVED", "REJECTED", "CANCELLED"
+  reviewedByUserId  String?
+  reviewedAt        DateTime?
+  reviewRemarks     String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  staff             StaffProfile @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([staffId, status])
+  @@index([organizationId, status])
+}
+
+// -------------------------------------------------------------
+// 14. FOUR-EYES APPROVAL WORKFLOW ENGINE
+// -------------------------------------------------------------
+
+model ApprovalRequest {
+  id               String    @id @default(cuid())
+  organizationId   String
+  institutionId    String?
+  workflowType     String    // "ATTENDANCE_CORRECTION", "FEE_ADJUSTMENT", "FEE_REFUND", "EXAM_PUBLICATION", "STAFF_TRANSFER", "ROLE_CHANGE", "SENSITIVE_DOC_VERIFICATION"
+  title            String
+  description      String
+  payloadJson      String    // JSON state of requested change
+  requesterUserId  String
+  targetResourceId String?
+  status           String    @default("PENDING") // "PENDING", "APPROVED", "REJECTED", "CANCELLED"
+  approverUserId   String?
+  approvalRemarks  String?
+  actedAt          DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requester        User         @relation("ApprovalsRequested", fields: [requesterUserId], references: [id], onDelete: Cascade)
+  approver         User?        @relation("ApprovalsActed", fields: [approverUserId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, status])
+  @@index([requesterUserId])
 }

@@ -336,6 +336,79 @@ export async function POST(req: Request) {
       });
     }
 
+    // ACTION 6: UPDATE_ORG_LOGO (School Crest & Brand Asset)
+    if (action === 'UPDATE_ORG_LOGO') {
+      const { orgId, logoUrl } = body;
+      if (!orgId) {
+        return NextResponse.json({ success: false, error: 'orgId is required' }, { status: 400 });
+      }
+
+      const updated = await prisma.organization.update({
+        where: { id: orgId },
+        data: { logoUrl: logoUrl || null },
+      });
+
+      await recordAudit({
+        organizationId: orgId,
+        actorId: sessionUser.id,
+        actorName: operatorName,
+        actorRole: sessionUser.role,
+        resource: 'ORGANIZATION',
+        action: 'UPDATE_LOGO',
+        recordId: orgId,
+        details: { logoUrlUpdated: !!logoUrl },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: 'Organization institutional logo updated successfully',
+        organization: updated,
+      });
+    }
+
+    // ACTION 7: UPDATE_ORG_LICENSE (Licensing, Tiers & Quota Controls)
+    if (action === 'UPDATE_ORG_LICENSE') {
+      const { orgId, licenseTier, licenseKey, licenseValidUntil, maxStudents, maxStaff, maxCampuses } = body;
+      if (!orgId) {
+        return NextResponse.json({ success: false, error: 'orgId is required' }, { status: 400 });
+      }
+
+      const updated = await prisma.organization.update({
+        where: { id: orgId },
+        data: {
+          ...(licenseTier ? { licenseTier } : {}),
+          ...(licenseKey ? { licenseKey } : {}),
+          ...(licenseValidUntil ? { licenseValidUntil: new Date(licenseValidUntil) } : {}),
+          ...(maxStudents !== undefined ? { maxStudents: parseInt(maxStudents) } : {}),
+          ...(maxStaff !== undefined ? { maxStaff: parseInt(maxStaff) } : {}),
+          ...(maxCampuses !== undefined ? { maxCampuses: parseInt(maxCampuses) } : {}),
+        },
+      });
+
+      await recordAudit({
+        organizationId: orgId,
+        actorId: sessionUser.id,
+        actorName: operatorName,
+        actorRole: sessionUser.role,
+        resource: 'ORGANIZATION_LICENSE',
+        action: 'UPDATE_LICENSE_QUOTA',
+        recordId: orgId,
+        details: {
+          licenseTier: updated.licenseTier,
+          maxStudents: updated.maxStudents,
+          maxStaff: updated.maxStaff,
+          maxCampuses: updated.maxCampuses,
+          licenseValidUntil: updated.licenseValidUntil,
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: 'Institutional license and quota thresholds updated successfully',
+        organization: updated,
+      });
+    }
+
     return NextResponse.json({ success: false, error: `Unknown action: ${action}` }, { status: 400 });
   } catch (error: any) {
     console.error('[AURXON_CONTROL_PLANE_POST_ERROR]', error);
