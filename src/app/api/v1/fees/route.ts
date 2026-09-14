@@ -9,7 +9,7 @@ export async function GET() {
   }
 
   try {
-    const [structures, allocations, payments] = await Promise.all([
+    const [structures, allocations, payments, organization] = await Promise.all([
       prisma.feeStructure.findMany({
         where: { organizationId: user.organizationId },
         include: {
@@ -27,7 +27,11 @@ export async function GET() {
               batch: true,
             },
           },
-          feeStructure: true,
+          feeStructure: {
+            include: {
+              feeHeads: true,
+            },
+          },
           payments: { orderBy: { paymentDate: 'desc' } },
         },
         orderBy: { balanceAmount: 'desc' },
@@ -35,11 +39,36 @@ export async function GET() {
       prisma.feePayment.findMany({
         where: { organizationId: user.organizationId },
         include: {
-          student: true,
-          allocation: { include: { feeStructure: true } },
+          student: {
+            include: {
+              section: { include: { classLevel: true } },
+              studentParents: {
+                include: { parent: true },
+              },
+            },
+          },
+          allocation: {
+            include: {
+              feeStructure: {
+                include: {
+                  feeHeads: true,
+                },
+              },
+            },
+          },
         },
         orderBy: { paymentDate: 'desc' },
-        take: 15,
+        take: 25,
+      }),
+      prisma.organization.findUnique({
+        where: { id: user.organizationId },
+        include: {
+          institutions: {
+            include: {
+              branches: true,
+            },
+          },
+        },
       }),
     ]);
 
@@ -58,6 +87,7 @@ export async function GET() {
       structures,
       allocations,
       payments,
+      organization,
     });
   } catch (error) {
     console.error('[FEES_GET_ERROR]', error);

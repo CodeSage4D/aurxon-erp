@@ -50,6 +50,26 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Demo Credentials Modal State
+  const [demoModalOpen, setDemoModalOpen] = useState(false);
+  const [copiedDemoEmail, setCopiedDemoEmail] = useState('');
+
+  const fillDemoCredentials = (email: string, pass: string = 'Password@123', tab: 'staff' | 'student' = 'staff') => {
+    setIdentifier(email);
+    setPassword(pass);
+    setActiveTab(tab);
+    setDemoModalOpen(false);
+    setLoginMode('credentials');
+  };
+
+  const copyDemoCreds = (email: string) => {
+    if (typeof window !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(email);
+      setCopiedDemoEmail(email);
+      setTimeout(() => setCopiedDemoEmail(''), 2000);
+    }
+  };
+
   // Organization Search State
   const [orgSearchQuery, setOrgSearchQuery] = useState('');
   const [searchingOrgs, setSearchingOrgs] = useState(false);
@@ -230,6 +250,28 @@ export default function LoginPage() {
 
           {/* Right Header Navigation */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => setDemoModalOpen(true)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                color: '#9E3BB3',
+                padding: '7px 14px',
+                borderRadius: '8px',
+                border: '1px solid rgba(158, 59, 179, 0.35)',
+                backgroundColor: '#FAF5FF',
+                cursor: 'pointer',
+                transition: 'all 150ms ease',
+              }}
+            >
+              <Sparkles size={14} />
+              <span>Demo Logins</span>
+            </button>
+
             <button
               type="button"
               onClick={() => setLoginMode(loginMode === 'credentials' ? 'search-org' : 'credentials')}
@@ -967,21 +1009,417 @@ export default function LoginPage() {
                     paddingTop: '16px',
                     borderTop: '1px solid #f1f5f9',
                     display: 'flex',
+                    flexDirection: 'column',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
+                    gap: '10px',
                     fontSize: '12px',
                     color: '#64748b',
                   }}
                 >
-                  <ShieldCheck size={14} color="#10b981" />
-                  <span>256-Bit Encrypted Multi-Tenant Session</span>
+                  <button
+                    type="button"
+                    onClick={() => setDemoModalOpen(true)}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '6px 14px',
+                      borderRadius: '20px',
+                      backgroundColor: '#FAF5FF',
+                      border: '1px solid rgba(158, 59, 179, 0.25)',
+                      color: '#9E3BB3',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <Sparkles size={13} />
+                    <span>View All Seeded Schools & Student Test Accounts</span>
+                  </button>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <ShieldCheck size={14} color="#10b981" />
+                    <span>256-Bit Encrypted Multi-Tenant Session</span>
+                  </div>
                 </div>
               </div>
             )}
           </div>
         </div>
       </main>
+
+      {/* -------------------------------------------------------------
+          DEMO CREDENTIALS INTERACTIVE MODAL
+          ------------------------------------------------------------- */}
+      {demoModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.7)',
+            backdropFilter: 'blur(6px)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '780px',
+              backgroundColor: '#ffffff',
+              borderRadius: '16px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              display: 'flex',
+              flexDirection: 'column',
+              maxHeight: '90vh',
+              overflow: 'hidden',
+              border: '1px solid #bae6fd',
+            }}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '16px 24px',
+                backgroundColor: '#192D55',
+                color: '#ffffff',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Sparkles size={20} color="#F7E223" />
+                <div>
+                  <h3 style={{ fontSize: '16px', fontWeight: 800, margin: 0, letterSpacing: '-0.01em' }}>
+                    AURXON Demo Credentials & Test Accounts
+                  </h3>
+                  <p style={{ fontSize: '11.5px', color: '#94a3b8', margin: 0 }}>
+                    Global test password for all accounts: <strong style={{ color: '#ffffff' }}>Password@123</strong>
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setDemoModalOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#94a3b8',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  display: 'flex',
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Scrollable Body */}
+            <div style={{ overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* Category 1: Super Admin */}
+              <div style={{ backgroundColor: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0', padding: '14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 800, color: '#9E3BB3', backgroundColor: '#FAF5FF', padding: '3px 8px', borderRadius: '4px', border: '1px solid #e9d5ff' }}>
+                      HQ SAAS CONTROL PLANE
+                    </span>
+                    <strong style={{ fontSize: '13px', color: '#192D55' }}>Super Admin</strong>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => fillDemoCredentials('superadmin@aurxon.io', 'Password@123', 'staff')}
+                    style={{
+                      fontSize: '11.5px',
+                      fontWeight: 700,
+                      color: '#ffffff',
+                      backgroundColor: '#2270AF',
+                      border: 'none',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Autofill & Login
+                  </button>
+                </div>
+                <div style={{ fontSize: '12px', color: '#475569' }}>
+                  Email: <code style={{ color: '#0369a1', fontFamily: 'monospace' }}>superadmin@aurxon.io</code> • Full control of tenants, telemetry, licensing, feature flags & DB audit.
+                </div>
+              </div>
+
+              {/* Category 2: Delhi Public School Society */}
+              <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #BAE6FD', padding: '14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                  <School size={18} color="#2270AF" />
+                  <strong style={{ fontSize: '14px', color: '#192D55' }}>Delhi Public School Society (K-12 School Chain)</strong>
+                  <span style={{ fontSize: '11px', color: '#64748b' }}>Portal: /s/dps-society</span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
+                  {[
+                    { role: 'Principal', name: 'Dr. Meenakshi Sundaram', email: 'principal.rkp@dps-society.edu', tab: 'staff' },
+                    { role: 'Org Admin', name: 'Rajesh Malhotra', email: 'admin@dps-society.edu', tab: 'staff' },
+                    { role: 'Accountant', name: 'Ramesh Bansal', email: 'accountant@dps-society.edu', tab: 'staff' },
+                    { role: 'Math Faculty', name: 'Amit Kulkarni', email: 'teacher.math@dps-society.edu', tab: 'staff' },
+                    { role: 'Student (Aarav)', name: 'Roll 1 (Class 10-A)', email: 'student.aarav@dps-society.edu', tab: 'student' },
+                    { role: 'Parent (Aarav)', name: 'Rajesh Sharma', email: 'parent.aarav@gmail.com', tab: 'student' },
+                  ].map((acc, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        padding: '10px',
+                        borderRadius: '8px',
+                        backgroundColor: '#F8FAFC',
+                        border: '1px solid #E2E8F0',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        gap: '6px',
+                      }}
+                    >
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '11px', fontWeight: 700, color: acc.tab === 'student' ? '#059669' : '#2270AF' }}>
+                            {acc.role}
+                          </span>
+                          <span style={{ fontSize: '10px', color: '#64748b' }}>{acc.name}</span>
+                        </div>
+                        <div style={{ fontSize: '11.5px', color: '#1e293b', wordBreak: 'break-all', fontFamily: 'monospace', marginTop: '2px' }}>
+                          {acc.email}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+                        <button
+                          type="button"
+                          onClick={() => fillDemoCredentials(acc.email, 'Password@123', acc.tab as any)}
+                          style={{
+                            flex: 1,
+                            padding: '3px 8px',
+                            borderRadius: '5px',
+                            border: '1px solid #bae6fd',
+                            backgroundColor: '#e0f2fe',
+                            color: '#0369a1',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Autofill
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => copyDemoCreds(acc.email)}
+                          style={{
+                            padding: '3px 8px',
+                            borderRadius: '5px',
+                            border: '1px solid #cbd5e1',
+                            backgroundColor: '#ffffff',
+                            color: '#475569',
+                            fontSize: '11px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {copiedDemoEmail === acc.email ? 'Copied!' : 'Copy'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Category 3: Apex Coaching Classes */}
+              <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #E2E8F0', padding: '14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                  <Building2 size={18} color="#9E3BB3" />
+                  <strong style={{ fontSize: '14px', color: '#192D55' }}>Apex Coaching Classes (NEET / JEE Coaching)</strong>
+                  <span style={{ fontSize: '11px', color: '#64748b' }}>Portal: /s/apex-classes</span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
+                  {[
+                    { role: 'Director', name: 'Rajesh Agrawal', email: 'director@apex.edu', tab: 'staff' },
+                    { role: 'Physics Faculty', name: 'Dr. H.C. Bhatia', email: 'faculty.physics@apex.edu', tab: 'staff' },
+                    { role: 'Student (JEE)', name: 'Priya (Roll 101)', email: 'student.priya@apex.edu', tab: 'student' },
+                  ].map((acc, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        padding: '10px',
+                        borderRadius: '8px',
+                        backgroundColor: '#F8FAFC',
+                        border: '1px solid #E2E8F0',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        gap: '6px',
+                      }}
+                    >
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '11px', fontWeight: 700, color: '#9E3BB3' }}>
+                            {acc.role}
+                          </span>
+                          <span style={{ fontSize: '10px', color: '#64748b' }}>{acc.name}</span>
+                        </div>
+                        <div style={{ fontSize: '11.5px', color: '#1e293b', wordBreak: 'break-all', fontFamily: 'monospace', marginTop: '2px' }}>
+                          {acc.email}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+                        <button
+                          type="button"
+                          onClick={() => fillDemoCredentials(acc.email, 'Password@123', acc.tab as any)}
+                          style={{
+                            flex: 1,
+                            padding: '3px 8px',
+                            borderRadius: '5px',
+                            border: '1px solid #e9d5ff',
+                            backgroundColor: '#faf5ff',
+                            color: '#7e22ce',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Autofill
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => copyDemoCreds(acc.email)}
+                          style={{
+                            padding: '3px 8px',
+                            borderRadius: '5px',
+                            border: '1px solid #cbd5e1',
+                            backgroundColor: '#ffffff',
+                            color: '#475569',
+                            fontSize: '11px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {copiedDemoEmail === acc.email ? 'Copied!' : 'Copy'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Category 4: Sharma Tutorials */}
+              <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #E2E8F0', padding: '14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                  <Building2 size={18} color="#2270AF" />
+                  <strong style={{ fontSize: '14px', color: '#192D55' }}>Sharma Tutorials (Board & Olympiad Coaching)</strong>
+                  <span style={{ fontSize: '11px', color: '#64748b' }}>Portal: /s/sharma-tutorials</span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
+                  {[
+                    { role: 'Director', name: 'Manoj Sharma', email: 'director@sharma.edu', tab: 'staff' },
+                    { role: 'Math Faculty', name: 'R.D. Saxena', email: 'faculty.math@sharma.edu', tab: 'staff' },
+                    { role: 'Student (Tanmay)', name: 'Roll 201 (Class 10)', email: 'student.rohan@sharma.edu', tab: 'student' },
+                  ].map((acc, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        padding: '10px',
+                        borderRadius: '8px',
+                        backgroundColor: '#F8FAFC',
+                        border: '1px solid #E2E8F0',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        gap: '6px',
+                      }}
+                    >
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '11px', fontWeight: 700, color: '#2270AF' }}>
+                            {acc.role}
+                          </span>
+                          <span style={{ fontSize: '10px', color: '#64748b' }}>{acc.name}</span>
+                        </div>
+                        <div style={{ fontSize: '11.5px', color: '#1e293b', wordBreak: 'break-all', fontFamily: 'monospace', marginTop: '2px' }}>
+                          {acc.email}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+                        <button
+                          type="button"
+                          onClick={() => fillDemoCredentials(acc.email, 'Password@123', acc.tab as any)}
+                          style={{
+                            flex: 1,
+                            padding: '3px 8px',
+                            borderRadius: '5px',
+                            border: '1px solid #bae6fd',
+                            backgroundColor: '#e0f2fe',
+                            color: '#0369a1',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Autofill
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => copyDemoCreds(acc.email)}
+                          style={{
+                            padding: '3px 8px',
+                            borderRadius: '5px',
+                            border: '1px solid #cbd5e1',
+                            backgroundColor: '#ffffff',
+                            color: '#475569',
+                            fontSize: '11px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {copiedDemoEmail === acc.email ? 'Copied!' : 'Copy'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div
+              style={{
+                padding: '12px 24px',
+                backgroundColor: '#F8FAFC',
+                borderTop: '1px solid #E2E8F0',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <span style={{ fontSize: '11.5px', color: '#64748b' }}>
+                Refer to <code>DEMO_CREDENTIALS.md</code> for complete student admission rolls and phone numbers.
+              </span>
+              <button
+                type="button"
+                onClick={() => setDemoModalOpen(false)}
+                style={{
+                  padding: '6px 16px',
+                  borderRadius: '6px',
+                  backgroundColor: '#192D55',
+                  color: '#ffffff',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* -------------------------------------------------------------
           FOOTER (Glacier Dark Navy Branding)

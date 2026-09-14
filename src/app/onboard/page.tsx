@@ -22,7 +22,28 @@ import {
   HelpCircle,
   AlertCircle,
   Award,
+  Upload,
+  Image as ImageIcon,
+  Trash2,
 } from 'lucide-react';
+
+const PRESET_CRESTS = [
+  {
+    id: 'cbse-gold',
+    name: 'CBSE Golden Shield',
+    url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="%23192D55" stroke="%23F7E223" stroke-width="4"/><path d="M50 18 L75 32 L75 60 C75 75 50 85 50 85 C50 85 25 75 25 60 L25 32 Z" fill="%232270AF" stroke="%23F7E223" stroke-width="2"/><circle cx="50" cy="45" r="12" fill="%23F7E223"/><text x="50" y="49" font-family="Arial" font-size="11" font-weight="bold" fill="%23192D55" text-anchor="middle">CBSE</text><path d="M40 68 L50 62 L60 68 L50 65 Z" fill="%23F7E223"/></svg>',
+  },
+  {
+    id: 'royal-purple',
+    name: 'Royal Purple Academy',
+    url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="%23192D55" stroke="%239E3BB3" stroke-width="4"/><polygon points="50,16 80,38 72,78 28,78 20,38" fill="%239E3BB3"/><path d="M50 26 L65 40 L65 65 C65 72 50 76 50 76 C50 76 35 72 35 65 L35 40 Z" fill="%23FFFFFF"/><text x="50" y="55" font-family="Arial" font-size="14" font-weight="900" fill="%23192D55" text-anchor="middle">A</text></svg>',
+  },
+  {
+    id: 'glacier-blue',
+    name: 'Glacier Blue Institute',
+    url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="6" y="6" width="88" height="88" rx="20" fill="%232270AF" stroke="%23EAF5FC" stroke-width="3"/><circle cx="50" cy="50" r="32" fill="%23192D55"/><polygon points="50,28 68,66 32,66" fill="%23F7E223"/><text x="50" y="62" font-family="Arial" font-size="10" font-weight="bold" fill="%23192D55" text-anchor="middle">EDU</text></svg>',
+  },
+];
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -38,6 +59,33 @@ export default function OnboardingPage() {
   const [orgType, setOrgType] = useState<'SCHOOL' | 'COACHING' | 'HYBRID'>('SCHOOL');
   const [contactEmail, setContactEmail] = useState('contact@sris-edu.in');
   const [phone, setPhone] = useState('+91 98765 43210');
+  const [logoUrl, setLogoUrl] = useState<string>('');
+  const [logoFileName, setLogoFileName] = useState<string>('');
+  const [logoUploadError, setLogoUploadError] = useState<string>('');
+
+  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLogoUploadError('');
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 3 * 1024 * 1024) {
+      setLogoUploadError('Logo image size exceeds 3MB limit. Please choose a smaller file.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (loadEvt) => {
+      const result = loadEvt.target?.result as string;
+      if (result) {
+        setLogoUrl(result);
+        setLogoFileName(file.name);
+      }
+    };
+    reader.onerror = () => {
+      setLogoUploadError('Failed to read image file. Please try another format.');
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Step 2: Institution & Branch
   const [instName, setInstName] = useState('Shri Ram Public School');
@@ -123,6 +171,7 @@ export default function OnboardingPage() {
           adminName,
           adminEmail,
           adminPassword,
+          logoUrl: logoUrl || undefined,
           modules: ['ACADEMICS', 'ATTENDANCE', 'EXAMINATIONS', 'FEES', 'TRANSPORT', 'LIBRARY', 'STAFF_HR', 'REPORTS', 'INVENTORY'],
         }),
       });
@@ -525,6 +574,151 @@ export default function OnboardingPage() {
                             <span>{opt.label}</span>
                           </label>
                         ))}
+                      </div>
+                    </div>
+
+                    {/* School Crest / Logo Upload */}
+                    <div
+                      style={{
+                        padding: '18px',
+                        backgroundColor: '#ffffff',
+                        borderRadius: '12px',
+                        border: '1px solid #bae6fd',
+                        boxShadow: '0 2px 8px rgba(2, 132, 199, 0.05)',
+                      }}
+                    >
+                      <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#0c4a6e', marginBottom: '4px' }}>
+                        Institution Crest / Official Logo
+                      </label>
+                      <p style={{ fontSize: '12px', color: '#64748b', marginBottom: '14px' }}>
+                        Upload your official school emblem. It will appear on Student Fee Receipts, ID Cards, Report Cards, and Official Certificates.
+                      </p>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+                        {/* Logo Preview Box */}
+                        <div
+                          style={{
+                            width: '84px',
+                            height: '84px',
+                            borderRadius: '16px',
+                            border: logoUrl ? '2px solid #0284c7' : '2px dashed #cbd5e1',
+                            backgroundColor: '#f8fafc',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            overflow: 'hidden',
+                            position: 'relative',
+                            boxShadow: logoUrl ? '0 4px 14px rgba(2, 132, 199, 0.15)' : 'none',
+                          }}
+                        >
+                          {logoUrl ? (
+                            <img
+                              src={logoUrl}
+                              alt="School Logo Preview"
+                              style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '6px' }}
+                            />
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#94a3b8' }}>
+                              <ImageIcon size={28} />
+                              <span style={{ fontSize: '10px', marginTop: '2px', fontWeight: 600 }}>NO LOGO</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Upload Button and Controls */}
+                        <div style={{ flex: 1, minWidth: '220px' }}>
+                          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '8px' }}>
+                            <label
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '7px',
+                                padding: '8px 16px',
+                                borderRadius: '8px',
+                                background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%)',
+                                color: '#ffffff',
+                                fontSize: '12.5px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                boxShadow: '0 2px 8px rgba(2, 132, 199, 0.25)',
+                              }}
+                            >
+                              <Upload size={14} />
+                              <span>{logoUrl ? 'Replace Logo' : 'Upload School Logo'}</span>
+                              <input
+                                type="file"
+                                accept="image/png, image/jpeg, image/jpg, image/svg+xml, image/webp"
+                                onChange={handleLogoFileChange}
+                                style={{ display: 'none' }}
+                              />
+                            </label>
+
+                            {logoUrl && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setLogoUrl('');
+                                  setLogoFileName('');
+                                }}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '5px',
+                                  padding: '8px 12px',
+                                  borderRadius: '8px',
+                                  backgroundColor: '#fee2e2',
+                                  color: '#dc2626',
+                                  fontSize: '12px',
+                                  fontWeight: 600,
+                                  border: '1px solid #fecaca',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                <Trash2 size={13} />
+                                <span>Remove</span>
+                              </button>
+                            )}
+                          </div>
+
+                          {logoFileName && (
+                            <div style={{ fontSize: '11.5px', color: '#059669', fontWeight: 600, marginBottom: '6px' }}>
+                              ✓ Loaded: {logoFileName}
+                            </div>
+                          )}
+
+                          {logoUploadError && (
+                            <div style={{ fontSize: '11.5px', color: '#dc2626', fontWeight: 600, marginBottom: '6px' }}>
+                              ⚠ {logoUploadError}
+                            </div>
+                          )}
+
+                          {/* Quick Presets for Demo / Easy Selection */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '6px' }}>
+                            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Or pick a sample emblem:</span>
+                            {PRESET_CRESTS.map((preset) => (
+                              <button
+                                key={preset.id}
+                                type="button"
+                                onClick={() => {
+                                  setLogoUrl(preset.url);
+                                  setLogoFileName(preset.name);
+                                }}
+                                style={{
+                                  padding: '4px 8px',
+                                  borderRadius: '6px',
+                                  backgroundColor: '#f1f5f9',
+                                  border: '1px solid #cbd5e1',
+                                  fontSize: '11px',
+                                  fontWeight: 500,
+                                  color: '#334155',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                {preset.name}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -1198,6 +1392,21 @@ export default function OnboardingPage() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '8px' }}>
                       <span style={{ fontSize: '13px', color: '#64748b' }}>Organization:</span>
                       <strong style={{ fontSize: '13.5px', color: '#0f172a' }}>{orgName} ({orgType})</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '8px' }}>
+                      <span style={{ fontSize: '13px', color: '#64748b' }}>Institutional Crest / Logo:</span>
+                      {logoUrl ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <img
+                            src={logoUrl}
+                            alt="Logo"
+                            style={{ width: '32px', height: '32px', borderRadius: '6px', objectFit: 'contain', border: '1px solid #bae6fd', backgroundColor: '#fff' }}
+                          />
+                          <span style={{ fontSize: '12px', fontWeight: 700, color: '#059669' }}>Custom Logo Configured</span>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic' }}>Default AURXON Crest</span>
+                      )}
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '8px' }}>
                       <span style={{ fontSize: '13px', color: '#64748b' }}>Primary Institution:</span>

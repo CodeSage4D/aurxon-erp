@@ -15,7 +15,8 @@ const onboardSchema = z.object({
   adminName: z.string().min(2, 'Administrator name is required'),
   adminEmail: z.string().email('Valid administrator email is required'),
   adminPassword: z.string().min(6, 'Password must be at least 6 characters').default('Password@123'),
-  primaryColor: z.string().default('#0284c7'),
+  primaryColor: z.string().default('#2270AF'),
+  logoUrl: z.string().optional().nullable(),
   modules: z.array(z.string()).default(['ACADEMICS', 'ATTENDANCE', 'EXAMINATIONS', 'FEES', 'TRANSPORT']),
 });
 
@@ -88,7 +89,8 @@ export async function POST(req: Request) {
             name: d.name,
             slug,
             code: orgCode,
-            primaryColor: d.primaryColor || '#0284c7',
+            logoUrl: d.logoUrl || null,
+            primaryColor: d.primaryColor || '#2270AF',
             status: 'ACTIVE',
           },
         });
