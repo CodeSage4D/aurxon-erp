@@ -205,8 +205,8 @@ export default function AurxonMasterCockpitPage() {
       style={{
         position: 'relative',
         minHeight: '100vh',
-        backgroundColor: '#f8fafc',
-        backgroundImage: 'radial-gradient(ellipse at 50% -20%, #e0f2fe 0%, #f8fafc 80%)',
+        backgroundColor: '#f8fbfe',
+        backgroundImage: 'radial-gradient(ellipse 100% 50% at 50% -10%, #dbeafe 0%, #edf6fd 30%, #f8fbfe 65%, #ffffff 100%)',
         color: '#0f172a',
         paddingBottom: '60px',
       }}
@@ -219,9 +219,9 @@ export default function AurxonMasterCockpitPage() {
           position: 'sticky',
           top: 0,
           zIndex: 40,
-          backgroundColor: 'rgba(255, 255, 255, 0.85)',
+          backgroundColor: 'rgba(255, 255, 255, 0.88)',
           backdropFilter: 'blur(16px)',
-          borderBottom: '1px solid #e2e8f0',
+          borderBottom: '1px solid rgba(186, 230, 253, 0.75)',
           padding: '0 32px',
           height: '64px',
           display: 'flex',
@@ -301,7 +301,7 @@ export default function AurxonMasterCockpitPage() {
       {/* Main Container */}
       <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px 24px' }}>
         {/* Hero Title & Primary Action */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginBottom: '32px' }}>
           <div>
             <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
               Institute Enrollment & Operations Cockpit
@@ -320,15 +320,15 @@ export default function AurxonMasterCockpitPage() {
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              padding: '12px 20px',
+              padding: '12px 22px',
               borderRadius: '12px',
-              background: 'linear-gradient(135deg, #0284c7, #0d9488)',
+              background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 50%, #1e40af 100%)',
               color: '#ffffff',
               fontSize: '14px',
               fontWeight: 700,
-              border: 'none',
+              border: '1px solid rgba(255, 255, 255, 0.25)',
               cursor: 'pointer',
-              boxShadow: '0 8px 20px -4px rgba(2, 132, 199, 0.4)',
+              boxShadow: '0 8px 24px -4px rgba(2, 132, 199, 0.4), 0 0 0 1px rgba(2, 132, 199, 0.1) inset',
               transition: 'all 150ms ease',
             }}
           >
@@ -337,16 +337,16 @@ export default function AurxonMasterCockpitPage() {
         </div>
 
         {/* 3D KPI Metrics Strip */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '36px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: '36px' }}>
           <Card3D maxTilt={5}>
             <div
               style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                backgroundColor: 'rgba(255, 255, 255, 0.92)',
                 backdropFilter: 'blur(12px)',
-                border: '1px solid #e0f2fe',
+                border: '1px solid rgba(186, 230, 253, 0.85)',
                 borderRadius: '16px',
                 padding: '22px',
-                boxShadow: '0 10px 25px -5px rgba(2, 132, 199, 0.08)',
+                boxShadow: '0 10px 25px -5px rgba(2, 132, 199, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.9) inset',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -358,7 +358,7 @@ export default function AurxonMasterCockpitPage() {
               <div style={{ fontSize: '32px', fontWeight: 800, color: '#0f172a', marginTop: '12px', letterSpacing: '-0.03em' }}>
                 {stats?.totalOrgs || orgs.length}
               </div>
-              <div style={{ fontSize: '12px', color: '#0d9488', marginTop: '4px', fontWeight: 600 }}>
+              <div style={{ fontSize: '12px', color: '#0284c7', marginTop: '4px', fontWeight: 600 }}>
                 Across {stats?.totalBranches || 11} Campuses
               </div>
             </div>
@@ -367,19 +367,19 @@ export default function AurxonMasterCockpitPage() {
           <Card3D maxTilt={5}>
             <div
               style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                backgroundColor: 'rgba(255, 255, 255, 0.92)',
                 backdropFilter: 'blur(12px)',
-                border: '1px solid #e0f2fe',
+                border: '1px solid rgba(186, 230, 253, 0.85)',
                 borderRadius: '16px',
                 padding: '22px',
-                boxShadow: '0 10px 25px -5px rgba(2, 132, 199, 0.08)',
+                boxShadow: '0 10px 25px -5px rgba(2, 132, 199, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.9) inset',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                   Active Enrolled Students
                 </span>
-                <GraduationCap size={20} color="#0d9488" />
+                <GraduationCap size={20} color="#0284c7" />
               </div>
               <div style={{ fontSize: '32px', fontWeight: 800, color: '#0f172a', marginTop: '12px', letterSpacing: '-0.03em' }}>
                 {stats?.totalStudents || 10}
@@ -393,19 +393,19 @@ export default function AurxonMasterCockpitPage() {
           <Card3D maxTilt={5}>
             <div
               style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                backgroundColor: 'rgba(255, 255, 255, 0.92)',
                 backdropFilter: 'blur(12px)',
-                border: '1px solid #e0f2fe',
+                border: '1px solid rgba(186, 230, 253, 0.85)',
                 borderRadius: '16px',
                 padding: '22px',
-                boxShadow: '0 10px 25px -5px rgba(2, 132, 199, 0.08)',
+                boxShadow: '0 10px 25px -5px rgba(2, 132, 199, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.9) inset',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                   Total Staff & Faculty
                 </span>
-                <Users size={20} color="#7c3aed" />
+                <Users size={20} color="#0284c7" />
               </div>
               <div style={{ fontSize: '32px', fontWeight: 800, color: '#0f172a', marginTop: '12px', letterSpacing: '-0.03em' }}>
                 {stats?.totalUsers || 18}
@@ -419,24 +419,24 @@ export default function AurxonMasterCockpitPage() {
           <Card3D maxTilt={5}>
             <div
               style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                backgroundColor: 'rgba(255, 255, 255, 0.92)',
                 backdropFilter: 'blur(12px)',
-                border: '1px solid #e0f2fe',
+                border: '1px solid rgba(186, 230, 253, 0.85)',
                 borderRadius: '16px',
                 padding: '22px',
-                boxShadow: '0 10px 25px -5px rgba(2, 132, 199, 0.08)',
+                boxShadow: '0 10px 25px -5px rgba(2, 132, 199, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.9) inset',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
                   Monthly SaaS Run Rate
                 </span>
-                <TrendingUp size={20} color="#059669" />
+                <TrendingUp size={20} color="#0284c7" />
               </div>
-              <div style={{ fontSize: '32px', fontWeight: 800, color: '#059669', marginTop: '12px', letterSpacing: '-0.03em' }}>
+              <div style={{ fontSize: '32px', fontWeight: 800, color: '#0284c7', marginTop: '12px', letterSpacing: '-0.03em' }}>
                 ₹{(stats?.estimatedMRR || 147000).toLocaleString('en-IN')}
               </div>
-              <div style={{ fontSize: '12px', color: '#059669', marginTop: '4px', fontWeight: 600 }}>
+              <div style={{ fontSize: '12px', color: '#0284c7', marginTop: '4px', fontWeight: 600 }}>
                 Enterprise Tier Subscriptions
               </div>
             </div>
@@ -448,19 +448,21 @@ export default function AurxonMasterCockpitPage() {
           style={{
             backgroundColor: 'rgba(255, 255, 255, 0.95)',
             borderRadius: '20px',
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 10px 30px -10px rgba(0, 0, 0, 0.04)',
+            border: '1px solid rgba(186, 230, 253, 0.8)',
+            boxShadow: '0 10px 30px -10px rgba(2, 132, 199, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.9) inset',
             overflow: 'hidden',
           }}
         >
           <div
             style={{
               padding: '20px 24px',
-              borderBottom: '1px solid #e2e8f0',
+              borderBottom: '1px solid rgba(186, 230, 253, 0.6)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              backgroundColor: '#f8fafc',
+              flexWrap: 'wrap',
+              gap: '12px',
+              backgroundColor: '#f8fbfe',
             }}
           >
             <div>
@@ -477,6 +479,7 @@ export default function AurxonMasterCockpitPage() {
                 fontWeight: 600,
                 color: '#0284c7',
                 backgroundColor: '#e0f2fe',
+                border: '1px solid rgba(186, 230, 253, 0.8)',
                 padding: '4px 10px',
                 borderRadius: '6px',
               }}
@@ -487,7 +490,7 @@ export default function AurxonMasterCockpitPage() {
 
           <div>
             {orgs.map((org) => {
-              const portalShortLink = `http://localhost:3001/s/${org.slug}`;
+              const portalShortLink = typeof window !== 'undefined' ? `${window.location.origin}/s/${org.slug}` : `/s/${org.slug}`;
               const inst = org.institutions[0];
 
               return (
@@ -498,11 +501,13 @@ export default function AurxonMasterCockpitPage() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '16px',
                     borderBottom: '1px solid #f1f5f9',
                     transition: 'background-color 150ms',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', minWidth: '240px' }}>
                     <div
                       style={{
                         width: '44px',
@@ -522,7 +527,7 @@ export default function AurxonMasterCockpitPage() {
                     </div>
 
                     <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                         <span style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>{org.name}</span>
                         <span
                           style={{
@@ -551,7 +556,7 @@ export default function AurxonMasterCockpitPage() {
                         </span>
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '6px', fontSize: '12px', color: '#64748b' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '6px', fontSize: '12px', color: '#64748b', flexWrap: 'wrap' }}>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <MapPin size={13} /> {inst?.city || 'Indore'}
                         </span>
@@ -564,15 +569,15 @@ export default function AurxonMasterCockpitPage() {
                   </div>
 
                   {/* Generated Custom Short Link & Actions */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                     <div
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px',
                         padding: '6px 12px',
-                        backgroundColor: '#f8fafc',
-                        border: '1px solid #cbd5e1',
+                        backgroundColor: '#f8fbfe',
+                        border: '1px solid rgba(186, 230, 253, 0.9)',
                         borderRadius: '8px',
                       }}
                     >
@@ -595,14 +600,14 @@ export default function AurxonMasterCockpitPage() {
                         display: 'flex',
                         alignItems: 'center',
                         gap: '6px',
-                        padding: '8px 14px',
+                        padding: '8px 16px',
                         borderRadius: '8px',
-                        backgroundColor: '#0284c7',
+                        background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 50%, #1e40af 100%)',
                         color: '#ffffff',
                         fontSize: '12px',
-                        fontWeight: 600,
+                        fontWeight: 700,
                         textDecoration: 'none',
-                        boxShadow: '0 2px 6px rgba(2, 132, 199, 0.3)',
+                        boxShadow: '0 3px 10px rgba(2, 132, 199, 0.35)',
                       }}
                     >
                       Open School Portal <ExternalLink size={14} />
@@ -852,16 +857,17 @@ export default function AurxonMasterCockpitPage() {
                       type="submit"
                       disabled={submitting}
                       style={{
-                        padding: '10px 20px',
-                        borderRadius: '8px',
-                        background: 'linear-gradient(135deg, #0284c7, #0d9488)',
+                        padding: '10px 22px',
+                        borderRadius: '10px',
+                        background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 50%, #1e40af 100%)',
                         color: '#ffffff',
                         fontWeight: 700,
-                        border: 'none',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
                         cursor: submitting ? 'not-allowed' : 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px',
+                        boxShadow: '0 6px 18px -2px rgba(2, 132, 199, 0.4)',
                       }}
                     >
                       {submitting ? 'Deploying Setup ERP...' : (
@@ -901,61 +907,69 @@ export default function AurxonMasterCockpitPage() {
                 </p>
 
                 {/* Generated Link Share Card */}
-                <div
-                  style={{
-                    margin: '24px 0',
-                    padding: '20px',
-                    backgroundColor: '#f0f9ff',
-                    borderRadius: '16px',
-                    border: '1px solid #bae6fd',
-                    textAlign: 'left',
-                  }}
-                >
-                  <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#0369a1', letterSpacing: '0.05em' }}>
-                    Dedicated School Access Link
-                  </div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginTop: '8px',
-                      padding: '10px 14px',
-                      backgroundColor: '#ffffff',
-                      borderRadius: '10px',
-                      border: '1px solid #7dd3fc',
-                    }}
-                  >
-                    <span style={{ fontSize: '14px', fontWeight: 700, fontFamily: 'monospace', color: '#0284c7' }}>
-                      http://localhost:3001/s/{deployedData.slug}
-                    </span>
-                    <button
-                      onClick={() => copyToClipboard(`http://localhost:3001/s/${deployedData.slug}`)}
+                {(() => {
+                  const deployedLink = typeof window !== 'undefined' ? `${window.location.origin}/s/${deployedData.slug}` : `/s/${deployedData.slug}`;
+                  return (
+                    <div
                       style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '6px 12px',
-                        borderRadius: '6px',
-                        backgroundColor: copiedLink ? '#059669' : '#0284c7',
-                        color: '#ffffff',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        border: 'none',
-                        cursor: 'pointer',
+                        margin: '24px 0',
+                        padding: '20px',
+                        backgroundColor: '#f8fbfe',
+                        borderRadius: '16px',
+                        border: '1px solid rgba(186, 230, 253, 0.9)',
+                        boxShadow: '0 4px 12px rgba(2, 132, 199, 0.06)',
+                        textAlign: 'left',
                       }}
                     >
-                      {copiedLink ? <><Check size={14} /> Copied</> : <><Copy size={14} /> Copy</>}
-                    </button>
-                  </div>
+                      <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#0369a1', letterSpacing: '0.05em' }}>
+                        Dedicated School Access Link
+                      </div>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          marginTop: '8px',
+                          padding: '10px 14px',
+                          backgroundColor: '#ffffff',
+                          borderRadius: '10px',
+                          border: '1px solid #7dd3fc',
+                          flexWrap: 'wrap',
+                          gap: '8px',
+                        }}
+                      >
+                        <span style={{ fontSize: '14px', fontWeight: 700, fontFamily: 'monospace', color: '#0284c7', wordBreak: 'break-all' }}>
+                          {deployedLink}
+                        </span>
+                        <button
+                          onClick={() => copyToClipboard(deployedLink)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '6px 14px',
+                            borderRadius: '6px',
+                            background: copiedLink ? '#059669' : 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 50%, #1e40af 100%)',
+                            color: '#ffffff',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            border: 'none',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {copiedLink ? <><Check size={14} /> Copied</> : <><Copy size={14} /> Copy</>}
+                        </button>
+                      </div>
 
-                  <div style={{ marginTop: '16px', fontSize: '12px', color: '#334155' }}>
-                    <strong>Admin Email:</strong> {deployedData.admin?.email} <br />
-                    <strong>Default Password:</strong> {deployedData.admin?.temporaryPassword}
-                  </div>
-                </div>
+                      <div style={{ marginTop: '16px', fontSize: '12px', color: '#334155' }}>
+                        <strong>Admin Email:</strong> {deployedData.admin?.email} <br />
+                        <strong>Default Password:</strong> {deployedData.admin?.temporaryPassword}
+                      </div>
+                    </div>
+                  );
+                })()}
 
-                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
                   <button
                     onClick={() => {
                       setDeployedData(null);
@@ -981,13 +995,13 @@ export default function AurxonMasterCockpitPage() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
-                      padding: '10px 20px',
+                      padding: '10px 22px',
                       borderRadius: '8px',
-                      background: 'linear-gradient(135deg, #0284c7, #0d9488)',
+                      background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 50%, #1e40af 100%)',
                       color: '#ffffff',
                       fontWeight: 700,
                       textDecoration: 'none',
-                      boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)',
+                      boxShadow: '0 6px 18px -2px rgba(2, 132, 199, 0.35)',
                     }}
                   >
                     Launch School Portal <ExternalLink size={16} />

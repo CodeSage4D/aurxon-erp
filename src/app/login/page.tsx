@@ -68,7 +68,7 @@ export default function LoginPage() {
     <div
       style={{
         minHeight: '100vh',
-        backgroundColor: '#ffffff',
+        background: 'radial-gradient(ellipse 100% 55% at 50% 0%, #dbeafe 0%, #edf6fd 35%, #f8fbfe 70%, #ffffff 100%)',
         color: '#0f172a',
         fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
         display: 'flex',
@@ -78,9 +78,11 @@ export default function LoginPage() {
       {/* Top Navigation Bar */}
       <header
         style={{
-          borderBottom: '1px solid #e2e8f0',
-          backgroundColor: '#ffffff',
-          padding: '14px 24px',
+          borderBottom: '1px solid rgba(186, 230, 253, 0.7)',
+          backgroundColor: 'rgba(255, 255, 255, 0.88)',
+          backdropFilter: 'blur(16px)',
+          padding: '12px 20px',
+          boxShadow: '0 4px 20px -4px rgba(2, 132, 199, 0.06)',
         }}
       >
         <div
@@ -90,21 +92,24 @@ export default function LoginPage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px',
           }}
         >
           <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
             <div
               style={{
-                width: '34px',
-                height: '34px',
-                borderRadius: '8px',
-                backgroundColor: '#0284c7',
+                width: '36px',
+                height: '36px',
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%)',
                 color: '#ffffff',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontWeight: 800,
-                fontSize: '16px',
+                fontSize: '17px',
+                boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)',
               }}
             >
               A
@@ -114,7 +119,26 @@ export default function LoginPage() {
             </span>
           </Link>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <Link
+              href="/onboard"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#0369a1',
+                textDecoration: 'none',
+                padding: '7px 14px',
+                borderRadius: '8px',
+                border: '1px solid rgba(186, 230, 253, 0.9)',
+                background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+              }}
+            >
+              Register Institute
+            </Link>
             <Link
               href="/"
               style={{
@@ -123,86 +147,57 @@ export default function LoginPage() {
                 gap: '6px',
                 fontSize: '13px',
                 fontWeight: 600,
-                color: '#0284c7',
+                color: '#475569',
                 textDecoration: 'none',
-                padding: '6px 12px',
-                borderRadius: '6px',
-                backgroundColor: '#f0f9ff',
+                padding: '7px 12px',
+                borderRadius: '8px',
               }}
             >
-              <Search size={14} />
-              <span>Find Your School</span>
+              Back to Home
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Main Sign In Surface */}
+      {/* Login Main Content Area */}
       <main
         style={{
           flex: 1,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '40px 24px',
+          padding: '40px 16px',
+          boxSizing: 'border-box',
+          width: '100%',
         }}
       >
-        <div style={{ maxWidth: '440px', width: '100%' }}>
-          {/* Quick Notice Card */}
+        <div style={{ width: '100%', maxWidth: '460px', margin: '0 auto' }}>
+          {/* Main Card */}
           <div
             style={{
-              backgroundColor: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: '12px',
-              padding: '12px 16px',
-              marginBottom: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              fontSize: '12.5px',
-              color: '#475569',
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 249, 255, 0.92) 100%)',
+              borderRadius: '20px',
+              border: '1px solid rgba(186, 230, 253, 0.85)',
+              padding: '36px 32px',
+              boxShadow: '0 20px 45px -10px rgba(2, 132, 199, 0.16), 0 4px 12px rgba(0, 0, 0, 0.03), inset 0 1px 0 0 #ffffff',
+              boxSizing: 'border-box',
             }}
           >
-            <span>Looking for your school portal?</span>
-            <Link
-              href="/"
-              style={{
-                color: '#0284c7',
-                fontWeight: 600,
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}
-            >
-              <span>Search School</span>
-              <ArrowRight size={13} />
-            </Link>
-          </div>
-
-          {/* Login Card */}
-          <div
-            style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '16px',
-              padding: '36px',
-              border: '1px solid #e2e8f0',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
-            }}
-          >
-            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+            {/* Header */}
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
               <div
                 style={{
                   width: '48px',
                   height: '48px',
                   borderRadius: '12px',
-                  backgroundColor: '#f0f9ff',
+                  background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)',
                   color: '#0284c7',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   margin: '0 auto 12px',
-                  border: '1px solid #bae6fd',
+                  border: '1px solid #7dd3fc',
+                  boxShadow: '0 2px 8px rgba(2, 132, 199, 0.12)',
                 }}
               >
                 <Lock size={22} />
@@ -219,8 +214,9 @@ export default function LoginPage() {
             <div
               style={{
                 display: 'flex',
-                backgroundColor: '#f1f5f9',
-                borderRadius: '8px',
+                background: 'rgba(224, 242, 254, 0.65)',
+                border: '1px solid rgba(186, 230, 253, 0.85)',
+                borderRadius: '10px',
                 padding: '4px',
                 marginBottom: '20px',
               }}
@@ -231,10 +227,10 @@ export default function LoginPage() {
                 style={{
                   flex: 1,
                   padding: '8px',
-                  borderRadius: '6px',
+                  borderRadius: '7px',
                   border: 'none',
-                  backgroundColor: activeTab === 'staff' ? '#ffffff' : 'transparent',
-                  color: activeTab === 'staff' ? '#0f172a' : '#64748b',
+                  background: activeTab === 'staff' ? 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%)' : 'transparent',
+                  color: activeTab === 'staff' ? '#ffffff' : '#475569',
                   fontSize: '12.5px',
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -242,7 +238,8 @@ export default function LoginPage() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '6px',
-                  boxShadow: activeTab === 'staff' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+                  boxShadow: activeTab === 'staff' ? '0 3px 10px rgba(2, 132, 199, 0.3)' : 'none',
+                  transition: 'all 150ms ease',
                 }}
               >
                 <Users size={14} />
@@ -254,10 +251,10 @@ export default function LoginPage() {
                 style={{
                   flex: 1,
                   padding: '8px',
-                  borderRadius: '6px',
+                  borderRadius: '7px',
                   border: 'none',
-                  backgroundColor: activeTab === 'student' ? '#ffffff' : 'transparent',
-                  color: activeTab === 'student' ? '#0f172a' : '#64748b',
+                  background: activeTab === 'student' ? 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%)' : 'transparent',
+                  color: activeTab === 'student' ? '#ffffff' : '#475569',
                   fontSize: '12.5px',
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -265,7 +262,8 @@ export default function LoginPage() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '6px',
-                  boxShadow: activeTab === 'student' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+                  boxShadow: activeTab === 'student' ? '0 3px 10px rgba(2, 132, 199, 0.3)' : 'none',
+                  transition: 'all 150ms ease',
                 }}
               >
                 <GraduationCap size={14} />
@@ -274,8 +272,8 @@ export default function LoginPage() {
             </div>
 
             {/* Quick Demo Credentials Autofill Bar */}
-            <div style={{ marginBottom: '18px', padding: '10px 12px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
+            <div style={{ marginBottom: '18px', padding: '10px 12px', background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)', borderRadius: '10px', border: '1px solid rgba(186, 230, 253, 0.8)' }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: '#0369a1', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
                 Quick Test Role Autofill:
               </div>
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
@@ -288,14 +286,15 @@ export default function LoginPage() {
                     setError('');
                   }}
                   style={{
-                    padding: '3px 8px',
-                    borderRadius: '4px',
-                    border: '1px solid #bae6fd',
-                    backgroundColor: '#f0f9ff',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    border: '1px solid #7dd3fc',
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)',
                     color: '#0369a1',
                     fontSize: '11.5px',
                     fontWeight: 600,
                     cursor: 'pointer',
+                    boxShadow: '0 1px 3px rgba(2, 132, 199, 0.08)',
                   }}
                 >
                   Principal
@@ -309,14 +308,15 @@ export default function LoginPage() {
                     setError('');
                   }}
                   style={{
-                    padding: '3px 8px',
-                    borderRadius: '4px',
-                    border: '1px solid #bae6fd',
-                    backgroundColor: '#f0f9ff',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    border: '1px solid #7dd3fc',
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)',
                     color: '#0369a1',
                     fontSize: '11.5px',
                     fontWeight: 600,
                     cursor: 'pointer',
+                    boxShadow: '0 1px 3px rgba(2, 132, 199, 0.08)',
                   }}
                 >
                   Faculty
@@ -330,14 +330,15 @@ export default function LoginPage() {
                     setError('');
                   }}
                   style={{
-                    padding: '3px 8px',
-                    borderRadius: '4px',
-                    border: '1px solid #bae6fd',
-                    backgroundColor: '#f0f9ff',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    border: '1px solid #7dd3fc',
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)',
                     color: '#0369a1',
                     fontSize: '11.5px',
                     fontWeight: 600,
                     cursor: 'pointer',
+                    boxShadow: '0 1px 3px rgba(2, 132, 199, 0.08)',
                   }}
                 >
                   Accountant
@@ -351,14 +352,15 @@ export default function LoginPage() {
                     setError('');
                   }}
                   style={{
-                    padding: '3px 8px',
-                    borderRadius: '4px',
-                    border: '1px solid #bbf7d0',
-                    backgroundColor: '#f0fdf4',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    border: '1px solid #86efac',
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%)',
                     color: '#166534',
                     fontSize: '11.5px',
                     fontWeight: 600,
                     cursor: 'pointer',
+                    boxShadow: '0 1px 3px rgba(22, 101, 52, 0.08)',
                   }}
                 >
                   Student
@@ -372,14 +374,15 @@ export default function LoginPage() {
                     setError('');
                   }}
                   style={{
-                    padding: '3px 8px',
-                    borderRadius: '4px',
-                    border: '1px solid #e2e8f0',
-                    backgroundColor: '#ffffff',
-                    color: '#475569',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    border: '1px solid #cbd5e1',
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+                    color: '#334155',
                     fontSize: '11.5px',
                     fontWeight: 600,
                     cursor: 'pointer',
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
                   }}
                 >
                   HQ Admin
@@ -511,12 +514,12 @@ export default function LoginPage() {
                 disabled={loading}
                 style={{
                   width: '100%',
-                  padding: '12px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  backgroundColor: '#0284c7',
+                  padding: '13px',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 50%, #1e40af 100%)',
                   color: '#ffffff',
-                  fontSize: '14px',
+                  fontSize: '14.5px',
                   fontWeight: 700,
                   cursor: loading ? 'not-allowed' : 'pointer',
                   display: 'flex',
@@ -524,7 +527,8 @@ export default function LoginPage() {
                   justifyContent: 'center',
                   gap: '8px',
                   opacity: loading ? 0.7 : 1,
-                  transition: 'background-color 150ms ease',
+                  boxShadow: '0 4px 14px 0 rgba(2, 132, 199, 0.38), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)',
+                  transition: 'all 150ms ease',
                 }}
               >
                 {loading ? (

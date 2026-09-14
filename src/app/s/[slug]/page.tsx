@@ -126,7 +126,8 @@ export default function SchoolDedicatedPortalPage() {
     <div
       style={{
         minHeight: '100vh',
-        backgroundColor: '#ffffff',
+        backgroundColor: '#f8fbfe',
+        backgroundImage: 'radial-gradient(ellipse 100% 50% at 50% -10%, #dbeafe 0%, #edf6fd 30%, #f8fbfe 65%, #ffffff 100%)',
         color: '#0f172a',
         fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
         display: 'flex',
@@ -136,8 +137,9 @@ export default function SchoolDedicatedPortalPage() {
       {/* Top Institutional Bar */}
       <header
         style={{
-          borderBottom: '1px solid #e2e8f0',
-          backgroundColor: '#ffffff',
+          borderBottom: '1px solid rgba(186, 230, 253, 0.75)',
+          backgroundColor: 'rgba(255, 255, 255, 0.88)',
+          backdropFilter: 'blur(16px)',
           position: 'sticky',
           top: 0,
           zIndex: 40,
@@ -151,6 +153,7 @@ export default function SchoolDedicatedPortalPage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            flexWrap: 'wrap',
             gap: '16px',
           }}
         >
@@ -350,17 +353,18 @@ export default function SchoolDedicatedPortalPage() {
                 </div>
 
                 {/* Regulatory Highlights Grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
                   <div
                     style={{
                       padding: '16px',
-                      borderRadius: '10px',
-                      backgroundColor: '#f8fafc',
-                      border: '1px solid #e2e8f0',
+                      borderRadius: '12px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.92)',
+                      border: '1px solid rgba(186, 230, 253, 0.8)',
+                      boxShadow: '0 4px 12px rgba(2, 132, 199, 0.04)',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
-                      <CheckCircle2 size={15} color="#10b981" />
+                      <CheckCircle2 size={15} color="#0284c7" />
                       <span>CBSE 9-Point Scale</span>
                     </div>
                     <p style={{ fontSize: '12px', color: '#64748b', margin: '6px 0 0', lineHeight: 1.4 }}>
@@ -371,13 +375,14 @@ export default function SchoolDedicatedPortalPage() {
                   <div
                     style={{
                       padding: '16px',
-                      borderRadius: '10px',
-                      backgroundColor: '#f8fafc',
-                      border: '1px solid #e2e8f0',
+                      borderRadius: '12px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.92)',
+                      border: '1px solid rgba(186, 230, 253, 0.8)',
+                      boxShadow: '0 4px 12px rgba(2, 132, 199, 0.04)',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
-                      <CheckCircle2 size={15} color="#10b981" />
+                      <CheckCircle2 size={15} color="#0284c7" />
                       <span>U-DISE+ Data Sync</span>
                     </div>
                     <p style={{ fontSize: '12px', color: '#64748b', margin: '6px 0 0', lineHeight: 1.4 }}>
@@ -388,13 +393,14 @@ export default function SchoolDedicatedPortalPage() {
                   <div
                     style={{
                       padding: '16px',
-                      borderRadius: '10px',
-                      backgroundColor: '#f8fafc',
-                      border: '1px solid #e2e8f0',
+                      borderRadius: '12px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.92)',
+                      border: '1px solid rgba(186, 230, 253, 0.8)',
+                      boxShadow: '0 4px 12px rgba(2, 132, 199, 0.04)',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
-                      <CheckCircle2 size={15} color="#10b981" />
+                      <CheckCircle2 size={15} color="#0284c7" />
                       <span>RTE 25% Quota</span>
                     </div>
                     <p style={{ fontSize: '12px', color: '#64748b', margin: '6px 0 0', lineHeight: 1.4 }}>
@@ -405,13 +411,14 @@ export default function SchoolDedicatedPortalPage() {
                   <div
                     style={{
                       padding: '16px',
-                      borderRadius: '10px',
-                      backgroundColor: '#f8fafc',
-                      border: '1px solid #e2e8f0',
+                      borderRadius: '12px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.92)',
+                      border: '1px solid rgba(186, 230, 253, 0.8)',
+                      boxShadow: '0 4px 12px rgba(2, 132, 199, 0.04)',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
-                      <CheckCircle2 size={15} color="#10b981" />
+                      <CheckCircle2 size={15} color="#0284c7" />
                       <span>Quarterly Fee Ledgers</span>
                     </div>
                     <p style={{ fontSize: '12px', color: '#64748b', margin: '6px 0 0', lineHeight: 1.4 }}>
@@ -421,14 +428,14 @@ export default function SchoolDedicatedPortalPage() {
                 </div>
               </div>
 
-              {/* RIGHT COLUMN: Institutional Login Card (Pure White, Accessible, No Demo Pills) */}
+              {/* RIGHT COLUMN: Institutional Login Card (Metallic Glacier, Accessible, High Contrast) */}
               <div
                 style={{
-                  backgroundColor: '#ffffff',
-                  borderRadius: '16px',
-                  padding: '32px',
-                  border: '1px solid #e2e8f0',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                  borderRadius: '20px',
+                  padding: '36px 32px',
+                  border: '1px solid rgba(186, 230, 253, 0.85)',
+                  boxShadow: '0 20px 45px -12px rgba(2, 132, 199, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.9) inset',
                 }}
               >
                 <div style={{ marginBottom: '20px', textAlign: 'center' }}>
@@ -602,9 +609,9 @@ export default function SchoolDedicatedPortalPage() {
                     style={{
                       width: '100%',
                       padding: '12px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      backgroundColor: '#0284c7',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(255, 255, 255, 0.25)',
+                      background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 50%, #1e40af 100%)',
                       color: '#ffffff',
                       fontSize: '14px',
                       fontWeight: 700,
@@ -614,7 +621,8 @@ export default function SchoolDedicatedPortalPage() {
                       justifyContent: 'center',
                       gap: '8px',
                       opacity: submitting ? 0.7 : 1,
-                      transition: 'background-color 150ms ease',
+                      boxShadow: '0 8px 24px -4px rgba(2, 132, 199, 0.4)',
+                      transition: 'all 150ms ease',
                     }}
                   >
                     {submitting ? (
@@ -642,7 +650,7 @@ export default function SchoolDedicatedPortalPage() {
                     color: '#64748b',
                   }}
                 >
-                  <ShieldCheck size={14} color="#10b981" />
+                  <ShieldCheck size={14} color="#0284c7" />
                   <span>256-Bit Encrypted Multi-Tenant Session</span>
                 </div>
               </div>
@@ -654,15 +662,15 @@ export default function SchoolDedicatedPortalPage() {
       {/* Institutional Footer */}
       <footer
         style={{
-          borderTop: '1px solid #e2e8f0',
-          backgroundColor: '#f8fafc',
+          borderTop: '1px solid rgba(186, 230, 253, 0.6)',
+          backgroundColor: 'rgba(255, 255, 255, 0.85)',
           padding: '16px 24px',
           textAlign: 'center',
           fontSize: '12.5px',
           color: '#64748b',
         }}
       >
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
           <span>Powered by <strong>AURXON Education OS</strong></span>
           <div style={{ display: 'flex', gap: '16px' }}>
             <span>Help Center</span>

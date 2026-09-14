@@ -263,33 +263,84 @@
 }
 
 .btn-primary {
-  background-color: var(--primary);
+  background: var(--btn-primary-bg);
   color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: var(--btn-primary-shadow);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: var(--primary-hover);
-  box-shadow: var(--shadow-sm);
+  background: var(--btn-primary-hover);
+  box-shadow: 0 6px 20px 0 rgba(2, 132, 199, 0.45);
+  transform: translateY(-1px);
 }
 
 .btn-secondary {
-  background-color: var(--surface-subtle);
-  color: var(--text-main);
-  border-color: var(--border-subtle);
+  background: var(--btn-secondary-bg);
+  color: var(--btn-secondary-text);
+  border: 1px solid var(--btn-secondary-border);
+  box-shadow: var(--btn-secondary-shadow);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background-color: var(--surface-hover);
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-color: #38bdf8;
+  color: #0284c7;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px 0 rgba(2, 132, 199, 0.18);
 }
 
 .btn-outline {
-  background-color: transparent;
-  color: var(--primary);
-  border-color: var(--primary);
+  background-color: #ffffff;
+  color: #0369a1;
+  border: 1px solid rgba(186, 230, 253, 0.9);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .btn-outline:hover:not(:disabled) {
-  background-color: var(--primary-light);
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+  border-color: #0284c7;
+  color: #0284c7;
+  transform: translateY(-1px);
+}
+
+/* Metallic Glacier Tab System */
+.tab-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--tab-container-bg);
+  border: 1px solid var(--tab-container-border);
+  padding: 4px;
+  border-radius: 10px;
+  backdrop-filter: blur(8px);
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tab-btn {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: var(--tab-inactive-color);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.tab-btn:hover:not(.active) {
+  color: #0369a1;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.tab-btn.active {
+  background: var(--tab-active-bg);
+  color: var(--tab-active-color);
+  box-shadow: var(--tab-active-shadow);
 }
 
 .btn-danger {
@@ -332,6 +383,19 @@
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-xs);
   overflow: hidden;
+}
+
+.card-metallic {
+  background: var(--card-metallic);
+  border: 1px solid var(--border-metallic);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 20px -2px rgba(2, 132, 199, 0.08), inset 0 1px 0 0 #ffffff;
+  transition: all var(--transition-fast);
+}
+
+.card-metallic:hover {
+  border-color: #38bdf8;
+  box-shadow: 0 8px 24px -4px rgba(2, 132, 199, 0.16), inset 0 1px 0 0 #ffffff;
 }
 
 .card-header {
@@ -1214,5 +1278,68 @@
   }
   .pulse-item:last-child {
     border-bottom: none;
+  }
+}
+
+/* -------------------------------------------------------------
+   17. UNIVERSAL RESPONSIVENESS & CONTAINER ADAPTATION
+   ------------------------------------------------------------- */
+.container-responsive {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 24px;
+  box-sizing: border-box;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  display: block;
+}
+
+@media (max-width: 1024px) {
+  .page-container {
+    padding: var(--space-4);
+  }
+}
+
+@media (max-width: 768px) {
+  .container-responsive {
+    padding: 0 16px;
+  }
+  .page-container {
+    padding: 16px 12px;
+  }
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .page-title {
+    font-size: var(--text-xl);
+  }
+  .metric-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .tab-container {
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .card-body {
+    padding: var(--space-4);
+  }
+}
+
+@media (max-width: 480px) {
+  .btn {
+    padding: 7px 12px;
+    font-size: var(--text-xs);
+  }
+  .page-container {
+    padding: 12px 8px;
   }
 }

@@ -159,7 +159,7 @@ export default function OnboardingPage() {
     <div
       style={{
         minHeight: '100vh',
-        backgroundColor: '#ffffff',
+        background: 'radial-gradient(ellipse 100% 50% at 50% 0%, #dbeafe 0%, #edf6fd 35%, #f8fbfe 70%, #ffffff 100%)',
         color: '#0f172a',
         fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
         display: 'flex',
@@ -169,12 +169,14 @@ export default function OnboardingPage() {
       {/* Top Bar */}
       <header
         style={{
-          borderBottom: '1px solid #e2e8f0',
-          backgroundColor: '#ffffff',
-          padding: '14px 24px',
+          borderBottom: '1px solid rgba(186, 230, 253, 0.7)',
+          backgroundColor: 'rgba(255, 255, 255, 0.88)',
+          backdropFilter: 'blur(16px)',
+          padding: '12px 20px',
           position: 'sticky',
           top: 0,
           zIndex: 40,
+          boxShadow: '0 4px 20px -4px rgba(2, 132, 199, 0.06)',
         }}
       >
         <div
@@ -184,21 +186,24 @@ export default function OnboardingPage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px',
           }}
         >
           <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
             <div
               style={{
-                width: '34px',
-                height: '34px',
-                borderRadius: '8px',
-                backgroundColor: '#0284c7',
+                width: '36px',
+                height: '36px',
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%)',
                 color: '#ffffff',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontWeight: 800,
-                fontSize: '16px',
+                fontSize: '17px',
+                boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)',
               }}
             >
               A
@@ -207,20 +212,37 @@ export default function OnboardingPage() {
               <span style={{ fontSize: '18px', fontWeight: 800, color: '#0c4a6e', letterSpacing: '-0.02em' }}>
                 AURXON
               </span>
-              <span style={{ fontSize: '11px', color: '#64748b', marginLeft: '8px', textTransform: 'uppercase', fontWeight: 700 }}>
-                Onboarding Portal
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  marginLeft: '8px',
+                  textTransform: 'uppercase',
+                  padding: '2px 8px',
+                  borderRadius: '6px',
+                  background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)',
+                  color: '#0369a1',
+                  border: '1px solid #7dd3fc',
+                }}
+              >
+                Onboarding
               </span>
             </div>
           </Link>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
             <Link
               href="/login"
               style={{
                 fontSize: '13px',
                 fontWeight: 600,
-                color: '#64748b',
+                color: '#0369a1',
                 textDecoration: 'none',
+                padding: '7px 14px',
+                borderRadius: '8px',
+                border: '1px solid rgba(186, 230, 253, 0.9)',
+                background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
               }}
             >
               Already Registered? Sign In
@@ -230,18 +252,18 @@ export default function OnboardingPage() {
       </header>
 
       {/* Main Container */}
-      <main style={{ flex: 1, padding: '40px 24px' }}>
-        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <main style={{ flex: 1, padding: '40px 16px', boxSizing: 'border-box' }}>
+        <div style={{ maxWidth: '820px', margin: '0 auto', width: '100%' }}>
           {registeredResult ? (
             /* SUCCESS CONFIRMATION SCREEN (Blueprint Section 3: After Submission) */
             <div
               style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '16px',
-                border: '1px solid #e2e8f0',
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 249, 255, 0.92) 100%)',
+                borderRadius: '20px',
+                border: '1px solid rgba(186, 230, 253, 0.85)',
                 padding: '48px 36px',
                 textAlign: 'center',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+                boxShadow: '0 20px 45px -10px rgba(2, 132, 199, 0.14), inset 0 1px 0 0 #ffffff',
               }}
             >
               <div
@@ -249,12 +271,14 @@ export default function OnboardingPage() {
                   width: '64px',
                   height: '64px',
                   borderRadius: '16px',
-                  backgroundColor: '#ecfdf5',
+                  background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
                   color: '#059669',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   margin: '0 auto 20px',
+                  border: '1px solid #a7f3d0',
+                  boxShadow: '0 4px 12px rgba(5, 150, 105, 0.15)',
                 }}
               >
                 <CheckCircle2 size={36} />
@@ -271,16 +295,17 @@ export default function OnboardingPage() {
               {/* Direct Workspace Link Card */}
               <div
                 style={{
-                  backgroundColor: '#f8fafc',
-                  borderRadius: '12px',
-                  border: '1px solid #e2e8f0',
+                  background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)',
+                  borderRadius: '14px',
+                  border: '1px solid rgba(186, 230, 253, 0.85)',
                   padding: '20px',
                   maxWidth: '520px',
                   margin: '0 auto 32px',
                   textAlign: 'left',
+                  boxShadow: '0 4px 14px rgba(2, 132, 199, 0.06)',
                 }}
               >
-                <div style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '6px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: '#0369a1', textTransform: 'uppercase', marginBottom: '6px' }}>
                   Your School Dedicated Workspace URL
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
@@ -293,14 +318,15 @@ export default function OnboardingPage() {
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '4px',
-                      padding: '6px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid #cbd5e1',
-                      backgroundColor: '#ffffff',
+                      padding: '7px 14px',
+                      borderRadius: '8px',
+                      border: '1px solid #7dd3fc',
+                      background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)',
                       fontSize: '12.5px',
                       fontWeight: 600,
-                      color: '#0f172a',
+                      color: '#0369a1',
                       cursor: 'pointer',
+                      boxShadow: '0 1px 3px rgba(2, 132, 199, 0.08)',
                     }}
                   >
                     {copiedLink ? <Check size={14} color="#059669" /> : <Copy size={14} />}
@@ -317,12 +343,13 @@ export default function OnboardingPage() {
                     alignItems: 'center',
                     gap: '8px',
                     padding: '12px 24px',
-                    borderRadius: '8px',
-                    backgroundColor: '#0284c7',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 50%, #1e40af 100%)',
                     color: '#ffffff',
                     fontSize: '14px',
                     fontWeight: 700,
                     textDecoration: 'none',
+                    boxShadow: '0 4px 14px rgba(2, 132, 199, 0.35)',
                   }}
                 >
                   <span>Go to School Workspace</span>
@@ -335,13 +362,13 @@ export default function OnboardingPage() {
                     alignItems: 'center',
                     gap: '8px',
                     padding: '12px 24px',
-                    borderRadius: '8px',
-                    backgroundColor: '#f1f5f9',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)',
                     color: '#0f172a',
                     fontSize: '14px',
                     fontWeight: 600,
                     textDecoration: 'none',
-                    border: '1px solid #e2e8f0',
+                    border: '1px solid #cbd5e1',
                   }}
                 >
                   <span>Open Executive Dashboard</span>
@@ -384,16 +411,18 @@ export default function OnboardingPage() {
                     >
                       <div
                         style={{
-                          width: '28px',
-                          height: '28px',
+                          width: '32px',
+                          height: '32px',
                           borderRadius: '50%',
-                          backgroundColor: isActive ? '#0284c7' : isCompleted ? '#ecfdf5' : '#f1f5f9',
+                          background: isActive ? 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%)' : isCompleted ? 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)' : '#f1f5f9',
                           color: isActive ? '#ffffff' : isCompleted ? '#059669' : '#64748b',
                           fontSize: '12.5px',
                           fontWeight: 700,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
+                          boxShadow: isActive ? '0 3px 10px rgba(2, 132, 199, 0.35)' : 'none',
+                          border: isCompleted ? '1px solid #a7f3d0' : 'none',
                         }}
                       >
                         {isCompleted ? <Check size={15} /> : step.num}
@@ -438,11 +467,11 @@ export default function OnboardingPage() {
               {currentStep === 1 && (
                 <div
                   style={{
-                    backgroundColor: '#ffffff',
-                    borderRadius: '16px',
-                    border: '1px solid #e2e8f0',
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 249, 255, 0.92) 100%)',
+                    borderRadius: '20px',
+                    border: '1px solid rgba(186, 230, 253, 0.85)',
                     padding: '32px',
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+                    boxShadow: '0 20px 45px -10px rgba(2, 132, 199, 0.12), inset 0 1px 0 0 #ffffff',
                   }}
                 >
                   <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '6px' }}>
@@ -499,7 +528,7 @@ export default function OnboardingPage() {
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
                       <div>
                         <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
                           Official Contact Email *
@@ -554,13 +583,14 @@ export default function OnboardingPage() {
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '6px',
-                          padding: '10px 20px',
-                          borderRadius: '8px',
-                          backgroundColor: '#0284c7',
+                          padding: '11px 22px',
+                          borderRadius: '10px',
+                          background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 50%, #1e40af 100%)',
                           color: '#ffffff',
                           fontSize: '14px',
-                          fontWeight: 600,
-                          border: 'none',
+                          fontWeight: 700,
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          boxShadow: '0 4px 14px 0 rgba(2, 132, 199, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)',
                           cursor: 'pointer',
                         }}
                       >
@@ -576,11 +606,11 @@ export default function OnboardingPage() {
               {currentStep === 2 && (
                 <div
                   style={{
-                    backgroundColor: '#ffffff',
-                    borderRadius: '16px',
-                    border: '1px solid #e2e8f0',
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 249, 255, 0.92) 100%)',
+                    borderRadius: '20px',
+                    border: '1px solid rgba(186, 230, 253, 0.85)',
                     padding: '32px',
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+                    boxShadow: '0 20px 45px -10px rgba(2, 132, 199, 0.12), inset 0 1px 0 0 #ffffff',
                   }}
                 >
                   <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '6px' }}>
@@ -817,13 +847,14 @@ export default function OnboardingPage() {
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '6px',
-                          padding: '10px 20px',
-                          borderRadius: '8px',
-                          backgroundColor: '#0284c7',
+                          padding: '11px 22px',
+                          borderRadius: '10px',
+                          background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 50%, #1e40af 100%)',
                           color: '#ffffff',
                           fontSize: '14px',
-                          fontWeight: 600,
-                          border: 'none',
+                          fontWeight: 700,
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          boxShadow: '0 4px 14px 0 rgba(2, 132, 199, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)',
                           cursor: 'pointer',
                         }}
                       >
@@ -839,11 +870,11 @@ export default function OnboardingPage() {
               {currentStep === 3 && (
                 <div
                   style={{
-                    backgroundColor: '#ffffff',
-                    borderRadius: '16px',
-                    border: '1px solid #e2e8f0',
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 249, 255, 0.92) 100%)',
+                    borderRadius: '20px',
+                    border: '1px solid rgba(186, 230, 253, 0.85)',
                     padding: '32px',
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+                    boxShadow: '0 20px 45px -10px rgba(2, 132, 199, 0.12), inset 0 1px 0 0 #ffffff',
                   }}
                 >
                   <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '6px' }}>
@@ -936,13 +967,15 @@ export default function OnboardingPage() {
                         type="button"
                         onClick={() => setCurrentStep(2)}
                         style={{
-                          padding: '10px 16px',
-                          borderRadius: '8px',
-                          backgroundColor: '#f1f5f9',
-                          border: '1px solid #e2e8f0',
-                          fontSize: '14px',
+                          padding: '10px 18px',
+                          borderRadius: '10px',
+                          background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)',
+                          border: '1px solid #7dd3fc',
+                          color: '#0369a1',
+                          fontSize: '13.5px',
                           fontWeight: 600,
                           cursor: 'pointer',
+                          boxShadow: '0 1px 3px rgba(2, 132, 199, 0.08)',
                         }}
                       >
                         Back
@@ -954,13 +987,14 @@ export default function OnboardingPage() {
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '6px',
-                          padding: '10px 20px',
-                          borderRadius: '8px',
-                          backgroundColor: '#0284c7',
+                          padding: '11px 22px',
+                          borderRadius: '10px',
+                          background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 50%, #1e40af 100%)',
                           color: '#ffffff',
                           fontSize: '14px',
-                          fontWeight: 600,
-                          border: 'none',
+                          fontWeight: 700,
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          boxShadow: '0 4px 14px 0 rgba(2, 132, 199, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)',
                           cursor: 'pointer',
                         }}
                       >
@@ -976,11 +1010,11 @@ export default function OnboardingPage() {
               {currentStep === 4 && (
                 <div
                   style={{
-                    backgroundColor: '#ffffff',
-                    borderRadius: '16px',
-                    border: '1px solid #e2e8f0',
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 249, 255, 0.92) 100%)',
+                    borderRadius: '20px',
+                    border: '1px solid rgba(186, 230, 253, 0.85)',
                     padding: '32px',
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+                    boxShadow: '0 20px 45px -10px rgba(2, 132, 199, 0.12), inset 0 1px 0 0 #ffffff',
                   }}
                 >
                   <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '6px' }}>
@@ -1091,13 +1125,15 @@ export default function OnboardingPage() {
                         type="button"
                         onClick={() => setCurrentStep(3)}
                         style={{
-                          padding: '10px 16px',
-                          borderRadius: '8px',
-                          backgroundColor: '#f1f5f9',
-                          border: '1px solid #e2e8f0',
-                          fontSize: '14px',
+                          padding: '10px 18px',
+                          borderRadius: '10px',
+                          background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)',
+                          border: '1px solid #7dd3fc',
+                          color: '#0369a1',
+                          fontSize: '13.5px',
                           fontWeight: 600,
                           cursor: 'pointer',
+                          boxShadow: '0 1px 3px rgba(2, 132, 199, 0.08)',
                         }}
                       >
                         Back
@@ -1109,13 +1145,14 @@ export default function OnboardingPage() {
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '6px',
-                          padding: '10px 20px',
-                          borderRadius: '8px',
-                          backgroundColor: '#0284c7',
+                          padding: '11px 22px',
+                          borderRadius: '10px',
+                          background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 50%, #1e40af 100%)',
                           color: '#ffffff',
                           fontSize: '14px',
-                          fontWeight: 600,
-                          border: 'none',
+                          fontWeight: 700,
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          boxShadow: '0 4px 14px 0 rgba(2, 132, 199, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)',
                           cursor: 'pointer',
                         }}
                       >
@@ -1131,11 +1168,11 @@ export default function OnboardingPage() {
               {currentStep === 5 && (
                 <div
                   style={{
-                    backgroundColor: '#ffffff',
-                    borderRadius: '16px',
-                    border: '1px solid #e2e8f0',
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 249, 255, 0.92) 100%)',
+                    borderRadius: '20px',
+                    border: '1px solid rgba(186, 230, 253, 0.85)',
                     padding: '32px',
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+                    boxShadow: '0 20px 45px -10px rgba(2, 132, 199, 0.12), inset 0 1px 0 0 #ffffff',
                   }}
                 >
                   <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '6px' }}>
@@ -1190,18 +1227,20 @@ export default function OnboardingPage() {
                     <span>I agree to the AURXON Terms of Service and Multi-Tenant Privacy Policy.</span>
                   </label>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
                     <button
                       type="button"
                       onClick={() => setCurrentStep(4)}
                       style={{
-                        padding: '10px 16px',
-                        borderRadius: '8px',
-                        backgroundColor: '#f1f5f9',
-                        border: '1px solid #e2e8f0',
+                        padding: '11px 20px',
+                        borderRadius: '10px',
+                        background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)',
+                        border: '1px solid #7dd3fc',
+                        color: '#0369a1',
                         fontSize: '14px',
                         fontWeight: 600,
                         cursor: 'pointer',
+                        boxShadow: '0 1px 3px rgba(2, 132, 199, 0.08)',
                       }}
                     >
                       Back
@@ -1214,13 +1253,14 @@ export default function OnboardingPage() {
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '6px',
-                        padding: '12px 24px',
-                        borderRadius: '8px',
-                        backgroundColor: '#0284c7',
+                        padding: '12px 28px',
+                        borderRadius: '10px',
+                        background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 50%, #1e40af 100%)',
                         color: '#ffffff',
-                        fontSize: '14px',
+                        fontSize: '14.5px',
                         fontWeight: 700,
-                        border: 'none',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        boxShadow: '0 4px 14px 0 rgba(2, 132, 199, 0.38), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)',
                         cursor: submitting || !agreedToTerms ? 'not-allowed' : 'pointer',
                         opacity: submitting || !agreedToTerms ? 0.7 : 1,
                       }}

@@ -185,7 +185,7 @@ export default function RootLandingPage() {
     <div
       style={{
         minHeight: '100vh',
-        backgroundColor: '#ffffff',
+        background: 'radial-gradient(ellipse 100% 45% at 50% -5%, #dbeafe 0%, #edf6fd 30%, #f8fbfe 65%, #ffffff 100%)',
         color: '#0f172a',
         fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
         display: 'flex',
@@ -195,22 +195,25 @@ export default function RootLandingPage() {
       {/* Top Institutional Header */}
       <header
         style={{
-          borderBottom: '1px solid #e2e8f0',
-          backgroundColor: '#ffffff',
+          borderBottom: '1px solid rgba(186, 230, 253, 0.7)',
+          backgroundColor: 'rgba(255, 255, 255, 0.88)',
+          backdropFilter: 'blur(16px)',
           position: 'sticky',
           top: 0,
           zIndex: 40,
+          boxShadow: '0 4px 20px -4px rgba(2, 132, 199, 0.06)',
         }}
       >
         <div
           style={{
             maxWidth: '1240px',
             margin: '0 auto',
-            padding: '14px 24px',
+            padding: '12px 20px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '16px',
+            gap: '12px',
+            flexWrap: 'wrap',
           }}
         >
           {/* Brand & Mission Tagline */}
@@ -219,8 +222,8 @@ export default function RootLandingPage() {
               style={{
                 width: '36px',
                 height: '36px',
-                borderRadius: '8px',
-                backgroundColor: '#0284c7',
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%)',
                 color: '#ffffff',
                 display: 'flex',
                 alignItems: 'center',
@@ -228,12 +231,13 @@ export default function RootLandingPage() {
                 fontWeight: 800,
                 fontSize: '18px',
                 letterSpacing: '-0.02em',
+                boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)',
               }}
             >
               A
             </div>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '18px', fontWeight: 800, color: '#0c4a6e', letterSpacing: '-0.03em' }}>
                   AURXON
                 </span>
@@ -244,46 +248,64 @@ export default function RootLandingPage() {
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
                     padding: '2px 8px',
-                    borderRadius: '4px',
-                    backgroundColor: '#e0f2fe',
+                    borderRadius: '6px',
+                    background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)',
                     color: '#0369a1',
+                    border: '1px solid #7dd3fc',
                   }}
                 >
                   Education OS
                 </span>
               </div>
-              <div style={{ fontSize: '12px', color: '#64748b' }}>
+              <div style={{ fontSize: '11.5px', color: '#64748b' }}>
                 For Schools • Coaching Institutes • Education Groups
               </div>
             </div>
           </div>
 
           {/* Navigation Links */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <Link
+              href="/onboard"
+              style={{
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#0369a1',
+                textDecoration: 'none',
+                padding: '7px 14px',
+                borderRadius: '8px',
+                border: '1px solid rgba(186, 230, 253, 0.9)',
+                background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+              }}
+            >
+              Register Institute
+            </Link>
             <Link
               href="/aurxon"
               style={{
                 fontSize: '13px',
                 fontWeight: 600,
-                color: '#64748b',
+                color: '#475569',
                 textDecoration: 'none',
-                padding: '6px 12px',
-                borderRadius: '6px',
+                padding: '7px 12px',
+                borderRadius: '8px',
               }}
             >
-              Platform Operations
+              Platform HQ
             </Link>
             <Link
               href="/login"
               style={{
                 fontSize: '13.5px',
                 fontWeight: 600,
-                color: '#0284c7',
+                color: '#ffffff',
                 textDecoration: 'none',
-                padding: '8px 16px',
+                padding: '8px 18px',
                 borderRadius: '8px',
-                border: '1px solid #bae6fd',
-                backgroundColor: '#f0f9ff',
+                background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 50%, #1e40af 100%)',
+                boxShadow: '0 4px 14px 0 rgba(2, 132, 199, 0.32), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
               }}
             >
               Sign In
@@ -364,14 +386,15 @@ export default function RootLandingPage() {
             <form
               onSubmit={handleFindSubmit}
               style={{
-                backgroundColor: '#ffffff',
-                border: '2px solid #0284c7',
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 249, 255, 0.92) 100%)',
+                border: '2px solid rgba(14, 165, 233, 0.55)',
                 borderRadius: '16px',
                 padding: '6px 8px 6px 18px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px',
-                boxShadow: '0 10px 25px -5px rgba(2, 132, 199, 0.12), 0 8px 10px -6px rgba(2, 132, 199, 0.08)',
+                boxShadow: '0 12px 35px -5px rgba(2, 132, 199, 0.18), inset 0 1px 0 0 #ffffff',
+                backdropFilter: 'blur(8px)',
               }}
             >
               <Search size={20} color="#0284c7" style={{ flexShrink: 0 }} />
@@ -418,18 +441,20 @@ export default function RootLandingPage() {
               <button
                 type="submit"
                 style={{
-                  backgroundColor: '#0284c7',
+                  background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 50%, #1e40af 100%)',
                   color: '#ffffff',
-                  border: 'none',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
                   borderRadius: '10px',
-                  padding: '10px 20px',
+                  padding: '10px 22px',
                   fontSize: '14px',
-                  fontWeight: 600,
+                  fontWeight: 700,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
                   flexShrink: 0,
+                  boxShadow: '0 4px 14px 0 rgba(2, 132, 199, 0.38), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)',
+                  transition: 'all 150ms ease',
                 }}
               >
                 <span>Find</span>
@@ -447,8 +472,8 @@ export default function RootLandingPage() {
                   right: 0,
                   backgroundColor: '#ffffff',
                   borderRadius: '14px',
-                  border: '1px solid #e2e8f0',
-                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+                  border: '1px solid rgba(186, 230, 253, 0.9)',
+                  boxShadow: '0 20px 35px -5px rgba(2, 132, 199, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
                   zIndex: 50,
                   maxHeight: '380px',
                   overflowY: 'auto',
@@ -507,8 +532,8 @@ export default function RootLandingPage() {
                                 width: '38px',
                                 height: '38px',
                                 borderRadius: '10px',
-                                backgroundColor: isSelected ? '#e0f2fe' : '#f1f5f9',
-                                color: '#0284c7',
+                                background: isSelected ? 'linear-gradient(135deg, #0284c7, #1d4ed8)' : '#e0f2fe',
+                                color: isSelected ? '#ffffff' : '#0284c7',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -523,25 +548,27 @@ export default function RootLandingPage() {
                               <div style={{ fontSize: '14.5px', fontWeight: 700, color: '#0f172a' }}>
                                 {org.name}
                               </div>
-                              <div style={{ fontSize: '12.5px', color: '#64748b', display: 'flex', gap: '8px' }}>
+                              <div style={{ fontSize: '12.5px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <span>{org.city}</span>
                                 <span>•</span>
-                                <span style={{ color: '#0369a1', fontWeight: 500 }}>{org.organizationType}</span>
+                                <span>{org.board}</span>
+                                <span>•</span>
+                                <span style={{ color: '#0284c7', fontWeight: 600 }}>{org.organizationType}</span>
                               </div>
                             </div>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span
                               style={{
-                                fontSize: '11px',
-                                fontWeight: 700,
-                                backgroundColor: '#f1f5f9',
-                                color: '#475569',
-                                padding: '2px 8px',
-                                borderRadius: '4px',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                color: '#0369a1',
+                                backgroundColor: '#e0f2fe',
+                                padding: '3px 8px',
+                                borderRadius: '6px',
                               }}
                             >
-                              {org.board}
+                              aurxon.app/s/{org.slug}
                             </span>
                             <ChevronRight size={16} color="#94a3b8" />
                           </div>
@@ -692,17 +719,19 @@ export default function RootLandingPage() {
                 type="button"
                 onClick={() => router.push(`/s/${campus.slug}`)}
                 style={{
-                  padding: '4px 10px',
-                  borderRadius: '6px',
-                  border: '1px solid #bae6fd',
-                  backgroundColor: '#f0f9ff',
+                  padding: '5px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid #7dd3fc',
+                  background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 50%, #e0f2fe 100%)',
                   color: '#0369a1',
-                  fontSize: '11.5px',
+                  fontSize: '12px',
                   fontWeight: 600,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '4px',
+                  gap: '5px',
+                  boxShadow: '0 2px 6px rgba(2, 132, 199, 0.08)',
+                  transition: 'all 150ms ease',
                 }}
               >
                 <span>{campus.name}</span>
@@ -711,31 +740,32 @@ export default function RootLandingPage() {
             ))}
           </div>
 
-          {/* DIRECT LINK FAST-PATH (Clean, Properly Proportioned Card) */}
+          {/* DIRECT LINK FAST-PATH (Clean, Metallic Glacier Card) */}
           <div
             style={{
               maxWidth: '640px',
               margin: '0 auto 36px',
-              backgroundColor: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: '14px',
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 249, 255, 0.85) 100%)',
+              border: '1px solid rgba(186, 230, 253, 0.85)',
+              borderRadius: '16px',
               padding: '16px 20px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               gap: '16px',
               flexWrap: 'wrap',
-              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
+              boxShadow: '0 4px 20px -2px rgba(2, 132, 199, 0.08), inset 0 1px 0 0 #ffffff',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div
                 style={{
-                  width: '38px',
-                  height: '38px',
+                  width: '40px',
+                  height: '40px',
                   borderRadius: '10px',
-                  backgroundColor: '#e0f2fe',
+                  background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)',
                   color: '#0284c7',
+                  border: '1px solid #7dd3fc',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -745,7 +775,7 @@ export default function RootLandingPage() {
                 <Globe size={18} />
               </div>
               <div style={{ textAlign: 'left' }}>
-                <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#0f172a' }}>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
                   Have a Direct School Link?
                 </div>
                 <div style={{ fontSize: '12px', color: '#64748b' }}>
@@ -763,6 +793,7 @@ export default function RootLandingPage() {
                   border: '1px solid #cbd5e1',
                   borderRadius: '8px',
                   overflow: 'hidden',
+                  boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.04)',
                 }}
               >
                 <span
@@ -795,18 +826,19 @@ export default function RootLandingPage() {
               <button
                 type="submit"
                 style={{
-                  backgroundColor: '#0284c7',
+                  background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 50%, #1e40af 100%)',
                   color: '#ffffff',
-                  border: 'none',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
                   borderRadius: '8px',
-                  padding: '8px 16px',
+                  padding: '9px 18px',
                   fontSize: '13px',
                   fontWeight: 600,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
-                  transition: 'background-color 150ms ease',
+                  boxShadow: '0 3px 10px rgba(2, 132, 199, 0.3)',
+                  transition: 'all 150ms ease',
                 }}
               >
                 <span>Open</span>
@@ -1384,10 +1416,12 @@ export default function RootLandingPage() {
         <section style={{ padding: '64px 24px', maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
           <div
             style={{
-              backgroundColor: '#0c4a6e',
-              borderRadius: '20px',
+              background: 'linear-gradient(135deg, #075985 0%, #0c4a6e 45%, #1e3a8a 100%)',
+              border: '1px solid rgba(125, 211, 252, 0.4)',
+              borderRadius: '24px',
               padding: '48px 32px',
               color: '#ffffff',
+              boxShadow: '0 20px 45px -10px rgba(12, 74, 110, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.25)',
             }}
           >
             <h2 style={{ fontSize: '28px', fontWeight: 800, letterSpacing: '-0.02em', margin: '0 0 12px' }}>
@@ -1404,13 +1438,15 @@ export default function RootLandingPage() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '8px',
-                  padding: '12px 24px',
-                  borderRadius: '10px',
-                  backgroundColor: '#ffffff',
-                  color: '#0c4a6e',
-                  fontSize: '14px',
+                  padding: '13px 26px',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)',
+                  color: '#075985',
+                  fontSize: '14.5px',
                   fontWeight: 700,
                   textDecoration: 'none',
+                  boxShadow: '0 4px 14px rgba(0, 0, 0, 0.15)',
+                  border: '1px solid #bae6fd',
                 }}
               >
                 <span>Register Institution Free</span>
@@ -1422,14 +1458,15 @@ export default function RootLandingPage() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '8px',
-                  padding: '12px 24px',
-                  borderRadius: '10px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                  padding: '13px 26px',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%)',
                   color: '#ffffff',
-                  fontSize: '14px',
+                  fontSize: '14.5px',
                   fontWeight: 600,
                   textDecoration: 'none',
-                  border: '1px solid rgba(255, 255, 255, 0.25)',
+                  border: '1px solid rgba(255, 255, 255, 0.35)',
+                  backdropFilter: 'blur(8px)',
                 }}
               >
                 <span>Sign In to Existing Workspace</span>

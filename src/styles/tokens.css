@@ -12,27 +12,52 @@
   --brand-800: #075985;
   --brand-900: #0c4a6e;
 
-  /* Primary Theme Accent - Glacier Blue */
+  /* Primary Theme Accent - Glacier Blue & Metallic Spectrum */
   --primary: #0284c7;
   --primary-hover: #0369a1;
   --primary-light: #f0f9ff;
   --primary-dark: #075985;
   --primary-foreground: #ffffff;
-  --primary-gradient: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  --primary-gradient: linear-gradient(135deg, #0284c7 0%, #1d4ed8 50%, #1e40af 100%);
   --glacier-canvas: #ffffff;
   --glacier-ice: #e0f2fe;
   --deep-ocean: #0c4a6e;
-  --glacier-border: #e2e8f0;
-  --glacier-glow: none;
+  --glacier-border: rgba(186, 230, 253, 0.8);
+  --glacier-glow: 0 0 25px -5px rgba(14, 165, 233, 0.25);
 
-  /* Neutrals & Surfaces - Pure White Canvas Dominant */
-  --surface-canvas: #ffffff;
+  /* Metallic Glacier Background Gradients */
+  --bg-metallic-glacier: linear-gradient(180deg, #f8fbfe 0%, #eef6fd 50%, #f7fbfe 100%);
+  --bg-metallic-radial: radial-gradient(circle at 50% -10%, #e0f2fe 0%, #f0f9ff 40%, #ffffff 80%);
+  --card-metallic: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 249, 255, 0.88) 100%);
+  --card-metallic-sheen: linear-gradient(145deg, #ffffff 0%, #f0f8ff 60%, #e8f4fd 100%);
+  --border-metallic: rgba(186, 230, 253, 0.85);
+
+  /* High-Impact Button Gradients */
+  --btn-primary-bg: linear-gradient(135deg, #0284c7 0%, #1d4ed8 50%, #1e40af 100%);
+  --btn-primary-hover: linear-gradient(135deg, #0369a1 0%, #1e40af 50%, #172554 100%);
+  --btn-primary-shadow: 0 4px 14px 0 rgba(2, 132, 199, 0.32), inset 0 1px 0 0 rgba(255, 255, 255, 0.3);
+  --btn-secondary-bg: linear-gradient(135deg, #ffffff 0%, #f0f9ff 50%, #e0f2fe 100%);
+  --btn-secondary-border: #7dd3fc;
+  --btn-secondary-text: #0369a1;
+  --btn-secondary-shadow: 0 2px 8px 0 rgba(2, 132, 199, 0.12), inset 0 1px 0 0 #ffffff;
+  --btn-accent-bg: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%);
+
+  /* Navigation & Interactive Tabs */
+  --tab-container-bg: rgba(224, 242, 254, 0.55);
+  --tab-container-border: rgba(186, 230, 253, 0.75);
+  --tab-active-bg: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%);
+  --tab-active-color: #ffffff;
+  --tab-active-shadow: 0 3px 10px rgba(2, 132, 199, 0.28);
+  --tab-inactive-color: #475569;
+
+  /* Neutrals & Surfaces - Premium White Canvas Dominant */
+  --surface-canvas: #f8fbfe;
   --surface-base: #ffffff;
   --surface-card: #ffffff;
-  --surface-subtle: #f8fafc;
-  --surface-muted: #f1f5f9;
-  --surface-hover: #f8fafc;
-  --surface-active: #e2e8f0;
+  --surface-subtle: #f0f9ff;
+  --surface-muted: #e2e8f0;
+  --surface-hover: #f0f9ff;
+  --surface-active: #e0f2fe;
 
   /* Text & Content - High Contrast Deep Ocean & Slate */
   --text-main: #0f172a;
@@ -41,8 +66,8 @@
   --text-inverse: #ffffff;
 
   /* Borders & Dividers */
-  --border-subtle: #f1f5f9;
-  --border-default: #e2e8f0;
+  --border-subtle: #f0f9ff;
+  --border-default: rgba(186, 230, 253, 0.6);
   --border-focus: #0284c7;
 
   /* Semantic Alerts */
