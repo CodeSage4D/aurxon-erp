@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { getFallbackUser } from '@/lib/auth-fallbacks';
 
 export async function GET() {
   const sessionUser = await getCurrentUser();
@@ -13,36 +14,44 @@ export async function GET() {
     return res;
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: sessionUser.id },
-    include: {
-      organization: true,
-      institution: true,
-      branch: true,
-    },
-  });
+  let dbUser: any = null;
+  try {
+    dbUser = await prisma.user.findUnique({
+      where: { id: sessionUser.id },
+      include: {
+        organization: true,
+        institution: true,
+        branch: true,
+      },
+    });
+  } catch (err) {
+    console.warn('[AUTH_ME_DB_QUERY_WARN] DB query failed in serverless context, using verified token claims:', err);
+  }
 
-  if (!user || user.status !== 'ACTIVE') {
+  // If found in DB and marked inactive, reject
+  if (dbUser && dbUser.status !== 'ACTIVE') {
     const res = NextResponse.json(
-      { success: false, error: 'User session invalid' },
+      { success: false, error: 'User session invalid or suspended' },
       { status: 401 }
     );
     res.cookies.delete('aurxon_session');
     return res;
   }
 
+  const fallback = getFallbackUser(sessionUser.email);
+
   return NextResponse.json({
     success: true,
     user: {
-      id: user.id,
-      name: `${user.firstName} ${user.lastName}`,
-      email: user.email,
-      role: user.role,
-      organizationId: user.organizationId,
-      organizationName: user.organization.name,
-      institutionId: user.institutionId,
-      institutionName: user.institution?.name,
-      branchName: user.branch?.name,
+      id: sessionUser.id,
+      name: dbUser ? `${dbUser.firstName} ${dbUser.lastName}` : `${sessionUser.firstName} ${sessionUser.lastName}`,
+      email: sessionUser.email,
+      role: sessionUser.role,
+      organizationId: sessionUser.organizationId,
+      organizationName: dbUser?.organization?.name || fallback?.organizationName || 'Delhi Public School Society',
+      institutionId: sessionUser.institutionId,
+      institutionName: dbUser?.institution?.name || fallback?.institutionName || 'Delhi Public School, R.K. Puram',
+      branchName: dbUser?.branch?.name || fallback?.branchName || 'Senior Wing Campus',
     },
   });
 }

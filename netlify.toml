@@ -1,0 +1,11 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+  DATABASE_URL = "file:./dev.db"
+  JWT_SECRET = "aurxon-enterprise-secure-jwt-secret-key-2026-production-ready"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
