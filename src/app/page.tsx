@@ -162,8 +162,8 @@ export default function RootLandingPage() {
       style={{
         minHeight: '100vh',
         backgroundColor: '#ffffff',
-        backgroundImage: 'radial-gradient(ellipse 100% 50% at 50% -10%, #dbeafe 0%, #edf6fd 30%, #f8fbfe 65%, #ffffff 100%)',
-        color: '#0f172a',
+        backgroundImage: 'linear-gradient(135deg, #EAF5FC 0%, #FFFFFF 48%, #F2E8F7 100%)',
+        color: '#192D55',
         fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
         display: 'flex',
         flexDirection: 'column',
@@ -172,11 +172,11 @@ export default function RootLandingPage() {
       {/* Top Operational Status Ribbon with Authoritative Live Clock */}
       <div
         style={{
-          backgroundColor: '#0f172a',
+          backgroundColor: '#192D55',
           color: '#f8fafc',
           padding: '6px 20px',
           fontSize: '12px',
-          borderBottom: '1px solid #1e293b',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -210,9 +210,9 @@ export default function RootLandingPage() {
           position: 'sticky',
           top: 0,
           zIndex: 40,
-          backgroundColor: 'rgba(255, 255, 255, 0.92)',
+          backgroundColor: 'rgba(255, 255, 255, 0.94)',
           backdropFilter: 'blur(16px)',
-          borderBottom: '1px solid rgba(186, 230, 253, 0.8)',
+          borderBottom: '1px solid rgba(34, 112, 175, 0.15)',
         }}
       >
         <div
@@ -233,21 +233,21 @@ export default function RootLandingPage() {
                 width: '38px',
                 height: '38px',
                 borderRadius: '10px',
-                background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%)',
+                background: 'linear-gradient(135deg, #2270AF 0%, #4B5FAF 45%, #9E3BB3 100%)',
                 color: '#ffffff',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontWeight: 800,
                 fontSize: '18px',
-                boxShadow: '0 3px 10px rgba(2, 132, 199, 0.35)',
+                boxShadow: '0 3px 10px rgba(34, 112, 175, 0.35)',
               }}
             >
               A
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>
+                <span style={{ fontSize: '18px', fontWeight: 800, color: '#192D55', letterSpacing: '-0.02em' }}>
                   AURXON
                 </span>
                 <span
@@ -257,9 +257,9 @@ export default function RootLandingPage() {
                     textTransform: 'uppercase',
                     padding: '2px 6px',
                     borderRadius: '4px',
-                    backgroundColor: '#e0f2fe',
-                    color: '#0284c7',
-                    border: '1px solid rgba(186, 230, 253, 0.8)',
+                    backgroundColor: '#EAF5FC',
+                    color: '#2270AF',
+                    border: '1px solid rgba(34, 112, 175, 0.25)',
                   }}
                 >
                   Education OS
@@ -271,16 +271,16 @@ export default function RootLandingPage() {
 
           {/* Navigation Links */}
           <nav style={{ display: 'flex', alignItems: 'center', gap: '24px' }} className="desktop-nav">
-            <a href="#find-school" style={{ fontSize: '13.5px', fontWeight: 600, color: '#334155', textDecoration: 'none' }}>
+            <a href="#find-school" style={{ fontSize: '13.5px', fontWeight: 600, color: '#192D55', textDecoration: 'none' }}>
               Find Organization
             </a>
-            <a href="#architecture" style={{ fontSize: '13.5px', fontWeight: 600, color: '#334155', textDecoration: 'none' }}>
+            <a href="#architecture" style={{ fontSize: '13.5px', fontWeight: 600, color: '#192D55', textDecoration: 'none' }}>
               Capabilities
             </a>
-            <a href="#roles" style={{ fontSize: '13.5px', fontWeight: 600, color: '#334155', textDecoration: 'none' }}>
+            <a href="#roles" style={{ fontSize: '13.5px', fontWeight: 600, color: '#192D55', textDecoration: 'none' }}>
               Role Workflows
             </a>
-            <a href="#direct-jump" style={{ fontSize: '13.5px', fontWeight: 600, color: '#334155', textDecoration: 'none' }}>
+            <a href="#direct-jump" style={{ fontSize: '13.5px', fontWeight: 600, color: '#192D55', textDecoration: 'none' }}>
               Direct Link
             </a>
           </nav>
@@ -292,11 +292,11 @@ export default function RootLandingPage() {
               style={{
                 fontSize: '13px',
                 fontWeight: 600,
-                color: '#0284c7',
+                color: '#2270AF',
                 padding: '7px 14px',
                 borderRadius: '8px',
-                border: '1px solid rgba(186, 230, 253, 0.85)',
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                border: '1px solid rgba(34, 112, 175, 0.25)',
+                backgroundColor: '#FFFFFF',
                 textDecoration: 'none',
                 transition: 'all 120ms ease',
               }}
@@ -312,8 +312,8 @@ export default function RootLandingPage() {
                 color: '#ffffff',
                 padding: '8px 16px',
                 borderRadius: '8px',
-                background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 50%, #1e40af 100%)',
-                boxShadow: '0 4px 12px rgba(2, 132, 199, 0.35)',
+                background: 'linear-gradient(135deg, #2270AF 0%, #4B5FAF 45%, #9E3BB3 100%)',
+                boxShadow: '0 4px 12px rgba(34, 112, 175, 0.35)',
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',

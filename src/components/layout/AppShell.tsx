@@ -205,7 +205,7 @@ export const AppShell: React.FC<AppShellProps> = ({ user, children }) => {
                 width: '34px',
                 height: '34px',
                 borderRadius: '8px',
-                backgroundColor: '#0284c7',
+                background: 'linear-gradient(135deg, #2270AF 0%, #4B5FAF 45%, #9E3BB3 100%)',
                 color: '#ffffff',
                 display: 'flex',
                 alignItems: 'center',
@@ -213,6 +213,7 @@ export const AppShell: React.FC<AppShellProps> = ({ user, children }) => {
                 fontWeight: 800,
                 fontSize: '15px',
                 flexShrink: 0,
+                boxShadow: '0 2px 8px rgba(34, 112, 175, 0.35)',
               }}
             >
               {user.organizationName ? user.organizationName.charAt(0).toUpperCase() : 'S'}

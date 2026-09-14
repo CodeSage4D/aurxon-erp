@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   ShieldCheck,
@@ -16,10 +16,32 @@ import {
   Search,
   Users,
   GraduationCap,
+  MapPin,
+  ExternalLink,
+  ChevronRight,
+  CheckCircle2,
+  Sparkles,
+  X,
 } from 'lucide-react';
+
+interface SearchResultOrg {
+  name: string;
+  slug: string;
+  code: string;
+  city: string;
+  board: string;
+  organizationType: string;
+  primaryColor?: string;
+  campusesCount: number;
+}
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const orgParam = searchParams.get('org');
+
+  // Mode: 'credentials' or 'search-org'
+  const [loginMode, setLoginMode] = useState<'credentials' | 'search-org'>('credentials');
   const [activeTab, setActiveTab] = useState<'staff' | 'student'>('staff');
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -27,6 +49,71 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Organization Search State
+  const [orgSearchQuery, setOrgSearchQuery] = useState('');
+  const [searchingOrgs, setSearchingOrgs] = useState(false);
+  const [orgResults, setOrgResults] = useState<SearchResultOrg[]>([]);
+  const [selectedOrg, setSelectedOrg] = useState<SearchResultOrg | null>(null);
+  const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // If ?org= is provided in URL, pre-fetch organization details
+  useEffect(() => {
+    if (orgParam) {
+      fetch(`/api/v1/portal/${encodeURIComponent(orgParam)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.portal) {
+            setSelectedOrg({
+              name: data.portal.name,
+              slug: data.portal.slug,
+              code: data.portal.code,
+              city: data.portal.institutions?.[0]?.city || 'India',
+              board: data.portal.institutions?.[0]?.board || 'CBSE',
+              organizationType: data.portal.institutions?.[0]?.type || 'School',
+              primaryColor: data.portal.primaryColor || '#2270AF',
+              campusesCount: data.portal.institutions?.[0]?.branches?.length || 1,
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  }, [orgParam]);
+
+  // Live Auto-Predict Search for Organizations
+  useEffect(() => {
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+
+    if (!orgSearchQuery.trim()) {
+      // Load default active institutions
+      fetch('/api/v1/portal/search?q=')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) setOrgResults(data.results || []);
+        })
+        .catch(() => {});
+      return;
+    }
+
+    setSearchingOrgs(true);
+    searchDebounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/v1/portal/search?q=${encodeURIComponent(orgSearchQuery.trim())}`);
+        const data = await res.json();
+        if (data.success) {
+          setOrgResults(data.results || []);
+        }
+      } catch {
+        // Network fallback
+      } finally {
+        setSearchingOrgs(false);
+      }
+    }, 150);
+
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    };
+  }, [orgSearchQuery]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,26 +155,30 @@ export default function LoginPage() {
     <div
       style={{
         minHeight: '100vh',
-        background: 'radial-gradient(ellipse 100% 55% at 50% 0%, #dbeafe 0%, #edf6fd 35%, #f8fbfe 70%, #ffffff 100%)',
-        color: '#0f172a',
+        backgroundColor: '#FFFFFF',
+        backgroundImage:
+          'linear-gradient(135deg, #EAF5FC 0%, #FFFFFF 48%, #F2E8F7 100%)',
+        color: '#192D55',
         fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
         display: 'flex',
         flexDirection: 'column',
       }}
     >
-      {/* Top Navigation Bar */}
+      {/* -------------------------------------------------------------
+          TOP HEADER BAR (Glacier Dark Navy & AURXON Blue)
+          ------------------------------------------------------------- */}
       <header
         style={{
-          borderBottom: '1px solid rgba(186, 230, 253, 0.7)',
-          backgroundColor: 'rgba(255, 255, 255, 0.88)',
+          borderBottom: '1px solid rgba(34, 112, 175, 0.15)',
+          backgroundColor: 'rgba(255, 255, 255, 0.92)',
           backdropFilter: 'blur(16px)',
-          padding: '12px 20px',
-          boxShadow: '0 4px 20px -4px rgba(2, 132, 199, 0.06)',
+          padding: '12px 24px',
+          boxShadow: '0 2px 10px rgba(25, 45, 85, 0.04)',
         }}
       >
         <div
           style={{
-            maxWidth: '1100px',
+            maxWidth: '1140px',
             margin: '0 auto',
             display: 'flex',
             alignItems: 'center',
@@ -96,491 +187,825 @@ export default function LoginPage() {
             gap: '12px',
           }}
         >
+          {/* Brand Logo */}
           <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
             <div
               style={{
-                width: '36px',
-                height: '36px',
+                width: '38px',
+                height: '38px',
                 borderRadius: '10px',
-                background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%)',
-                color: '#ffffff',
+                background: 'linear-gradient(135deg, #2270AF 0%, #4B5FAF 45%, #9E3BB3 100%)',
+                color: '#FFFFFF',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontWeight: 800,
-                fontSize: '17px',
-                boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)',
+                fontSize: '18px',
+                boxShadow: '0 4px 12px rgba(34, 112, 175, 0.3)',
               }}
             >
               A
             </div>
-            <span style={{ fontSize: '18px', fontWeight: 800, color: '#0c4a6e', letterSpacing: '-0.02em' }}>
-              AURXON
-            </span>
+            <div>
+              <span style={{ fontSize: '18px', fontWeight: 800, color: '#192D55', letterSpacing: '-0.02em' }}>
+                AURXON
+              </span>
+              <span
+                style={{
+                  marginLeft: '8px',
+                  fontSize: '10.5px',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  padding: '2px 7px',
+                  borderRadius: '4px',
+                  backgroundColor: '#EAF5FC',
+                  color: '#2270AF',
+                  border: '1px solid rgba(34, 112, 175, 0.25)',
+                }}
+              >
+                Education OS
+              </span>
+            </div>
           </Link>
 
+          {/* Right Header Navigation */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => setLoginMode(loginMode === 'credentials' ? 'search-org' : 'credentials')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '12.5px',
+                fontWeight: 600,
+                color: '#2270AF',
+                padding: '7px 14px',
+                borderRadius: '8px',
+                border: '1px solid rgba(34, 112, 175, 0.3)',
+                backgroundColor: loginMode === 'search-org' ? '#EAF5FC' : '#FFFFFF',
+                cursor: 'pointer',
+                transition: 'all 150ms ease',
+              }}
+            >
+              <Search size={14} />
+              <span>{loginMode === 'search-org' ? 'Standard Login' : 'Find Your Institute'}</span>
+            </button>
+
             <Link
               href="/onboard"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
-                fontSize: '13px',
+                fontSize: '12.5px',
                 fontWeight: 600,
-                color: '#0369a1',
+                color: '#192D55',
                 textDecoration: 'none',
                 padding: '7px 14px',
                 borderRadius: '8px',
-                border: '1px solid rgba(186, 230, 253, 0.9)',
-                background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+                border: '1px solid #cbd5e1',
+                backgroundColor: '#FFFFFF',
               }}
             >
-              Register Institute
+              Register Campus
             </Link>
+
             <Link
               href="/"
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
                 fontSize: '13px',
                 fontWeight: 600,
-                color: '#475569',
+                color: '#64748b',
                 textDecoration: 'none',
-                padding: '7px 12px',
-                borderRadius: '8px',
+                padding: '7px 10px',
               }}
             >
-              Back to Home
+              Home
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Login Main Content Area */}
+      {/* -------------------------------------------------------------
+          MAIN LOGIN CONTENT AREA (Pure White Foundation + Glacier Blue Accents)
+          ------------------------------------------------------------- */}
       <main
         style={{
           flex: 1,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '40px 16px',
+          padding: '40px 20px',
           boxSizing: 'border-box',
           width: '100%',
         }}
       >
-        <div style={{ width: '100%', maxWidth: '460px', margin: '0 auto' }}>
+        <div style={{ width: '100%', maxWidth: loginMode === 'search-org' ? '620px' : '480px', margin: '0 auto' }}>
           {/* Main Card */}
           <div
             style={{
-              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 249, 255, 0.92) 100%)',
+              backgroundColor: '#FFFFFF',
               borderRadius: '20px',
-              border: '1px solid rgba(186, 230, 253, 0.85)',
+              border: '1px solid rgba(34, 112, 175, 0.18)',
               padding: '36px 32px',
-              boxShadow: '0 20px 45px -10px rgba(2, 132, 199, 0.16), 0 4px 12px rgba(0, 0, 0, 0.03), inset 0 1px 0 0 #ffffff',
+              boxShadow: '0 16px 40px -10px rgba(25, 45, 85, 0.08), 0 2px 6px rgba(25, 45, 85, 0.03)',
               boxSizing: 'border-box',
             }}
           >
-            {/* Header */}
-            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-              <div
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '12px',
-                  background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)',
-                  color: '#0284c7',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 12px',
-                  border: '1px solid #7dd3fc',
-                  boxShadow: '0 2px 8px rgba(2, 132, 199, 0.12)',
-                }}
-              >
-                <Lock size={22} />
-              </div>
-              <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>
-                Sign In to AURXON
-              </h1>
-              <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
-                Sign in to your secure academic workspace
-              </p>
-            </div>
+            {/* =========================================================
+                MODE 1: ORGANIZATION-BASED SEARCH & DISCOVERY
+                ========================================================= */}
+            {loginMode === 'search-org' ? (
+              <div>
+                <div style={{ textAlign: 'center', marginBottom: '22px' }}>
+                  <div
+                    style={{
+                      width: '46px',
+                      height: '46px',
+                      borderRadius: '12px',
+                      backgroundColor: '#EAF5FC',
+                      color: '#2270AF',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 12px',
+                      border: '1px solid rgba(34, 112, 175, 0.25)',
+                    }}
+                  >
+                    <Building2 size={22} />
+                  </div>
+                  <h1 style={{ fontSize: '21px', fontWeight: 800, color: '#192D55', margin: '0 0 6px' }}>
+                    Find Your Organization Portal
+                  </h1>
+                  <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
+                    Search for your school, college, or coaching institute to access its dedicated branded ERP.
+                  </p>
+                </div>
 
-            {/* Portal Tab Switcher (Staff vs Student/Parent) */}
-            <div
-              style={{
-                display: 'flex',
-                background: 'rgba(224, 242, 254, 0.65)',
-                border: '1px solid rgba(186, 230, 253, 0.85)',
-                borderRadius: '10px',
-                padding: '4px',
-                marginBottom: '20px',
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => setActiveTab('staff')}
-                style={{
-                  flex: 1,
-                  padding: '8px',
-                  borderRadius: '7px',
-                  border: 'none',
-                  background: activeTab === 'staff' ? 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%)' : 'transparent',
-                  color: activeTab === 'staff' ? '#ffffff' : '#475569',
-                  fontSize: '12.5px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  boxShadow: activeTab === 'staff' ? '0 3px 10px rgba(2, 132, 199, 0.3)' : 'none',
-                  transition: 'all 150ms ease',
-                }}
-              >
-                <Users size={14} />
-                <span>Staff & Management</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('student')}
-                style={{
-                  flex: 1,
-                  padding: '8px',
-                  borderRadius: '7px',
-                  border: 'none',
-                  background: activeTab === 'student' ? 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%)' : 'transparent',
-                  color: activeTab === 'student' ? '#ffffff' : '#475569',
-                  fontSize: '12.5px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  boxShadow: activeTab === 'student' ? '0 3px 10px rgba(2, 132, 199, 0.3)' : 'none',
-                  transition: 'all 150ms ease',
-                }}
-              >
-                <GraduationCap size={14} />
-                <span>Student / Parent</span>
-              </button>
-            </div>
-
-            {/* Quick Demo Credentials Autofill Bar */}
-            <div style={{ marginBottom: '18px', padding: '10px 12px', background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)', borderRadius: '10px', border: '1px solid rgba(186, 230, 253, 0.8)' }}>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: '#0369a1', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
-                Quick Test Role Autofill:
-              </div>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveTab('staff');
-                    setIdentifier('principal.rkp@dps-society.edu');
-                    setPassword('Password@123');
-                    setError('');
-                  }}
-                  style={{
-                    padding: '4px 10px',
-                    borderRadius: '6px',
-                    border: '1px solid #7dd3fc',
-                    background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)',
-                    color: '#0369a1',
-                    fontSize: '11.5px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    boxShadow: '0 1px 3px rgba(2, 132, 199, 0.08)',
-                  }}
-                >
-                  Principal
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveTab('staff');
-                    setIdentifier('teacher.math@dps-society.edu');
-                    setPassword('Password@123');
-                    setError('');
-                  }}
-                  style={{
-                    padding: '4px 10px',
-                    borderRadius: '6px',
-                    border: '1px solid #7dd3fc',
-                    background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)',
-                    color: '#0369a1',
-                    fontSize: '11.5px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    boxShadow: '0 1px 3px rgba(2, 132, 199, 0.08)',
-                  }}
-                >
-                  Faculty
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveTab('staff');
-                    setIdentifier('accountant@dps-society.edu');
-                    setPassword('Password@123');
-                    setError('');
-                  }}
-                  style={{
-                    padding: '4px 10px',
-                    borderRadius: '6px',
-                    border: '1px solid #7dd3fc',
-                    background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)',
-                    color: '#0369a1',
-                    fontSize: '11.5px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    boxShadow: '0 1px 3px rgba(2, 132, 199, 0.08)',
-                  }}
-                >
-                  Accountant
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveTab('student');
-                    setIdentifier('student.aarav@dps-society.edu');
-                    setPassword('Password@123');
-                    setError('');
-                  }}
-                  style={{
-                    padding: '4px 10px',
-                    borderRadius: '6px',
-                    border: '1px solid #86efac',
-                    background: 'linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%)',
-                    color: '#166534',
-                    fontSize: '11.5px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    boxShadow: '0 1px 3px rgba(22, 101, 52, 0.08)',
-                  }}
-                >
-                  Student
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveTab('staff');
-                    setIdentifier('superadmin@aurxon.io');
-                    setPassword('Password@123');
-                    setError('');
-                  }}
-                  style={{
-                    padding: '4px 10px',
-                    borderRadius: '6px',
-                    border: '1px solid #cbd5e1',
-                    background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-                    color: '#334155',
-                    fontSize: '11.5px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
-                  }}
-                >
-                  HQ Admin
-                </button>
-              </div>
-            </div>
-
-            {error && (
-              <div
-                style={{
-                  marginBottom: '18px',
-                  padding: '10px 14px',
-                  borderRadius: '8px',
-                  backgroundColor: '#fef2f2',
-                  border: '1px solid #fecaca',
-                  color: '#b91c1c',
-                  fontSize: '13px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}
-              >
-                <AlertCircle size={16} style={{ flexShrink: 0 }} />
-                <span>{error}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleLogin}>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                  {activeTab === 'staff' ? 'Official Email or Employee ID' : 'Student Enrollment No. or Parent Email'}
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <Mail
+                {/* Search Input Box */}
+                <div style={{ position: 'relative', marginBottom: '18px' }}>
+                  <Search
                     size={16}
-                    color="#94a3b8"
+                    color="#64748b"
                     style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}
                   />
                   <input
                     type="text"
-                    required
-                    value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder={activeTab === 'staff' ? 'e.g. principal@dps-society.edu' : 'e.g. student@school.edu'}
+                    autoFocus
+                    placeholder="Search by institute name, acronym (e.g. DPS, ALLEN), city..."
+                    value={orgSearchQuery}
+                    onChange={(e) => setOrgSearchQuery(e.target.value)}
                     style={{
                       width: '100%',
-                      padding: '10px 12px 10px 38px',
-                      borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
-                      backgroundColor: '#ffffff',
+                      padding: '11px 14px 11px 38px',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(34, 112, 175, 0.3)',
+                      backgroundColor: '#FFFFFF',
                       fontSize: '13.5px',
-                      color: '#0f172a',
+                      color: '#192D55',
                       outline: 'none',
                       boxSizing: 'border-box',
+                      boxShadow: '0 2px 6px rgba(25, 45, 85, 0.04)',
                     }}
                   />
+                  {orgSearchQuery && (
+                    <button
+                      onClick={() => setOrgSearchQuery('')}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        color: '#94a3b8',
+                        cursor: 'pointer',
+                        padding: 0,
+                      }}
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
                 </div>
-              </div>
 
-              <div style={{ marginBottom: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <label style={{ fontSize: '12.5px', fontWeight: 600, color: '#334155' }}>
-                    Password
-                  </label>
-                  <span style={{ fontSize: '12px', color: '#0284c7', cursor: 'pointer' }}>
-                    Forgot password?
-                  </span>
+                {/* Search Results List */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '380px', overflowY: 'auto' }}>
+                  {orgResults.length === 0 ? (
+                    <div style={{ padding: '32px 16px', textAlign: 'center', color: '#64748b' }}>
+                      <Building2 size={32} color="#cbd5e1" style={{ margin: '0 auto 10px' }} />
+                      <div style={{ fontSize: '14px', fontWeight: 600, color: '#192D55' }}>
+                        No institutions found matching &quot;{orgSearchQuery}&quot;
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                        Try searching by city (e.g. Indore, Bhopal) or board name.
+                      </div>
+                    </div>
+                  ) : (
+                    orgResults.map((org) => (
+                      <div
+                        key={org.slug}
+                        style={{
+                          backgroundColor: '#EAF5FC',
+                          borderRadius: '12px',
+                          border: '1px solid rgba(34, 112, 175, 0.2)',
+                          padding: '14px 16px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '12px',
+                          transition: 'all 120ms ease',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div
+                            style={{
+                              width: '40px',
+                              height: '40px',
+                              borderRadius: '8px',
+                              backgroundColor: org.primaryColor || '#2270AF',
+                              color: '#FFFFFF',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontWeight: 800,
+                              fontSize: '16px',
+                              flexShrink: 0,
+                            }}
+                          >
+                            {org.name.charAt(0)}
+                          </div>
+
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: '14px', fontWeight: 700, color: '#192D55' }}>{org.name}</span>
+                              <span
+                                style={{
+                                  fontSize: '10.5px',
+                                  fontFamily: 'monospace',
+                                  padding: '1px 5px',
+                                  borderRadius: '4px',
+                                  backgroundColor: '#FFFFFF',
+                                  color: '#2270AF',
+                                  border: '1px solid rgba(34, 112, 175, 0.25)',
+                                }}
+                              >
+                                {org.code}
+                              </span>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '3px', fontSize: '11.5px', color: '#64748b' }}>
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                <MapPin size={11} color="#2270AF" /> {org.city}
+                              </span>
+                              <span>•</span>
+                              <span>{org.board || 'CBSE'}</span>
+                              <span>•</span>
+                              <span>{org.campusesCount || 1} Campuses</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action: Open Portal Link */}
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <Link
+                            href={`/s/${org.slug}`}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              padding: '7px 12px',
+                              borderRadius: '6px',
+                              background: 'linear-gradient(135deg, #2270AF 0%, #4B5FAF 45%, #9E3BB3 100%)',
+                              color: '#FFFFFF',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              textDecoration: 'none',
+                              whiteSpace: 'nowrap',
+                              boxShadow: '0 2px 8px rgba(34, 112, 175, 0.25)',
+                            }}
+                          >
+                            <span>Open Portal</span>
+                            <ChevronRight size={14} />
+                          </Link>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
-                <div style={{ position: 'relative' }}>
-                  <Lock
-                    size={16}
-                    color="#94a3b8"
-                    style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}
-                  />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter password"
-                    style={{
-                      width: '100%',
-                      padding: '10px 40px 10px 38px',
-                      borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
-                      backgroundColor: '#ffffff',
-                      fontSize: '13.5px',
-                      color: '#0f172a',
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                    }}
-                  />
+
+                <div style={{ marginTop: '20px', textAlign: 'center' }}>
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
+                    onClick={() => setLoginMode('credentials')}
                     style={{
-                      position: 'absolute',
-                      right: '12px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'transparent',
+                      background: 'none',
                       border: 'none',
-                      color: '#94a3b8',
+                      color: '#2270AF',
+                      fontSize: '13px',
+                      fontWeight: 600,
                       cursor: 'pointer',
-                      padding: 0,
-                      display: 'flex',
+                      textDecoration: 'underline',
                     }}
                   >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    ← Back to Standard Username & Password Login
                   </button>
                 </div>
               </div>
+            ) : (
+              /* =========================================================
+                 MODE 2: DIRECT CREDENTIALS LOGIN
+                 ========================================================= */
+              <div>
+                {/* Header */}
+                <div style={{ textAlign: 'center', marginBottom: '22px' }}>
+                  <div
+                    style={{
+                      width: '46px',
+                      height: '46px',
+                      borderRadius: '12px',
+                      backgroundColor: '#EAF5FC',
+                      color: '#2270AF',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 12px',
+                      border: '1px solid rgba(34, 112, 175, 0.25)',
+                    }}
+                  >
+                    <Lock size={22} />
+                  </div>
+                  <h1 style={{ fontSize: '21px', fontWeight: 800, color: '#192D55', margin: '0 0 4px' }}>
+                    Sign In to AURXON
+                  </h1>
+                  <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
+                    {selectedOrg
+                      ? `Logging into ${selectedOrg.name} (${selectedOrg.city})`
+                      : 'Secure multi-tenant academic and institutional access'}
+                  </p>
+                </div>
 
-              {/* Remember Me */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-                <input
-                  type="checkbox"
-                  id="rememberMe"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                />
-                <label htmlFor="rememberMe" style={{ fontSize: '12.5px', color: '#64748b', cursor: 'pointer' }}>
-                  Remember me on this browser
-                </label>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '13px',
-                  borderRadius: '10px',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 50%, #1e40af 100%)',
-                  color: '#ffffff',
-                  fontSize: '14.5px',
-                  fontWeight: 700,
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  opacity: loading ? 0.7 : 1,
-                  boxShadow: '0 4px 14px 0 rgba(2, 132, 199, 0.38), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)',
-                  transition: 'all 150ms ease',
-                }}
-              >
-                {loading ? (
-                  <span>Authenticating...</span>
-                ) : (
-                  <>
-                    <span>Sign In</span>
-                    <ArrowRight size={16} />
-                  </>
+                {/* Optional Selected Organization Banner */}
+                {selectedOrg && (
+                  <div
+                    style={{
+                      backgroundColor: '#EAF5FC',
+                      borderRadius: '10px',
+                      padding: '10px 14px',
+                      marginBottom: '18px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      border: '1px solid rgba(34, 112, 175, 0.25)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <School size={16} color="#2270AF" />
+                      <div>
+                        <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#192D55' }}>
+                          {selectedOrg.name}
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#64748b' }}>
+                          Portal: /s/{selectedOrg.slug}
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setSelectedOrg(null)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#64748b',
+                        cursor: 'pointer',
+                        fontSize: '11.5px',
+                        fontWeight: 600,
+                      }}
+                    >
+                      Clear
+                    </button>
+                  </div>
                 )}
-              </button>
-            </form>
 
-            <div
-              style={{
-                marginTop: '24px',
-                paddingTop: '16px',
-                borderTop: '1px solid #f1f5f9',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                fontSize: '12px',
-                color: '#64748b',
-              }}
-            >
-              <ShieldCheck size={14} color="#10b981" />
-              <span>256-Bit Encrypted Multi-Tenant Session</span>
-            </div>
+                {/* Tab Switcher: Staff & Faculty vs Student / Parent */}
+                <div
+                  style={{
+                    display: 'flex',
+                    backgroundColor: '#EAF5FC',
+                    border: '1px solid rgba(34, 112, 175, 0.2)',
+                    borderRadius: '10px',
+                    padding: '4px',
+                    marginBottom: '20px',
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('staff')}
+                    style={{
+                      flex: 1,
+                      padding: '8px',
+                      borderRadius: '7px',
+                      border: 'none',
+                      background:
+                        activeTab === 'staff'
+                          ? 'linear-gradient(135deg, #2270AF 0%, #4B5FAF 45%, #9E3BB3 100%)'
+                          : 'transparent',
+                      color: activeTab === 'staff' ? '#FFFFFF' : '#192D55',
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      boxShadow: activeTab === 'staff' ? '0 2px 8px rgba(34, 112, 175, 0.3)' : 'none',
+                      transition: 'all 150ms ease',
+                    }}
+                  >
+                    <Users size={14} />
+                    <span>Staff & Management</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('student')}
+                    style={{
+                      flex: 1,
+                      padding: '8px',
+                      borderRadius: '7px',
+                      border: 'none',
+                      background:
+                        activeTab === 'student'
+                          ? 'linear-gradient(135deg, #2270AF 0%, #4B5FAF 45%, #9E3BB3 100%)'
+                          : 'transparent',
+                      color: activeTab === 'student' ? '#FFFFFF' : '#192D55',
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      boxShadow: activeTab === 'student' ? '0 2px 8px rgba(34, 112, 175, 0.3)' : 'none',
+                      transition: 'all 150ms ease',
+                    }}
+                  >
+                    <GraduationCap size={14} />
+                    <span>Student / Parent</span>
+                  </button>
+                </div>
+
+                {/* Quick Role Autofill Bar */}
+                <div
+                  style={{
+                    marginBottom: '18px',
+                    padding: '10px 12px',
+                    backgroundColor: '#EAF5FC',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(34, 112, 175, 0.2)',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      color: '#2270AF',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                      marginBottom: '6px',
+                    }}
+                  >
+                    Quick Role Autofill:
+                  </div>
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab('staff');
+                        setIdentifier('principal.rkp@dps-society.edu');
+                        setPassword('Password@123');
+                        setError('');
+                      }}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        border: '1px solid rgba(34, 112, 175, 0.3)',
+                        backgroundColor: '#FFFFFF',
+                        color: '#192D55',
+                        fontSize: '11.5px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Principal
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab('staff');
+                        setIdentifier('teacher.math@dps-society.edu');
+                        setPassword('Password@123');
+                        setError('');
+                      }}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        border: '1px solid rgba(34, 112, 175, 0.3)',
+                        backgroundColor: '#FFFFFF',
+                        color: '#192D55',
+                        fontSize: '11.5px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Faculty
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab('staff');
+                        setIdentifier('accountant@dps-society.edu');
+                        setPassword('Password@123');
+                        setError('');
+                      }}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        border: '1px solid rgba(34, 112, 175, 0.3)',
+                        backgroundColor: '#FFFFFF',
+                        color: '#192D55',
+                        fontSize: '11.5px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Accountant
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab('student');
+                        setIdentifier('student.aarav@dps-society.edu');
+                        setPassword('Password@123');
+                        setError('');
+                      }}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        border: '1px solid rgba(34, 112, 175, 0.3)',
+                        backgroundColor: '#FFFFFF',
+                        color: '#192D55',
+                        fontSize: '11.5px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Student
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab('staff');
+                        setIdentifier('superadmin@aurxon.io');
+                        setPassword('Password@123');
+                        setError('');
+                      }}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        border: '1px solid #192D55',
+                        backgroundColor: '#192D55',
+                        color: '#FFFFFF',
+                        fontSize: '11.5px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      HQ Admin
+                    </button>
+                  </div>
+                </div>
+
+                {error && (
+                  <div
+                    style={{
+                      marginBottom: '16px',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      backgroundColor: '#fef2f2',
+                      border: '1px solid #fecaca',
+                      color: '#b91c1c',
+                      fontSize: '13px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <AlertCircle size={16} style={{ flexShrink: 0 }} />
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleLogin}>
+                  <div style={{ marginBottom: '16px' }}>
+                    <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: '#192D55', marginBottom: '6px' }}>
+                      {activeTab === 'staff' ? 'Official Email / Username' : 'Enrollment No. / Parent Email'}
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <Mail
+                        size={16}
+                        color="#64748b"
+                        style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}
+                      />
+                      <input
+                        type="text"
+                        required
+                        value={identifier}
+                        onChange={(e) => setIdentifier(e.target.value)}
+                        placeholder={activeTab === 'staff' ? 'e.g. principal.rkp@dps-society.edu' : 'e.g. student.aarav@dps-society.edu'}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px 10px 38px',
+                          borderRadius: '8px',
+                          border: '1px solid #cbd5e1',
+                          backgroundColor: '#FFFFFF',
+                          fontSize: '13.5px',
+                          color: '#192D55',
+                          outline: 'none',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <label style={{ fontSize: '12.5px', fontWeight: 600, color: '#192D55' }}>
+                        Password
+                      </label>
+                      <span style={{ fontSize: '12px', color: '#2270AF', cursor: 'pointer' }}>
+                        Forgot password?
+                      </span>
+                    </div>
+                    <div style={{ position: 'relative' }}>
+                      <Lock
+                        size={16}
+                        color="#64748b"
+                        style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}
+                      />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter password"
+                        style={{
+                          width: '100%',
+                          padding: '10px 40px 10px 38px',
+                          borderRadius: '8px',
+                          border: '1px solid #cbd5e1',
+                          backgroundColor: '#FFFFFF',
+                          fontSize: '13.5px',
+                          color: '#192D55',
+                          outline: 'none',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        style={{
+                          position: 'absolute',
+                          right: '12px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#64748b',
+                          cursor: 'pointer',
+                          padding: 0,
+                          display: 'flex',
+                        }}
+                      >
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Remember Me */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+                    <input
+                      type="checkbox"
+                      id="rememberMe"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                    />
+                    <label htmlFor="rememberMe" style={{ fontSize: '12.5px', color: '#64748b', cursor: 'pointer' }}>
+                      Remember me on this browser
+                    </label>
+                  </div>
+
+                  {/* Submit Button: Strongest Gradient (AURXON Blue -> Royal Purple) */}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    style={{
+                      width: '100%',
+                      padding: '13px',
+                      borderRadius: '10px',
+                      border: 'none',
+                      background: 'linear-gradient(135deg, #2270AF 0%, #4B5FAF 45%, #9E3BB3 100%)',
+                      color: '#FFFFFF',
+                      fontSize: '14.5px',
+                      fontWeight: 700,
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      opacity: loading ? 0.7 : 1,
+                      boxShadow: '0 4px 14px 0 rgba(34, 112, 175, 0.35)',
+                      transition: 'all 150ms ease',
+                    }}
+                  >
+                    {loading ? (
+                      <span>Authenticating securely...</span>
+                    ) : (
+                      <>
+                        <span>Sign In</span>
+                        <ArrowRight size={16} />
+                      </>
+                    )}
+                  </button>
+                </form>
+
+                {/* Organization Search Launcher Link */}
+                <div style={{ marginTop: '18px', textAlign: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={() => setLoginMode('search-org')}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#2270AF',
+                      fontSize: '12.5px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                    }}
+                  >
+                    <Building2 size={13} />
+                    <span>Looking for your school or coaching portal? Search here →</span>
+                  </button>
+                </div>
+
+                {/* Encrypted Session Notice */}
+                <div
+                  style={{
+                    marginTop: '20px',
+                    paddingTop: '16px',
+                    borderTop: '1px solid #f1f5f9',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    fontSize: '12px',
+                    color: '#64748b',
+                  }}
+                >
+                  <ShieldCheck size={14} color="#10b981" />
+                  <span>256-Bit Encrypted Multi-Tenant Session</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </main>
 
-      {/* Footer */}
+      {/* -------------------------------------------------------------
+          FOOTER (Glacier Dark Navy Branding)
+          ------------------------------------------------------------- */}
       <footer
         style={{
-          borderTop: '1px solid #e2e8f0',
-          backgroundColor: '#f8fafc',
+          borderTop: '1px solid rgba(34, 112, 175, 0.15)',
+          backgroundColor: '#FFFFFF',
           padding: '16px 24px',
           textAlign: 'center',
           fontSize: '12.5px',
           color: '#64748b',
         }}
       >
-        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>Powered by <strong>AURXON Education OS</strong></span>
+        <div style={{ maxWidth: '1140px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+          <span>
+            Powered by <strong style={{ color: '#192D55' }}>AURXON Education OS</strong>
+          </span>
           <div style={{ display: 'flex', gap: '16px' }}>
-            <Link href="/onboard" style={{ color: '#0284c7', textDecoration: 'none', fontWeight: 600 }}>
+            <Link href="/onboard" style={{ color: '#2270AF', textDecoration: 'none', fontWeight: 600 }}>
               Register Institution
             </Link>
             <span>•</span>
-            <Link href="/aurxon" style={{ color: '#64748b', textDecoration: 'none' }}>
+            <Link href="/aurxon" style={{ color: '#192D55', textDecoration: 'none', fontWeight: 600 }}>
               Platform Operations
             </Link>
             <span>•</span>

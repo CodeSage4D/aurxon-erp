@@ -13,7 +13,7 @@
 
 .sidebar {
   width: var(--sidebar-width);
-  background-color: #0c1524; /* Deep Navy Obsidian */
+  background-color: var(--glacier-dark-navy, #192D55); /* Glacier Dark Navy */
   color: #e2e8f0;
   display: flex;
   flex-direction: column;
@@ -47,7 +47,7 @@
 }
 
 .sidebar-brand-badge {
-  background: linear-gradient(135deg, var(--brand-500), #0284c7);
+  background: var(--gradient-aurxon-strong);
   color: #ffffff;
   font-size: 10px;
   font-weight: 800;
@@ -71,7 +71,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #64748b;
+  color: #94a3b8;
   padding: var(--space-3) var(--space-3) var(--space-1);
 }
 
@@ -81,7 +81,7 @@
   gap: var(--space-3);
   padding: 8px 12px;
   border-radius: var(--radius-md);
-  color: #94a3b8;
+  color: #cbd5e1;
   text-decoration: none;
   font-size: var(--text-sm);
   font-weight: 500;
@@ -89,16 +89,16 @@
 }
 
 .sidebar-link:hover {
-  background-color: rgba(255, 255, 255, 0.06);
+  background-color: rgba(255, 255, 255, 0.08);
   color: #ffffff;
 }
 
 .sidebar-link.active {
-  background: linear-gradient(90deg, rgba(2, 132, 199, 0.35), rgba(56, 189, 248, 0.15));
-  color: #38bdf8;
+  background: linear-gradient(90deg, rgba(34, 112, 175, 0.4), rgba(158, 59, 179, 0.2));
+  color: #ffffff;
   font-weight: 600;
-  border-left: 3px solid #38bdf8;
-  box-shadow: inset 0 0 12px rgba(56, 189, 248, 0.1);
+  border-left: 3px solid var(--royal-purple, #9E3BB3);
+  box-shadow: inset 0 0 12px rgba(158, 59, 179, 0.15);
 }
 
 .sidebar-link svg {
