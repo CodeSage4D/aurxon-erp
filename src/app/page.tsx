@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import LiveClockWidget from '@/components/ui/LiveClockWidget';
 import {
   Search,
   Building2,
@@ -30,6 +31,8 @@ import {
   FileText,
   Settings,
   Bell,
+  Check,
+  Copy,
 } from 'lucide-react';
 
 interface OrganizationResult {
@@ -45,7 +48,7 @@ interface OrganizationResult {
 export default function RootLandingPage() {
   const router = useRouter();
 
-  // Search State
+  // Organization Search State
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState<OrganizationResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -53,14 +56,21 @@ export default function RootLandingPage() {
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [selectedOrg, setSelectedOrg] = useState<OrganizationResult | null>(null);
 
-  // Direct Link Jump State
+  // Direct Link Fast Jump State
   const [directSlug, setDirectSlug] = useState('');
   const [directError, setDirectError] = useState('');
+  const [copiedSlug, setCopiedSlug] = useState(false);
+
+  // Capability Architecture Active Tab
+  const [activeTab, setActiveTab] = useState<'academics' | 'fees' | 'attendance' | 'multicampus'>('academics');
+
+  // Role Architecture Active Tab
+  const [activeRole, setActiveRole] = useState<'principal' | 'teacher' | 'accountant' | 'parent'>('principal');
 
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Debounced Search Function connected directly to database
+  // Debounced search directly querying database
   const fetchSearchResults = useCallback(async (query: string) => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -81,28 +91,28 @@ export default function RootLandingPage() {
       }
     } catch (err: any) {
       if (err.name !== 'AbortError') {
-        console.error('Search request failed:', err);
+        console.error('Portal search request error:', err);
       }
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Pre-load enrolled organizations on mount for instant prediction
+  // Initialize with top registered institutions
   useEffect(() => {
     fetchSearchResults('');
   }, [fetchSearchResults]);
 
-  // Fast debounced search as user types (100ms)
+  // Debounced input trigger (120ms)
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchSearchResults(searchQuery);
-    }, 100);
+    }, 120);
 
     return () => clearTimeout(timer);
   }, [searchQuery, fetchSearchResults]);
 
-  // Click outside to close dropdown
+  // Outside click to close search dropdown
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
@@ -118,110 +128,110 @@ export default function RootLandingPage() {
     setShowDropdown(false);
   };
 
-  // Immediate Find Submission (Button Click or Enter key)
-  const handleFindSubmit = async (e?: React.FormEvent) => {
+  const handleFindSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const clean = searchQuery.trim();
-
-    // If user has navigated results or results already loaded:
     if (results.length > 0) {
       const target = selectedIndex >= 0 && selectedIndex < results.length ? results[selectedIndex] : results[0];
       handleSelectOrg(target);
       return;
     }
-
-    if (!clean) {
+    if (!searchQuery.trim()) {
       setShowDropdown(true);
-      return;
-    }
-
-    // Direct immediate database search query
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/v1/portal/search?q=${encodeURIComponent(clean)}`);
-      const data = await res.json();
-      if (data.success && data.results && data.results.length > 0) {
-        setResults(data.results);
-        handleSelectOrg(data.results[0]);
-      } else {
-        setShowDropdown(true);
-      }
-    } catch (err) {
-      console.error('Find query failed:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Keyboard navigation for search results
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setShowDropdown(true);
-      setSelectedIndex((prev) => (prev < results.length - 1 ? prev + 1 : prev));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : 0));
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      handleFindSubmit();
-    } else if (e.key === 'Escape') {
-      setShowDropdown(false);
     }
   };
 
   const handleDirectJump = (e: React.FormEvent) => {
     e.preventDefault();
-    const clean = directSlug.trim().toLowerCase().replace(/^\/s\//, '');
+    const clean = directSlug.toLowerCase().trim().replace(/^\/s\//, '').replace(/^s\//, '');
     if (!clean) {
-      setDirectError('Please enter your school slug or identifier (e.g. dps)');
+      setDirectError('Please enter an organization slug (e.g. "dps-society")');
       return;
     }
     setDirectError('');
     router.push(`/s/${clean}`);
   };
 
+  const copyDirectLink = (url: string) => {
+    navigator.clipboard.writeText(url);
+    setCopiedSlug(true);
+    setTimeout(() => setCopiedSlug(false), 2000);
+  };
+
   return (
     <div
       style={{
         minHeight: '100vh',
-        background: 'radial-gradient(ellipse 100% 45% at 50% -5%, #dbeafe 0%, #edf6fd 30%, #f8fbfe 65%, #ffffff 100%)',
+        backgroundColor: '#ffffff',
+        backgroundImage: 'radial-gradient(ellipse 100% 50% at 50% -10%, #dbeafe 0%, #edf6fd 30%, #f8fbfe 65%, #ffffff 100%)',
         color: '#0f172a',
         fontFamily: 'var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
         display: 'flex',
         flexDirection: 'column',
       }}
     >
-      {/* Top Institutional Header */}
+      {/* Top Operational Status Ribbon with Authoritative Live Clock */}
+      <div
+        style={{
+          backgroundColor: '#0f172a',
+          color: '#f8fafc',
+          padding: '6px 20px',
+          fontSize: '12px',
+          borderBottom: '1px solid #1e293b',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '8px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span
+            style={{
+              display: 'inline-block',
+              width: '7px',
+              height: '7px',
+              borderRadius: '50%',
+              backgroundColor: '#10b981',
+              boxShadow: '0 0 6px #10b981',
+            }}
+          />
+          <span style={{ fontWeight: 600, color: '#38bdf8' }}>AURXON Enterprise Cloud</span>
+          <span style={{ color: '#64748b' }}>•</span>
+          <span style={{ color: '#94a3b8' }}>Multi-Tenant Education Operating System</span>
+        </div>
+
+        {/* Global Authoritative Clock (Day, Date, Time) */}
+        <LiveClockWidget theme="dark" />
+      </div>
+
+      {/* Primary Navigation Header */}
       <header
         style={{
-          borderBottom: '1px solid rgba(186, 230, 253, 0.7)',
-          backgroundColor: 'rgba(255, 255, 255, 0.88)',
-          backdropFilter: 'blur(16px)',
           position: 'sticky',
           top: 0,
           zIndex: 40,
-          boxShadow: '0 4px 20px -4px rgba(2, 132, 199, 0.06)',
+          backgroundColor: 'rgba(255, 255, 255, 0.92)',
+          backdropFilter: 'blur(16px)',
+          borderBottom: '1px solid rgba(186, 230, 253, 0.8)',
         }}
       >
         <div
           style={{
             maxWidth: '1240px',
             margin: '0 auto',
-            padding: '12px 20px',
+            padding: '14px 20px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '12px',
-            flexWrap: 'wrap',
+            gap: '16px',
           }}
         >
-          {/* Brand & Mission Tagline */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Brand Identity */}
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
             <div
               style={{
-                width: '36px',
-                height: '36px',
+                width: '38px',
+                height: '38px',
                 borderRadius: '10px',
                 background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%)',
                 color: '#ffffff',
@@ -230,85 +240,88 @@ export default function RootLandingPage() {
                 justifyContent: 'center',
                 fontWeight: 800,
                 fontSize: '18px',
-                letterSpacing: '-0.02em',
-                boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)',
+                boxShadow: '0 3px 10px rgba(2, 132, 199, 0.35)',
               }}
             >
               A
             </div>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '18px', fontWeight: 800, color: '#0c4a6e', letterSpacing: '-0.03em' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>
                   AURXON
                 </span>
                 <span
                   style={{
-                    fontSize: '11px',
+                    fontSize: '10px',
                     fontWeight: 700,
                     textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    padding: '2px 8px',
-                    borderRadius: '6px',
-                    background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)',
-                    color: '#0369a1',
-                    border: '1px solid #7dd3fc',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    backgroundColor: '#e0f2fe',
+                    color: '#0284c7',
+                    border: '1px solid rgba(186, 230, 253, 0.8)',
                   }}
                 >
                   Education OS
                 </span>
               </div>
-              <div style={{ fontSize: '11.5px', color: '#64748b' }}>
-                For Schools • Coaching Institutes • Education Groups
-              </div>
+              <div style={{ fontSize: '11px', color: '#64748b' }}>Centralized School & Coaching ERP</div>
             </div>
-          </div>
+          </Link>
 
           {/* Navigation Links */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <nav style={{ display: 'flex', alignItems: 'center', gap: '24px' }} className="desktop-nav">
+            <a href="#find-school" style={{ fontSize: '13.5px', fontWeight: 600, color: '#334155', textDecoration: 'none' }}>
+              Find Organization
+            </a>
+            <a href="#architecture" style={{ fontSize: '13.5px', fontWeight: 600, color: '#334155', textDecoration: 'none' }}>
+              Capabilities
+            </a>
+            <a href="#roles" style={{ fontSize: '13.5px', fontWeight: 600, color: '#334155', textDecoration: 'none' }}>
+              Role Workflows
+            </a>
+            <a href="#direct-jump" style={{ fontSize: '13.5px', fontWeight: 600, color: '#334155', textDecoration: 'none' }}>
+              Direct Link
+            </a>
+          </nav>
+
+          {/* Header Action Buttons */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Link
+              href="/login"
+              style={{
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#0284c7',
+                padding: '7px 14px',
+                borderRadius: '8px',
+                border: '1px solid rgba(186, 230, 253, 0.85)',
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                textDecoration: 'none',
+                transition: 'all 120ms ease',
+              }}
+            >
+              Sign In
+            </Link>
+
             <Link
               href="/onboard"
               style={{
                 fontSize: '13px',
-                fontWeight: 600,
-                color: '#0369a1',
-                textDecoration: 'none',
-                padding: '7px 14px',
-                borderRadius: '8px',
-                border: '1px solid rgba(186, 230, 253, 0.9)',
-                background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
-              }}
-            >
-              Register Institute
-            </Link>
-            <Link
-              href="/aurxon"
-              style={{
-                fontSize: '13px',
-                fontWeight: 600,
-                color: '#475569',
-                textDecoration: 'none',
-                padding: '7px 12px',
-                borderRadius: '8px',
-              }}
-            >
-              Platform HQ
-            </Link>
-            <Link
-              href="/login"
-              style={{
-                fontSize: '13.5px',
-                fontWeight: 600,
+                fontWeight: 700,
                 color: '#ffffff',
-                textDecoration: 'none',
-                padding: '8px 18px',
+                padding: '8px 16px',
                 borderRadius: '8px',
                 background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 50%, #1e40af 100%)',
-                boxShadow: '0 4px 14px 0 rgba(2, 132, 199, 0.32), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
+                boxShadow: '0 4px 12px rgba(2, 132, 199, 0.35)',
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
             >
-              Sign In
+              <span>Onboard Institute</span>
+              <ArrowRight size={14} />
             </Link>
           </div>
         </div>
@@ -316,68 +329,67 @@ export default function RootLandingPage() {
 
       {/* Main Content Area */}
       <main style={{ flex: 1 }}>
-        {/* HERO SECTION */}
+        {/* HERO SECTION: Primary Customer Discovery & Organization Entry */}
         <section
+          id="find-school"
           style={{
-            padding: '60px 24px 40px',
             maxWidth: '1240px',
             margin: '0 auto',
+            padding: '48px 20px 40px',
             textAlign: 'center',
           }}
         >
-          {/* Regulatory & Standards Badge */}
+          {/* Trust & Architecture Tag */}
           <div
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '8px',
-              padding: '6px 14px',
+              gap: '6px',
+              padding: '5px 14px',
               borderRadius: '9999px',
-              backgroundColor: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              fontSize: '12.5px',
-              fontWeight: 600,
+              backgroundColor: 'rgba(224, 242, 254, 0.8)',
+              border: '1px solid rgba(186, 230, 253, 0.9)',
               color: '#0369a1',
+              fontSize: '12.5px',
+              fontWeight: 700,
               marginBottom: '20px',
             }}
           >
-            <ShieldCheck size={16} color="#0284c7" />
-            <span>Built for India • CBSE, U-DISE+, APAAR & RTE Compliant</span>
+            <ShieldCheck size={15} color="#0284c7" />
+            <span>Dedicated Multi-Tenant Architecture • CBSE & State Board Standardized</span>
           </div>
 
-          {/* Master Headline */}
           <h1
             style={{
-              fontSize: 'clamp(28px, 4.5vw, 44px)',
+              fontSize: 'clamp(28px, 4.5vw, 46px)',
               fontWeight: 800,
               color: '#0f172a',
               letterSpacing: '-0.03em',
               lineHeight: 1.15,
-              maxWidth: '840px',
+              maxWidth: '820px',
               margin: '0 auto 16px',
             }}
           >
-            The Complete Education ERP for a Better Tomorrow
+            The Operating System for Modern Indian Schools & Coaching Institutes
           </h1>
 
           <p
             style={{
-              fontSize: '16px',
+              fontSize: 'clamp(15px, 2vw, 17px)',
               color: '#475569',
-              maxWidth: '680px',
-              margin: '0 auto 40px',
               lineHeight: 1.6,
+              maxWidth: '680px',
+              margin: '0 auto 36px',
             }}
           >
-            A unified, multi-branch operating system designed for modern Indian schools, coaching networks, and
-            educational trusts. Simple daily operations, enterprise compliance, and real-time operational intelligence.
+            Connect directly to your educational institution&apos;s authenticated workspace. Search your school below or use your dedicated direct portal link.
           </p>
 
-          {/* FIND YOUR ORGANIZATION (Central Search Box) */}
+          {/* CENTRAL SEARCH BOX: Live Auto-Predict Direct to Database */}
           <div
             ref={searchContainerRef}
             style={{
-              maxWidth: '640px',
+              maxWidth: '680px',
               margin: '0 auto 24px',
               position: 'relative',
               textAlign: 'left',
@@ -386,51 +398,60 @@ export default function RootLandingPage() {
             <form
               onSubmit={handleFindSubmit}
               style={{
-                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 249, 255, 0.92) 100%)',
-                border: '2px solid rgba(14, 165, 233, 0.55)',
-                borderRadius: '16px',
-                padding: '6px 8px 6px 18px',
                 display: 'flex',
                 alignItems: 'center',
+                backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                borderRadius: '16px',
+                border: '2px solid #38bdf8',
+                boxShadow: '0 12px 36px -8px rgba(2, 132, 199, 0.22), 0 0 0 1px rgba(255, 255, 255, 0.9) inset',
+                padding: '6px 8px 6px 16px',
                 gap: '12px',
-                boxShadow: '0 12px 35px -5px rgba(2, 132, 199, 0.18), inset 0 1px 0 0 #ffffff',
-                backdropFilter: 'blur(8px)',
               }}
             >
               <Search size={20} color="#0284c7" style={{ flexShrink: 0 }} />
               <input
                 type="text"
+                placeholder="Start typing your school, coaching institute or organization..."
                 value={searchQuery}
+                onFocus={() => setShowDropdown(true)}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
                   setShowDropdown(true);
                   setSelectedIndex(-1);
                 }}
-                onFocus={() => setShowDropdown(true)}
-                onKeyDown={handleKeyDown}
-                placeholder="Search school, coaching institute or organization..."
+                onKeyDown={(e) => {
+                  if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    setSelectedIndex((prev) => (prev < results.length - 1 ? prev + 1 : prev));
+                  } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    setSelectedIndex((prev) => (prev > 0 ? prev - 1 : 0));
+                  } else if (e.key === 'Escape') {
+                    setShowDropdown(false);
+                  }
+                }}
                 style={{
                   flex: 1,
                   border: 'none',
                   outline: 'none',
                   fontSize: '15px',
-                  fontWeight: 500,
                   color: '#0f172a',
                   backgroundColor: 'transparent',
                 }}
               />
+
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => {
                     setSearchQuery('');
-                    fetchSearchResults('');
+                    setSelectedIndex(-1);
                   }}
                   style={{
-                    background: 'transparent',
+                    background: 'none',
                     border: 'none',
-                    cursor: 'pointer',
                     color: '#94a3b8',
+                    cursor: 'pointer',
                     padding: '4px',
                     display: 'flex',
                   }}
@@ -438,350 +459,296 @@ export default function RootLandingPage() {
                   <X size={16} />
                 </button>
               )}
+
               <button
                 type="submit"
                 style={{
+                  padding: '10px 22px',
+                  borderRadius: '10px',
                   background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 50%, #1e40af 100%)',
                   color: '#ffffff',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '10px',
-                  padding: '10px 22px',
                   fontSize: '14px',
                   fontWeight: 700,
+                  border: '1px solid rgba(255, 255, 255, 0.25)',
                   cursor: 'pointer',
-                  display: 'flex',
+                  boxShadow: '0 4px 12px rgba(2, 132, 199, 0.35)',
+                  display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
                   flexShrink: 0,
-                  boxShadow: '0 4px 14px 0 rgba(2, 132, 199, 0.38), inset 0 1px 0 0 rgba(255, 255, 255, 0.3)',
-                  transition: 'all 150ms ease',
                 }}
               >
-                <span>Find</span>
-                <ArrowRight size={16} />
+                {loading ? (
+                  <span>Searching...</span>
+                ) : (
+                  <>
+                    <span>Find</span>
+                    <ArrowRight size={14} />
+                  </>
+                )}
               </button>
             </form>
 
-            {/* LIVE AUTOCOMPLETE DROPDOWN */}
-            {showDropdown && (
+            {/* Live Autocomplete Dropdown List */}
+            {showDropdown && results.length > 0 && (
               <div
                 style={{
                   position: 'absolute',
-                  top: 'calc(100% + 8px)',
+                  top: '100%',
                   left: 0,
                   right: 0,
+                  marginTop: '8px',
                   backgroundColor: '#ffffff',
                   borderRadius: '14px',
-                  border: '1px solid rgba(186, 230, 253, 0.9)',
-                  boxShadow: '0 20px 35px -5px rgba(2, 132, 199, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+                  border: '1px solid rgba(186, 230, 253, 0.95)',
+                  boxShadow: '0 20px 40px -10px rgba(2, 132, 199, 0.25)',
+                  overflow: 'hidden',
                   zIndex: 50,
-                  maxHeight: '380px',
+                  maxHeight: '340px',
                   overflowY: 'auto',
                 }}
               >
                 <div
                   style={{
-                    padding: '10px 16px',
-                    borderBottom: '1px solid #f1f5f9',
-                    fontSize: '12px',
+                    padding: '8px 16px',
+                    backgroundColor: '#f8fbfe',
+                    borderBottom: '1px solid #e2e8f0',
+                    fontSize: '11px',
                     fontWeight: 700,
-                    color: '#64748b',
                     textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
+                    color: '#0369a1',
+                    letterSpacing: '0.04em',
                     display: 'flex',
                     justifyContent: 'space-between',
                   }}
                 >
                   <span>Registered Educational Organizations</span>
-                  {loading && <span style={{ color: '#0284c7' }}>Searching...</span>}
+                  <span>Direct Secure Route</span>
                 </div>
 
-                {results.length === 0 && !loading ? (
-                  <div style={{ padding: '24px', textAlign: 'center', color: '#64748b' }}>
-                    <School size={28} color="#cbd5e1" style={{ margin: '0 auto 8px' }} />
-                    <div style={{ fontSize: '14px', fontWeight: 600, color: '#334155' }}>
-                      No organization matching &quot;{searchQuery}&quot;
-                    </div>
-                    <div style={{ fontSize: '12.5px', marginTop: '4px' }}>
-                      Try typing the city name, abbreviation (e.g. &quot;dps&quot;), or use direct school link below.
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    {results.map((org, index) => {
-                      const isSelected = index === selectedIndex;
-                      return (
+                {results.map((org, index) => {
+                  const isSelected = index === selectedIndex;
+                  return (
+                    <div
+                      key={org.slug}
+                      onClick={() => handleSelectOrg(org)}
+                      style={{
+                        padding: '12px 16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        borderBottom: index < results.length - 1 ? '1px solid #f1f5f9' : 'none',
+                        cursor: 'pointer',
+                        backgroundColor: isSelected ? '#f0f9ff' : '#ffffff',
+                        transition: 'background-color 100ms ease',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <div
-                          key={org.slug}
-                          onClick={() => handleSelectOrg(org)}
-                          onMouseEnter={() => setSelectedIndex(index)}
                           style={{
-                            padding: '14px 16px',
+                            width: '34px',
+                            height: '34px',
+                            borderRadius: '8px',
+                            backgroundColor: '#0284c7',
+                            color: '#ffffff',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'space-between',
-                            cursor: 'pointer',
-                            backgroundColor: isSelected ? '#f0f9ff' : '#ffffff',
-                            borderBottom: '1px solid #f8fafc',
-                            transition: 'background-color 150ms ease',
+                            justifyContent: 'center',
+                            fontWeight: 800,
+                            fontSize: '14px',
                           }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <div
-                              style={{
-                                width: '38px',
-                                height: '38px',
-                                borderRadius: '10px',
-                                background: isSelected ? 'linear-gradient(135deg, #0284c7, #1d4ed8)' : '#e0f2fe',
-                                color: isSelected ? '#ffffff' : '#0284c7',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontWeight: 800,
-                                fontSize: '15px',
-                                flexShrink: 0,
-                              }}
-                            >
-                              {org.name.charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                              <div style={{ fontSize: '14.5px', fontWeight: 700, color: '#0f172a' }}>
-                                {org.name}
-                              </div>
-                              <div style={{ fontSize: '12.5px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span>{org.city}</span>
-                                <span>•</span>
-                                <span>{org.board}</span>
-                                <span>•</span>
-                                <span style={{ color: '#0284c7', fontWeight: 600 }}>{org.organizationType}</span>
-                              </div>
-                            </div>
-                          </div>
+                          {org.name.charAt(0)}
+                        </div>
+                        <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>{org.name}</span>
                             <span
                               style={{
-                                fontSize: '12px',
-                                fontWeight: 600,
-                                color: '#0369a1',
-                                backgroundColor: '#e0f2fe',
-                                padding: '3px 8px',
-                                borderRadius: '6px',
+                                fontSize: '10.5px',
+                                fontWeight: 700,
+                                padding: '2px 5px',
+                                borderRadius: '4px',
+                                backgroundColor: '#f1f5f9',
+                                color: '#475569',
+                                fontFamily: 'monospace',
                               }}
                             >
-                              aurxon.app/s/{org.slug}
+                              {org.code}
                             </span>
-                            <ChevronRight size={16} color="#94a3b8" />
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                            {org.city} • {org.board} • {org.organizationType}
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '12px', fontFamily: 'monospace', color: '#0284c7', fontWeight: 600 }}>
+                          /s/{org.slug}
+                        </span>
+                        <ChevronRight size={14} color="#94a3b8" />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
 
-          {/* ORGANIZATION PREVIEW MODAL / DIALOG */}
+          {/* Quick Enrolled Campus Shortcuts */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              flexWrap: 'wrap',
+              fontSize: '12.5px',
+              color: '#64748b',
+            }}
+          >
+            <span style={{ fontWeight: 600, color: '#0369a1' }}>Quick Access:</span>
+            {[
+              { name: 'Delhi Public School', slug: 'dps-society' },
+              { name: 'Allen Career Institute', slug: 'allen-career' },
+              { name: 'Indore Public School', slug: 'ips' },
+              { name: 'St. Xavier High School', slug: 'st-xavier' },
+            ].map((inst) => (
+              <Link
+                key={inst.slug}
+                href={`/s/${inst.slug}`}
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                  border: '1px solid rgba(186, 230, 253, 0.85)',
+                  color: '#0284c7',
+                  textDecoration: 'none',
+                  fontWeight: 600,
+                  fontSize: '12px',
+                  boxShadow: '0 1px 3px rgba(2, 132, 199, 0.08)',
+                }}
+              >
+                {inst.name}
+              </Link>
+            ))}
+          </div>
+
+          {/* Selected Organization Confirmation Card */}
           {selectedOrg && (
             <div
               style={{
-                position: 'fixed',
-                inset: 0,
-                backgroundColor: 'rgba(15, 23, 42, 0.45)',
-                backdropFilter: 'blur(4px)',
+                maxWidth: '680px',
+                margin: '28px auto 0',
+                padding: '20px 24px',
+                borderRadius: '16px',
+                backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                border: '2px solid #0284c7',
+                boxShadow: '0 12px 30px -6px rgba(2, 132, 199, 0.2)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 100,
-                padding: '20px',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '16px',
+                textAlign: 'left',
               }}
             >
-              <div
-                style={{
-                  backgroundColor: '#ffffff',
-                  borderRadius: '20px',
-                  maxWidth: '480px',
-                  width: '100%',
-                  padding: '32px',
-                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-                  border: '1px solid #e2e8f0',
-                  textAlign: 'center',
-                  position: 'relative',
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={() => setSelectedOrg(null)}
-                  style={{
-                    position: 'absolute',
-                    top: '16px',
-                    right: '16px',
-                    background: 'transparent',
-                    border: 'none',
-                    color: '#64748b',
-                    cursor: 'pointer',
-                    padding: '6px',
-                  }}
-                >
-                  <X size={20} />
-                </button>
-
-                {/* Emblem */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                 <div
                   style={{
-                    width: '64px',
-                    height: '64px',
-                    borderRadius: '16px',
-                    backgroundColor: '#e0f2fe',
-                    color: '#0284c7',
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '10px',
+                    backgroundColor: '#0284c7',
+                    color: '#ffffff',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontWeight: 800,
-                    fontSize: '24px',
-                    margin: '0 auto 16px',
-                    border: '2px solid #bae6fd',
+                    fontSize: '18px',
                   }}
                 >
-                  {selectedOrg.name.charAt(0).toUpperCase()}
+                  {selectedOrg.name.charAt(0)}
                 </div>
-
-                <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', marginBottom: '6px' }}>
-                  {selectedOrg.name}
-                </h3>
-                <div style={{ fontSize: '13.5px', color: '#64748b', marginBottom: '16px' }}>
-                  {selectedOrg.city} • {selectedOrg.board} • {selectedOrg.organizationType}
-                </div>
-
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
-                    gap: '10px',
-                    padding: '14px 0',
-                    borderTop: '1px solid #f1f5f9',
-                    borderBottom: '1px solid #f1f5f9',
-                    marginBottom: '24px',
-                  }}
-                >
-                  <div>
-                    <Award size={18} color="#0284c7" style={{ margin: '0 auto 4px' }} />
-                    <div style={{ fontSize: '11px', fontWeight: 600, color: '#334155' }}>Academic Excellence</div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>{selectedOrg.name}</span>
+                    <span
+                      style={{
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        backgroundColor: '#e0f2fe',
+                        color: '#0284c7',
+                      }}
+                    >
+                      {selectedOrg.code}
+                    </span>
                   </div>
-                  <div>
-                    <Users size={18} color="#0284c7" style={{ margin: '0 auto 4px' }} />
-                    <div style={{ fontSize: '11px', fontWeight: 600, color: '#334155' }}>Holistic Development</div>
-                  </div>
-                  <div>
-                    <ShieldCheck size={18} color="#0284c7" style={{ margin: '0 auto 4px' }} />
-                    <div style={{ fontSize: '11px', fontWeight: 600, color: '#334155' }}>Trusted Legacy</div>
+                  <div style={{ fontSize: '12.5px', color: '#64748b', marginTop: '2px' }}>
+                    {selectedOrg.city} • {selectedOrg.board} • Dedicated Tenant Scope Ready
                   </div>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => router.push(`/s/${selectedOrg.slug}`)}
-                  style={{
-                    width: '100%',
-                    backgroundColor: '#0284c7',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '12px',
-                    padding: '14px',
-                    fontSize: '15px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    boxShadow: '0 10px 15px -3px rgba(2, 132, 199, 0.3)',
-                  }}
-                >
-                  <span>Continue to Workspace Login</span>
-                  <ArrowRight size={18} />
-                </button>
               </div>
-            </div>
-          )}
 
-          {/* QUICK INTERACTIVE CAMPUS LAUNCHERS */}
-          <div style={{ maxWidth: '640px', margin: '0 auto 18px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Quick Enrolled Previews:</span>
-            {[
-              { name: 'DPS R.K. Puram', slug: 'dps-society' },
-              { name: 'Apex IIT-JEE Academy', slug: 'apex-coaching' },
-              { name: 'Shri Ram Public School', slug: 'sris' },
-              { name: 'Global Indian World School', slug: 'giws' },
-            ].map((campus) => (
-              <button
-                key={campus.slug}
-                type="button"
-                onClick={() => router.push(`/s/${campus.slug}`)}
+              <Link
+                href={`/s/${selectedOrg.slug}`}
                 style={{
-                  padding: '5px 12px',
-                  borderRadius: '8px',
-                  border: '1px solid #7dd3fc',
-                  background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 50%, #e0f2fe 100%)',
-                  color: '#0369a1',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  display: 'flex',
+                  padding: '10px 22px',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%)',
+                  color: '#ffffff',
+                  fontSize: '13.5px',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '5px',
-                  boxShadow: '0 2px 6px rgba(2, 132, 199, 0.08)',
-                  transition: 'all 150ms ease',
+                  gap: '6px',
+                  boxShadow: '0 4px 12px rgba(2, 132, 199, 0.35)',
                 }}
               >
-                <span>{campus.name}</span>
-                <ExternalLink size={11} />
-              </button>
-            ))}
-          </div>
+                <span>Open School Portal</span>
+                <ArrowRight size={15} />
+              </Link>
+            </div>
+          )}
+        </section>
 
-          {/* DIRECT LINK FAST-PATH (Clean, Metallic Glacier Card) */}
+        {/* DIRECT SHORT-LINK FAST PATH */}
+        <section
+          id="direct-jump"
+          style={{
+            maxWidth: '900px',
+            margin: '0 auto 60px',
+            padding: '0 20px',
+          }}
+        >
           <div
             style={{
-              maxWidth: '640px',
-              margin: '0 auto 36px',
-              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 249, 255, 0.85) 100%)',
-              border: '1px solid rgba(186, 230, 253, 0.85)',
+              backgroundColor: '#ffffff',
               borderRadius: '16px',
-              padding: '16px 20px',
+              border: '1px solid rgba(186, 230, 253, 0.9)',
+              padding: '24px 28px',
+              boxShadow: '0 8px 24px -4px rgba(2, 132, 199, 0.08)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              gap: '16px',
               flexWrap: 'wrap',
-              boxShadow: '0 4px 20px -2px rgba(2, 132, 199, 0.08), inset 0 1px 0 0 #ffffff',
+              gap: '20px',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '10px',
-                  background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)',
-                  color: '#0284c7',
-                  border: '1px solid #7dd3fc',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <Globe size={18} />
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Globe size={18} color="#0284c7" />
+                <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                  Direct Organization Fast Path
+                </h3>
               </div>
-              <div style={{ textAlign: 'left' }}>
-                <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
-                  Have a Direct School Link?
-                </div>
-                <div style={{ fontSize: '12px', color: '#64748b' }}>
-                  Skip search and jump directly to your school workspace
-                </div>
-              </div>
+              <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 0' }}>
+                Already know your school&apos;s custom handle? Jump straight into your login screen without searching.
+              </p>
             </div>
 
             <form onSubmit={handleDirectJump} style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
@@ -789,701 +756,463 @@ export default function RootLandingPage() {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  backgroundColor: '#ffffff',
+                  backgroundColor: '#f8fbfe',
                   border: '1px solid #cbd5e1',
                   borderRadius: '8px',
-                  overflow: 'hidden',
-                  boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.04)',
+                  padding: '6px 12px',
                 }}
               >
-                <span
-                  style={{
-                    padding: '8px 10px',
-                    fontSize: '12.5px',
-                    fontWeight: 600,
-                    color: '#64748b',
-                    backgroundColor: '#f1f5f9',
-                    borderRight: '1px solid #cbd5e1',
-                  }}
-                >
-                  aurxon.app/s/
+                <span style={{ fontSize: '13px', fontFamily: 'monospace', color: '#64748b' }}>
+                  aurxon.io/s/
                 </span>
                 <input
                   type="text"
+                  placeholder="your-school-slug"
                   value={directSlug}
-                  onChange={(e) => setDirectSlug(e.target.value)}
-                  placeholder="dps"
+                  onChange={(e) => {
+                    setDirectSlug(e.target.value);
+                    setDirectError('');
+                  }}
                   style={{
-                    padding: '8px 12px',
                     border: 'none',
                     outline: 'none',
+                    backgroundColor: 'transparent',
+                    fontFamily: 'monospace',
                     fontSize: '13px',
-                    width: '120px',
-                    color: '#0f172a',
+                    color: '#0284c7',
+                    fontWeight: 600,
+                    width: '140px',
                   }}
                 />
               </div>
+
               <button
                 type="submit"
                 style={{
-                  background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 50%, #1e40af 100%)',
-                  color: '#ffffff',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  padding: '8px 16px',
                   borderRadius: '8px',
-                  padding: '9px 18px',
+                  background: 'linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%)',
+                  color: '#ffffff',
                   fontSize: '13px',
-                  fontWeight: 600,
+                  fontWeight: 700,
+                  border: 'none',
                   cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  boxShadow: '0 3px 10px rgba(2, 132, 199, 0.3)',
-                  transition: 'all 150ms ease',
+                  boxShadow: '0 2px 6px rgba(2, 132, 199, 0.3)',
                 }}
               >
-                <span>Open</span>
-                <ArrowRight size={14} />
+                Go to Portal
               </button>
             </form>
+
+            {directError && (
+              <div style={{ width: '100%', fontSize: '12px', color: '#dc2626' }}>
+                {directError}
+              </div>
+            )}
           </div>
-          {directError && <div style={{ color: '#dc2626', fontSize: '12.5px', marginTop: '-24px', marginBottom: '24px' }}>{directError}</div>}
         </section>
 
-        {/* TRUST & SCALE METRICS (Blueprint Section 1) */}
+        {/* CORE ARCHITECTURAL CAPABILITIES (Informative & Truthful) */}
         <section
+          id="architecture"
           style={{
-            borderTop: '1px solid #f1f5f9',
-            borderBottom: '1px solid #f1f5f9',
-            backgroundColor: '#f8fafc',
-            padding: '24px',
+            maxWidth: '1240px',
+            margin: '0 auto 80px',
+            padding: '0 20px',
           }}
         >
-          <div
-            style={{
-              maxWidth: '1240px',
-              margin: '0 auto',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '24px',
-              textAlign: 'center',
-            }}
-          >
-            <div>
-              <div style={{ fontSize: '26px', fontWeight: 800, color: '#0284c7' }}>500+</div>
-              <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>Registered Organizations</div>
-            </div>
-            <div>
-              <div style={{ fontSize: '26px', fontWeight: 800, color: '#0c4a6e' }}>2M+</div>
-              <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>Active Students</div>
-            </div>
-            <div>
-              <div style={{ fontSize: '26px', fontWeight: 800, color: '#059669' }}>99.9%</div>
-              <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>Enterprise Uptime</div>
-            </div>
-            <div>
-              <div style={{ fontSize: '26px', fontWeight: 800, color: '#7c3aed' }}>100%</div>
-              <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>India Compliant (CBSE/U-DISE+)</div>
-            </div>
-          </div>
-        </section>
-
-        {/* CORE OPERATING MODULES (Built for India) */}
-        <section style={{ padding: '60px 24px', maxWidth: '1240px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-            <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>
-              One Operating System for Every Educational Need
+          <div style={{ textAlign: 'center', marginBottom: '36px' }}>
+            <span
+              style={{
+                fontSize: '11.5px',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                color: '#0284c7',
+                letterSpacing: '0.05em',
+              }}
+            >
+              Enterprise Capabilities
+            </span>
+            <h2 style={{ fontSize: '28px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', marginTop: '4px' }}>
+              Built for Indian Academic Rigor & Multi-Campus Governance
             </h2>
-            <p style={{ fontSize: '14.5px', color: '#64748b', marginTop: '6px' }}>
-              Designed to handle everything from single-campus coaching to multi-institution educational trusts.
+            <p style={{ fontSize: '14.5px', color: '#64748b', maxWidth: '620px', margin: '6px auto 0' }}>
+              Standardized with national educational frameworks, financial ledgers, and multi-tenant isolation.
             </p>
           </div>
 
+          {/* Capability Switcher Tabs */}
           <div
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-              gap: '20px',
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '8px',
+              flexWrap: 'wrap',
+              marginBottom: '28px',
             }}
           >
-            {/* Module 1 */}
-            <div
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '14px',
-                border: '1px solid #e2e8f0',
-                padding: '24px',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
-              }}
-            >
-              <div
+            {[
+              { id: 'academics', label: 'CBSE 9-Point & NEP Grading' },
+              { id: 'fees', label: 'Quarterly Fee Ledgers & RTE' },
+              { id: 'attendance', label: 'Attendance & Parent Alerts' },
+              { id: 'multicampus', label: 'Multi-Campus Federation' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
                 style={{
-                  width: '40px',
-                  height: '40px',
+                  padding: '10px 18px',
                   borderRadius: '10px',
-                  backgroundColor: '#e0f2fe',
-                  color: '#0284c7',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '16px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  border: activeTab === tab.id ? '1px solid #0284c7' : '1px solid rgba(186, 230, 253, 0.8)',
+                  backgroundColor: activeTab === tab.id ? '#0284c7' : '#ffffff',
+                  color: activeTab === tab.id ? '#ffffff' : '#475569',
+                  boxShadow: activeTab === tab.id ? '0 4px 12px rgba(2, 132, 199, 0.25)' : 'none',
+                  transition: 'all 150ms ease',
                 }}
               >
-                <Users size={20} />
-              </div>
-              <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
-                Student Information System (SIS)
-              </h3>
-              <p style={{ fontSize: '13.5px', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
-                Comprehensive student lifecycle from inquiry to graduation. Unified guardian profiles, sibling tracking,
-                and national APAAR/U-DISE+ identifier integration.
-              </p>
-            </div>
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
-            {/* Module 2 */}
-            <div
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '14px',
-                border: '1px solid #e2e8f0',
-                padding: '24px',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
-              }}
-            >
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '10px',
-                  backgroundColor: '#ecfdf5',
-                  color: '#059669',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '16px',
-                }}
-              >
-                <CalendarCheck size={20} />
-              </div>
-              <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
-                Attendance & Roll Call
-              </h3>
-              <p style={{ fontSize: '13.5px', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
-                Daily period-wise and roll-call attendance with automated parent SMS alerts. Idempotent record-keeping
-                supporting manual entry and biometric/RFID devices.
-              </p>
-            </div>
+          {/* Tab Content Display */}
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '20px',
+              border: '1px solid rgba(186, 230, 253, 0.9)',
+              padding: '36px',
+              boxShadow: '0 12px 32px -8px rgba(2, 132, 199, 0.08)',
+            }}
+          >
+            {activeTab === 'academics' && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px', alignItems: 'center' }}>
+                <div>
+                  <div style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '6px', backgroundColor: '#e0f2fe', color: '#0369a1', fontSize: '12px', fontWeight: 700, marginBottom: '12px' }}>
+                    Academic Excellence
+                  </div>
+                  <h3 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: '0 0 10px' }}>
+                    Authoritative CBSE Scholastic & Co-Scholastic Engine
+                  </h3>
+                  <p style={{ fontSize: '14px', color: '#64748b', lineHeight: 1.6, margin: '0 0 20px' }}>
+                    Calculates A1–E2 grade scale, Grade Points (10.0 scale), cumulative CGPA, and NEP 2020 Holistic Progress Cards with zero manual errors.
+                  </p>
+                  <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '13.5px', color: '#334155', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <li>Deterministic grade computation directly mapped to verified marks thresholds.</li>
+                    <li>U-DISE+ student national ID synchronization & bulk export templates.</li>
+                    <li>Automated Transfer Certificate (TC) counter-signature registers.</li>
+                  </ul>
+                </div>
 
-            {/* Module 3 */}
-            <div
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '14px',
-                border: '1px solid #e2e8f0',
-                padding: '24px',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
-              }}
-            >
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '10px',
-                  backgroundColor: '#fef3c7',
-                  color: '#d97706',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '16px',
-                }}
-              >
-                <Receipt size={20} />
+                <div
+                  style={{
+                    backgroundColor: '#f8fbfe',
+                    borderRadius: '14px',
+                    border: '1px solid #cbd5e1',
+                    padding: '20px',
+                  }}
+                >
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#0369a1', marginBottom: '12px', textTransform: 'uppercase' }}>
+                    CBSE 9-Point Scale Mapping
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', fontSize: '12px' }}>
+                    <div style={{ padding: '8px', backgroundColor: '#ffffff', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                      <strong>91 – 100%</strong>: A1 (10.0)
+                    </div>
+                    <div style={{ padding: '8px', backgroundColor: '#ffffff', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                      <strong>81 – 90%</strong>: A2 (9.0)
+                    </div>
+                    <div style={{ padding: '8px', backgroundColor: '#ffffff', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                      <strong>71 – 80%</strong>: B1 (8.0)
+                    </div>
+                    <div style={{ padding: '8px', backgroundColor: '#ffffff', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                      <strong>61 – 70%</strong>: B2 (7.0)
+                    </div>
+                    <div style={{ padding: '8px', backgroundColor: '#ffffff', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                      <strong>51 – 60%</strong>: C1 (6.0)
+                    </div>
+                    <div style={{ padding: '8px', backgroundColor: '#ffffff', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                      <strong>41 – 50%</strong>: C2 (5.0)
+                    </div>
+                  </div>
+                  <div style={{ marginTop: '14px', fontSize: '11.5px', color: '#64748b' }}>
+                    Verified against CBSE Examination Byelaws & Curriculum circulars.
+                  </div>
+                </div>
               </div>
-              <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
-                Fees & Financial Collections
-              </h3>
-              <p style={{ fontSize: '13.5px', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
-                Quarterly installments, fee concessions, RTE 25% quota accounting, computer-generated GST receipts,
-                and real-time outstanding dues reconciliation.
-              </p>
-            </div>
+            )}
 
-            {/* Module 4 */}
-            <div
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '14px',
-                border: '1px solid #e2e8f0',
-                padding: '24px',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
-              }}
-            >
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '10px',
-                  backgroundColor: '#f3e8ff',
-                  color: '#7c3aed',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '16px',
-                }}
-              >
-                <FileSpreadsheet size={20} />
-              </div>
-              <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
-                Examinations & CBSE Grading
-              </h3>
-              <p style={{ fontSize: '13.5px', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
-                Deterministic A1 to E2 letter grades, 9-point scale CBSE marks cards, scholastic & co-scholastic
-                evaluations, and printable term report cards.
-              </p>
-            </div>
+            {activeTab === 'fees' && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px', alignItems: 'center' }}>
+                <div>
+                  <div style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '6px', backgroundColor: '#ecfdf5', color: '#059669', fontSize: '12px', fontWeight: 700, marginBottom: '12px' }}>
+                    Financial Governance
+                  </div>
+                  <h3 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: '0 0 10px' }}>
+                    Indian Financial Year Fee Accounting & RTE Quota
+                  </h3>
+                  <p style={{ fontSize: '14px', color: '#64748b', lineHeight: 1.6, margin: '0 0 20px' }}>
+                    Supports Q1 (Apr–Jun), Q2 (Jul–Sep), Q3 (Oct–Dec), and Q4 (Jan–Mar) installment structures, sibling discounts, and RTE 25% zero-balance ledgers.
+                  </p>
+                  <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '13.5px', color: '#334155', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <li>Instant thermal & PDF receipt generation with QR-coded verification.</li>
+                    <li>RTE 25% reservation compliance with separate audit trail for state reimbursement.</li>
+                    <li>Real-time defaulters tracking with automated reminder dispatches.</li>
+                  </ul>
+                </div>
 
-            {/* Module 5 */}
-            <div
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '14px',
-                border: '1px solid #e2e8f0',
-                padding: '24px',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
-              }}
-            >
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '10px',
-                  backgroundColor: '#fee2e2',
-                  color: '#dc2626',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '16px',
-                }}
-              >
-                <Compass size={20} />
+                <div
+                  style={{
+                    backgroundColor: '#f8fbfe',
+                    borderRadius: '14px',
+                    border: '1px solid #cbd5e1',
+                    padding: '20px',
+                  }}
+                >
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#059669', marginBottom: '12px', textTransform: 'uppercase' }}>
+                    Fee Installment Breakdown Model
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12.5px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', backgroundColor: '#ffffff', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                      <span>Q1 (Apr – Jun): Admission & Tuition</span>
+                      <strong style={{ color: '#0f172a' }}>Standard Due: 15 Apr</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', backgroundColor: '#ffffff', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                      <span>Q2 (Jul – Sep): Tuition & Lab Fees</span>
+                      <strong style={{ color: '#0f172a' }}>Standard Due: 15 Jul</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', backgroundColor: '#ffffff', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                      <span>Q3 (Oct – Dec): Exam & Activities</span>
+                      <strong style={{ color: '#0f172a' }}>Standard Due: 15 Oct</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', backgroundColor: '#ffffff', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                      <span>Q4 (Jan – Mar): Annual Session Dues</span>
+                      <strong style={{ color: '#0f172a' }}>Standard Due: 15 Jan</strong>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
-                Admissions & Enrollment
-              </h3>
-              <p style={{ fontSize: '13.5px', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
-                End-to-end inquiry intake, document verification, entrance exam scoring, seat reservation, and 1-click
-                conversion into registered student records.
-              </p>
-            </div>
+            )}
 
-            {/* Module 6 */}
-            <div
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '14px',
-                border: '1px solid #e2e8f0',
-                padding: '24px',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
-              }}
-            >
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '10px',
-                  backgroundColor: '#e0e7ff',
-                  color: '#4338ca',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '16px',
-                }}
-              >
-                <Building2 size={20} />
-              </div>
-              <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
-                Multi-Branch & Group Architecture
-              </h3>
-              <p style={{ fontSize: '13.5px', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
-                Hierarchical governance across Organization → Institution → Branch → Academic Session with
-                cryptographic tenant isolation and consolidated executive reporting.
-              </p>
-            </div>
+            {activeTab === 'attendance' && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px', alignItems: 'center' }}>
+                <div>
+                  <div style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '6px', backgroundColor: '#fef3c7', color: '#d97706', fontSize: '12px', fontWeight: 700, marginBottom: '12px' }}>
+                    Daily Operations
+                  </div>
+                  <h3 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: '0 0 10px' }}>
+                    Idempotent Attendance & Rapid Biometric Sync
+                  </h3>
+                  <p style={{ fontSize: '14px', color: '#64748b', lineHeight: 1.6, margin: '0 0 20px' }}>
+                    Guarantees single daily record integrity via database composite unique constraints (`studentId + date`), preventing accidental double-marking.
+                  </p>
+                  <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '13.5px', color: '#334155', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <li>Supports Mobile Teacher Roll Call, RFID tap cards, and Biometric turnstiles.</li>
+                    <li>Automated 75% CBSE mandatory attendance threshold warning monitors.</li>
+                    <li>Instant dispatch queue for SMS / WhatsApp parent notifications on unexcused absence.</li>
+                  </ul>
+                </div>
 
-            {/* Module 7: Transport & Fleet */}
-            <div
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '14px',
-                border: '1px solid #e2e8f0',
-                padding: '24px',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
-              }}
-            >
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '10px',
-                  backgroundColor: '#f0f9ff',
-                  color: '#0284c7',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '16px',
-                }}
-              >
-                <Bus size={20} />
+                <div
+                  style={{
+                    backgroundColor: '#f8fbfe',
+                    borderRadius: '14px',
+                    border: '1px solid #cbd5e1',
+                    padding: '20px',
+                  }}
+                >
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#d97706', marginBottom: '12px', textTransform: 'uppercase' }}>
+                    Attendance Idempotency Model
+                  </div>
+                  <div style={{ padding: '12px', backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid #e2e8f0', fontFamily: 'monospace', fontSize: '12px', color: '#334155' }}>
+                    @@unique([studentId, date])<br />
+                    Status: PRESENT | ABSENT | LATE | HALF_DAY | EXCUSED<br />
+                    Execution: Atomic upsert prevents concurrency collision
+                  </div>
+                  <div style={{ marginTop: '12px', fontSize: '11.5px', color: '#64748b' }}>
+                    Guaranteed data accuracy for state inspection logs.
+                  </div>
+                </div>
               </div>
-              <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
-                Transport & Live Fleet GPS
-              </h3>
-              <p style={{ fontSize: '13.5px', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
-                AIS-140 compliant GPS telematics, multi-stop morning and afternoon routes, driver rosters, vehicle fitness
-                alerts, and student bus seat allocations.
-              </p>
-            </div>
+            )}
 
-            {/* Module 8: Library & Books */}
-            <div
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '14px',
-                border: '1px solid #e2e8f0',
-                padding: '24px',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
-              }}
-            >
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '10px',
-                  backgroundColor: '#fef3c7',
-                  color: '#d97706',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '16px',
-                }}
-              >
-                <BookOpen size={20} />
-              </div>
-              <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
-                Library & Book Circulation
-              </h3>
-              <p style={{ fontSize: '13.5px', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
-                Accession register, barcode scanner circulation, loan renewals, automated ₹5/day fine ledger, and integrated
-                NCERT digital e-library repository.
-              </p>
-            </div>
+            {activeTab === 'multicampus' && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px', alignItems: 'center' }}>
+                <div>
+                  <div style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: '6px', backgroundColor: '#f3e8ff', color: '#7c3aed', fontSize: '12px', fontWeight: 700, marginBottom: '12px' }}>
+                    Multi-Entity Scale
+                  </div>
+                  <h3 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: '0 0 10px' }}>
+                    True Multi-Campus Federation
+                  </h3>
+                  <p style={{ fontSize: '14px', color: '#64748b', lineHeight: 1.6, margin: '0 0 20px' }}>
+                    Single unified SaaS deployment supporting school groups with multiple cities, branches, and independent institutions under one legal trust.
+                  </p>
+                  <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '13.5px', color: '#334155', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <li>Strict database tenant isolation (`organizationId + institutionId + branchId`).</li>
+                    <li>Centralized management dashboard for group trustees.</li>
+                    <li>Isolated books of accounts and faculty payroll per physical campus.</li>
+                  </ul>
+                </div>
 
-            {/* Module 9: Staff HR */}
-            <div
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '14px',
-                border: '1px solid #e2e8f0',
-                padding: '24px',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
-              }}
-            >
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '10px',
-                  backgroundColor: '#ecfdf5',
-                  color: '#059669',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '16px',
-                }}
-              >
-                <Briefcase size={20} />
+                <div
+                  style={{
+                    backgroundColor: '#f8fbfe',
+                    borderRadius: '14px',
+                    border: '1px solid #cbd5e1',
+                    padding: '20px',
+                  }}
+                >
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#7c3aed', marginBottom: '12px', textTransform: 'uppercase' }}>
+                    Organization Hierarchy Hierarchy
+                  </div>
+                  <div style={{ padding: '12px', backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '12.5px', color: '#334155' }}>
+                    <strong>Education Trust / Group</strong><br />
+                    └── <strong>Main City K-12 School</strong> (Branch 1, Branch 2)<br />
+                    └── <strong>Integrated Coaching Academy</strong> (City Center, Branch 3)
+                  </div>
+                  <div style={{ marginTop: '12px', fontSize: '11.5px', color: '#64748b' }}>
+                    Zero cross-tenant data bleed across legal entities.
+                  </div>
+                </div>
               </div>
-              <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
-                Faculty HR & Payroll
-              </h3>
-              <p style={{ fontSize: '13.5px', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
-                Biometric RFID attendance sync, faculty qualifications directory, digital leave approval workflows, and
-                EPF/TDS compliant salary statement slips.
-              </p>
-            </div>
-
-            {/* Module 10: Official Reports & TC */}
-            <div
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '14px',
-                border: '1px solid #e2e8f0',
-                padding: '24px',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
-              }}
-            >
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '10px',
-                  backgroundColor: '#f3e8ff',
-                  color: '#7c3aed',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '16px',
-                }}
-              >
-                <FileText size={20} />
-              </div>
-              <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
-                Official CBSE Reports & TC
-              </h3>
-              <p style={{ fontSize: '13.5px', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
-                1-click generation of CBSE 2-Term report cards, official Transfer Certificates (TC) with UDISE numbers, class
-                tabulation registers, and fee defaulter recovery lists.
-              </p>
-            </div>
-
-            {/* Module 11: Institutional Settings */}
-            <div
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '14px',
-                border: '1px solid #e2e8f0',
-                padding: '24px',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
-              }}
-            >
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '10px',
-                  backgroundColor: '#e0f2fe',
-                  color: '#0284c7',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '16px',
-                }}
-              >
-                <Settings size={20} />
-              </div>
-              <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
-                Institutional Configuration
-              </h3>
-              <p style={{ fontSize: '13.5px', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
-                School profile with CBSE/ICSE board credentials, academic sessions, module entitlement switchboards, and
-                MeitY sovereign cloud data backups.
-              </p>
-            </div>
-
-            {/* Module 12: Communication */}
-            <div
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '14px',
-                border: '1px solid #e2e8f0',
-                padding: '24px',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
-              }}
-            >
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '10px',
-                  backgroundColor: '#fee2e2',
-                  color: '#dc2626',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '16px',
-                }}
-              >
-                <Bell size={20} />
-              </div>
-              <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
-                Circulars & SMS/WhatsApp
-              </h3>
-              <p style={{ fontSize: '13.5px', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
-                Instant broadcast of school circulars to parents and staff via TRAI DLT approved SMS pipes and official Meta
-                verified WhatsApp Business channels.
-              </p>
-            </div>
+            )}
           </div>
         </section>
 
-        {/* WHY CHOOSE AURXON SECTION (Blueprint Reference) */}
+        {/* ROLE-SPECIFIC WORKFLOW ARCHITECTURE */}
         <section
+          id="roles"
           style={{
-            backgroundColor: '#f8fafc',
-            borderTop: '1px solid #e2e8f0',
-            borderBottom: '1px solid #e2e8f0',
-            padding: '64px 24px',
+            maxWidth: '1240px',
+            margin: '0 auto 80px',
+            padding: '0 20px',
           }}
         >
-          <div style={{ maxWidth: '1240px', margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-              <span
-                style={{
-                  fontSize: '11.5px',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  color: '#0284c7',
-                  backgroundColor: '#e0f2fe',
-                  padding: '4px 12px',
-                  borderRadius: '4px',
-                }}
-              >
-                Institutional Advantages
-              </span>
-              <h2 style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', marginTop: '12px' }}>
-                Why Leading Education Leaders Choose AURXON
-              </h2>
-              <p style={{ fontSize: '14.5px', color: '#64748b', maxWidth: '600px', margin: '6px auto 0' }}>
-                Engineered from the ground up for the Indian educational ecosystem.
+          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+            <span
+              style={{
+                fontSize: '11.5px',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                color: '#0284c7',
+                letterSpacing: '0.05em',
+              }}
+            >
+              Role Workflows
+            </span>
+            <h2 style={{ fontSize: '28px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', marginTop: '4px' }}>
+              Purpose-Built Interfaces for Every Institutional Stakeholder
+            </h2>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
+            <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid rgba(186, 230, 253, 0.9)', padding: '24px', boxShadow: '0 4px 14px rgba(2, 132, 199, 0.05)' }}>
+              <Building2 size={24} color="#0284c7" style={{ marginBottom: '12px' }} />
+              <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>Principals & Trustees</h4>
+              <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
+                Real-time fee reconciliation, daily attendance percentage, audit logs, and faculty deployment metrics.
               </p>
             </div>
 
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-                gap: '20px',
-              }}
-            >
-              {[
-                {
-                  title: 'All-in-One Platform',
-                  desc: 'Schools, coaching institutes, and higher education administrative units operated seamlessly from a single workspace.',
-                  color: '#0284c7',
-                },
-                {
-                  title: 'Cost-Effective Enterprise Value',
-                  desc: 'Enterprise-grade features at an affordable Indian school budget with no hidden module fees or per-student extortion.',
-                  color: '#059669',
-                },
-                {
-                  title: 'Future-Ready Architecture',
-                  desc: 'Modern Next.js 14 stack, RESTful APIs, biometric/RFID device hooks, and scalable multi-tenant isolation.',
-                  color: '#7c3aed',
-                },
-                {
-                  title: 'Indian Compliance Built-in',
-                  desc: 'CBSE 9-point scale grading, national U-DISE+ data sync, RTE 25% quota tracking, and FY April–March fee structures.',
-                  color: '#d97706',
-                },
-                {
-                  title: 'Stakeholder Engagement',
-                  desc: 'Real-time connectivity between management, principals, teachers, parents, and students through dedicated portals.',
-                  color: '#dc2626',
-                },
-                {
-                  title: 'Authoritative Financial Health',
-                  desc: 'Computerized GST-ready fee invoices, bank reconciliation, concession tracking, and live collection summaries.',
-                  color: '#0c4a6e',
-                },
-              ].map((item, i) => (
-                <div
-                  key={i}
-                  style={{
-                    backgroundColor: '#ffffff',
-                    borderRadius: '12px',
-                    border: '1px solid #e2e8f0',
-                    padding: '20px',
-                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: item.color }} />
-                    <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
-                      {item.title}
-                    </h3>
-                  </div>
-                  <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
-                    {item.desc}
-                  </p>
-                </div>
-              ))}
+            <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid rgba(186, 230, 253, 0.9)', padding: '24px', boxShadow: '0 4px 14px rgba(2, 132, 199, 0.05)' }}>
+              <GraduationCap size={24} color="#0284c7" style={{ marginBottom: '12px' }} />
+              <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>Teachers & Faculty</h4>
+              <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
+                30-second mobile attendance roll call, test marks entry, automated CBSE grade point conversions, and timetable view.
+              </p>
+            </div>
+
+            <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid rgba(186, 230, 253, 0.9)', padding: '24px', boxShadow: '0 4px 14px rgba(2, 132, 199, 0.05)' }}>
+              <Receipt size={24} color="#0284c7" style={{ marginBottom: '12px' }} />
+              <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>Accountants & Bursars</h4>
+              <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
+                Instant quarter-wise ledger creation, bank reconciliation, RTE 25% reimbursement claims, and fee receipts.
+              </p>
+            </div>
+
+            <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid rgba(186, 230, 253, 0.9)', padding: '24px', boxShadow: '0 4px 14px rgba(2, 132, 199, 0.05)' }}>
+              <Users size={24} color="#0284c7" style={{ marginBottom: '12px' }} />
+              <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>Parents & Students</h4>
+              <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
+                Download official report cards, verify fee balances, pay installments, and check live attendance history.
+              </p>
             </div>
           </div>
         </section>
 
         {/* CALL TO ACTION BANNER */}
-        <section style={{ padding: '64px 24px', maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
+        <section
+          style={{
+            maxWidth: '1240px',
+            margin: '0 auto 60px',
+            padding: '0 20px',
+          }}
+        >
           <div
             style={{
-              background: 'linear-gradient(135deg, #075985 0%, #0c4a6e 45%, #1e3a8a 100%)',
-              border: '1px solid rgba(125, 211, 252, 0.4)',
-              borderRadius: '24px',
-              padding: '48px 32px',
+              borderRadius: '20px',
+              background: 'linear-gradient(135deg, #0c4a6e 0%, #0369a1 50%, #0284c7 100%)',
               color: '#ffffff',
-              boxShadow: '0 20px 45px -10px rgba(12, 74, 110, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.25)',
+              padding: '48px 32px',
+              textAlign: 'center',
+              boxShadow: '0 16px 40px -10px rgba(2, 132, 199, 0.35)',
             }}
           >
-            <h2 style={{ fontSize: '28px', fontWeight: 800, letterSpacing: '-0.02em', margin: '0 0 12px' }}>
-              Empower Your Educational Entity Today
+            <h2 style={{ fontSize: '28px', fontWeight: 800, margin: '0 0 10px', letterSpacing: '-0.02em' }}>
+              Provision Your Institution on AURXON in Minutes
             </h2>
-            <p style={{ fontSize: '15px', color: '#bae6fd', maxWidth: '600px', margin: '0 auto 28px', lineHeight: 1.6 }}>
-              Join hundreds of forward-thinking schools, coaching chains, and educational trusts across India.
-              Setup takes less than 2 minutes.
+            <p style={{ fontSize: '15px', color: '#e0f2fe', maxWidth: '580px', margin: '0 auto 28px' }}>
+              Deploy an independent multi-tenant educational scope complete with custom branded access link and administrative credentials.
             </p>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '14px', flexWrap: 'wrap' }}>
+
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
               <Link
                 href="/onboard"
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '13px 26px',
-                  borderRadius: '12px',
-                  background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)',
-                  color: '#075985',
-                  fontSize: '14.5px',
+                  padding: '12px 26px',
+                  borderRadius: '10px',
+                  backgroundColor: '#ffffff',
+                  color: '#0369a1',
+                  fontSize: '14px',
                   fontWeight: 700,
                   textDecoration: 'none',
                   boxShadow: '0 4px 14px rgba(0, 0, 0, 0.15)',
-                  border: '1px solid #bae6fd',
                 }}
               >
-                <span>Register Institution Free</span>
-                <ArrowRight size={16} />
+                Start Free Onboarding
               </Link>
+
               <Link
                 href="/login"
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '13px 26px',
-                  borderRadius: '12px',
-                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%)',
+                  padding: '12px 22px',
+                  borderRadius: '10px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
                   color: '#ffffff',
-                  fontSize: '14.5px',
+                  fontSize: '14px',
                   fontWeight: 600,
                   textDecoration: 'none',
-                  border: '1px solid rgba(255, 255, 255, 0.35)',
-                  backdropFilter: 'blur(8px)',
                 }}
               >
-                <span>Sign In to Existing Workspace</span>
+                Sign In to Existing Portal
               </Link>
             </div>
           </div>
         </section>
       </main>
 
-      {/* Footer */}
+      {/* Institutional Global Footer */}
       <footer
         style={{
-          borderTop: '1px solid #e2e8f0',
-          backgroundColor: '#f8fafc',
-          padding: '24px',
-          textAlign: 'center',
-          fontSize: '13px',
+          borderTop: '1px solid rgba(186, 230, 253, 0.8)',
+          backgroundColor: '#f8fbfe',
+          padding: '28px 20px',
+          fontSize: '12.5px',
           color: '#64748b',
         }}
       >
@@ -1495,23 +1224,33 @@ export default function RootLandingPage() {
             alignItems: 'center',
             justifyContent: 'space-between',
             flexWrap: 'wrap',
-            gap: '12px',
+            gap: '16px',
           }}
         >
           <div>
-            <strong>AURXON</strong> — The Centralized Operating System for Indian Education
+            <strong>AURXON Education OS</strong> • Multi-Tenant School & Coaching ERP Architecture
           </div>
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <Link href="/aurxon" style={{ color: '#0284c7', textDecoration: 'none', fontWeight: 600 }}>
-              AURXON Platform Operations
+          <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+            <Link href="/login" style={{ color: '#0284c7', textDecoration: 'none', fontWeight: 600 }}>
+              Staff & Student Login
             </Link>
-            <span>•</span>
-            <span>Security & Data Privacy</span>
-            <span>•</span>
-            <span>256-Bit Encrypted</span>
+            <Link href="/onboard" style={{ color: '#0284c7', textDecoration: 'none', fontWeight: 600 }}>
+              Self-Service Onboard
+            </Link>
+            <Link href="/aurxon/login" style={{ color: '#64748b', textDecoration: 'none' }}>
+              Platform Master HQ
+            </Link>
           </div>
         </div>
       </footer>
+
+      <style jsx global>{`
+        @media (max-width: 820px) {
+          .desktop-nav {
+            display: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

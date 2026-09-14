@@ -36,13 +36,13 @@ export default function DashboardPage() {
       try {
         const meRes = await fetch('/api/v1/auth/me');
         if (!meRes.ok) {
-          window.location.href = '/login';
+          window.location.replace('/login');
           return;
         }
 
         const meJson = await meRes.json();
         if (meJson.user?.role === 'SUPER_ADMIN') {
-          window.location.href = '/platform';
+          window.location.replace('/platform');
           return;
         }
         setUserData(meJson.user);

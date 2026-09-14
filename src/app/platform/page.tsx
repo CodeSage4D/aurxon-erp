@@ -26,13 +26,13 @@ export default function PlatformDashboardPage() {
       try {
         const meRes = await fetch('/api/v1/auth/me');
         if (!meRes.ok) {
-          window.location.href = '/login';
+          window.location.replace('/login');
           return;
         }
 
         const meJson = await meRes.json();
         if (meJson.user?.role !== 'SUPER_ADMIN') {
-          window.location.href = '/dashboard';
+          window.location.replace('/dashboard');
           return;
         }
         setUserData(meJson.user);
@@ -59,7 +59,7 @@ export default function PlatformDashboardPage() {
           Loading AURXON Platform Control Plane...
         </div>
         <button
-          onClick={() => { window.location.href = '/login'; }}
+          onClick={() => { window.location.replace('/login'); }}
           style={{ padding: '8px 16px', borderRadius: '6px', backgroundColor: '#0d9488', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}
         >
           Sign In

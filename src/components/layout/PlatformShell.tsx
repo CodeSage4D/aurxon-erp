@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import LiveClockWidget from '@/components/ui/LiveClockWidget';
 import {
   Server,
   Building2,
@@ -32,10 +33,24 @@ export default function PlatformShell({ user, children }: PlatformShellProps) {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Security: Invalidate bfcache on back button navigation
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        window.location.reload();
+      }
+    };
+    window.addEventListener('pageshow', onPageShow);
+    return () => window.removeEventListener('pageshow', onPageShow);
+  }, []);
+
   const handleLogout = async () => {
-    await fetch('/api/v1/auth/logout', { method: 'POST' });
-    router.push('/login');
-    router.refresh();
+    try {
+      await fetch('/api/v1/auth/logout', { method: 'POST' });
+    } catch {
+      // Proceed with redirect
+    }
+    window.location.replace('/aurxon/login');
   };
 
   const navItems = [
@@ -147,7 +162,8 @@ export default function PlatformShell({ user, children }: PlatformShellProps) {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+            <LiveClockWidget theme="dark" />
             <div style={{ fontSize: '12.5px', color: '#94a3b8' }}>
               Connected as <strong style={{ color: '#f1f5f9' }}>{user.email}</strong>
             </div>

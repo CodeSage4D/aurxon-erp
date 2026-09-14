@@ -7,6 +7,21 @@ const JWT_SECRET = new TextEncoder().encode(
 
 const COOKIE_NAME = 'aurxon_session';
 
+function applySecurityHeaders(res: NextResponse, isProtected = false): NextResponse {
+  res.headers.set('X-Content-Type-Options', 'nosniff');
+  res.headers.set('X-Frame-Options', 'SAMEORIGIN');
+  res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+
+  if (isProtected) {
+    // Prevent browser bfcache and intermediate proxy caches from saving authenticated user states
+    res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+    res.headers.set('Pragma', 'no-cache');
+    res.headers.set('Expires', '0');
+  }
+  return res;
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -22,7 +37,7 @@ export async function middleware(req: NextRequest) {
     pathname === '/access' ||
     pathname === '/onboard'
   ) {
-    return NextResponse.next();
+    return applySecurityHeaders(NextResponse.next(), false);
   }
 
   const token = req.cookies.get(COOKIE_NAME)?.value;
@@ -33,19 +48,20 @@ export async function middleware(req: NextRequest) {
       try {
         const { payload } = await jwtVerify(token, JWT_SECRET);
         if (payload.role === 'SUPER_ADMIN') {
-          return NextResponse.redirect(new URL('/aurxon', req.url));
+          return applySecurityHeaders(NextResponse.redirect(new URL('/aurxon', req.url)), true);
         }
       } catch {
         // Token invalid, proceed to /aurxon/login
       }
     }
-    return NextResponse.next();
+    return applySecurityHeaders(NextResponse.next(), false);
   }
 
   // If visiting /aurxon without valid token
   if (pathname === '/aurxon' || pathname.startsWith('/aurxon/')) {
     if (!token) {
-      return NextResponse.redirect(new URL('/aurxon/login', req.url));
+      const redirectRes = NextResponse.redirect(new URL('/aurxon/login', req.url));
+      return applySecurityHeaders(redirectRes, true);
     }
   }
 
@@ -55,14 +71,14 @@ export async function middleware(req: NextRequest) {
       try {
         const { payload } = await jwtVerify(token, JWT_SECRET);
         if (payload.role === 'SUPER_ADMIN') {
-          return NextResponse.redirect(new URL('/aurxon', req.url));
+          return applySecurityHeaders(NextResponse.redirect(new URL('/aurxon', req.url)), true);
         }
-        return NextResponse.redirect(new URL('/dashboard', req.url));
+        return applySecurityHeaders(NextResponse.redirect(new URL('/dashboard', req.url)), true);
       } catch {
         // Token invalid, allow /login
       }
     }
-    return NextResponse.next();
+    return applySecurityHeaders(NextResponse.next(), false);
   }
 
   // Root /: Redirect to /aurxon or /dashboard if authenticated, else allow public launchpad
@@ -71,22 +87,24 @@ export async function middleware(req: NextRequest) {
       try {
         const { payload } = await jwtVerify(token, JWT_SECRET);
         if (payload.role === 'SUPER_ADMIN') {
-          return NextResponse.redirect(new URL('/aurxon', req.url));
+          return applySecurityHeaders(NextResponse.redirect(new URL('/aurxon', req.url)), true);
         }
-        return NextResponse.redirect(new URL('/dashboard', req.url));
+        return applySecurityHeaders(NextResponse.redirect(new URL('/dashboard', req.url)), true);
       } catch {
         // Token invalid, render launchpad
       }
     }
-    return NextResponse.next();
+    return applySecurityHeaders(NextResponse.next(), false);
   }
 
   // Protected App and API routes
   if (!token) {
     if (pathname.startsWith('/api/')) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      const unauthorizedRes = NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return applySecurityHeaders(unauthorizedRes, true);
     }
-    return NextResponse.redirect(new URL('/login', req.url));
+    const redirectLogin = NextResponse.redirect(new URL('/login', req.url));
+    return applySecurityHeaders(redirectLogin, true);
   }
 
   try {
@@ -101,18 +119,21 @@ export async function middleware(req: NextRequest) {
       requestHeaders.set('x-inst-id', String(payload.institutionId));
     }
 
-    return NextResponse.next({
+    const nextRes = NextResponse.next({
       request: {
         headers: requestHeaders,
       },
     });
+
+    return applySecurityHeaders(nextRes, true);
   } catch {
     if (pathname.startsWith('/api/')) {
-      return NextResponse.json({ success: false, error: 'Session expired or invalid' }, { status: 401 });
+      const expiredRes = NextResponse.json({ success: false, error: 'Session expired or invalid' }, { status: 401 });
+      return applySecurityHeaders(expiredRes, true);
     }
     const response = NextResponse.redirect(new URL('/login', req.url));
     response.cookies.delete(COOKIE_NAME);
-    return response;
+    return applySecurityHeaders(response, true);
   }
 }
 

@@ -28,6 +28,7 @@ import {
 
 import ContextSwitcher from '@/components/layout/ContextSwitcher';
 import CommandPalette from '@/components/ui/CommandPalette';
+import LiveClockWidget from '@/components/ui/LiveClockWidget';
 import { Search, Server } from 'lucide-react';
 
 export interface AppShellUser {
@@ -50,10 +51,25 @@ export const AppShell: React.FC<AppShellProps> = ({ user, children }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cmdOpen, setCmdOpen] = useState(false);
 
+  // Security: Invalidate bfcache if user navigates back after logout
+  React.useEffect(() => {
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        window.location.reload();
+      }
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, []);
+
   const handleLogout = async () => {
-    await fetch('/api/v1/auth/logout', { method: 'POST' });
-    router.push('/login');
-    router.refresh();
+    try {
+      await fetch('/api/v1/auth/logout', { method: 'POST' });
+    } catch {
+      // Proceed with redirect even if network fails
+    }
+    // Hard replacement of history state to prevent Back button re-entry
+    window.location.replace('/login');
   };
 
   // Build role-aware navigation items
@@ -296,23 +312,8 @@ export const AppShell: React.FC<AppShellProps> = ({ user, children }) => {
           </div>
 
           <div className="header-right">
-            {/* Live Academic Date Indicator */}
-            <div
-              style={{
-                fontSize: '12.5px',
-                color: 'var(--text-muted)',
-                fontWeight: 500,
-                display: 'none',
-              }}
-              className="desktop-date-pill"
-            >
-              {new Date().toLocaleDateString('en-IN', {
-                weekday: 'short',
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-              })}
-            </div>
+            {/* Live Day, Date & Time Clock across full ERP */}
+            <LiveClockWidget theme="light" />
 
             {/* Quick Find (Ctrl+K) */}
             <button
