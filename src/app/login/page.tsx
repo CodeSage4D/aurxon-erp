@@ -14,20 +14,24 @@ import {
   Eye,
   EyeOff,
   Search,
+  Users,
+  GraduationCap,
 } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<'staff' | 'student'>('staff');
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!identifier.trim() || !password) {
-      setError('Please enter your official email or username and password.');
+      setError('Please enter your official email / username and password.');
       return;
     }
 
@@ -43,7 +47,7 @@ export default function LoginPage() {
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        setError(data.error || 'Authentication failed. Please check your credentials.');
+        setError(data.error || 'Authentication failed. Please verify your credentials.');
         setLoading(false);
         return;
       }
@@ -71,7 +75,7 @@ export default function LoginPage() {
         flexDirection: 'column',
       }}
     >
-      {/* Top Header */}
+      {/* Top Navigation Bar */}
       <header
         style={{
           borderBottom: '1px solid #e2e8f0',
@@ -110,28 +114,30 @@ export default function LoginPage() {
             </span>
           </Link>
 
-          <Link
-            href="/"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontSize: '13px',
-              fontWeight: 600,
-              color: '#0284c7',
-              textDecoration: 'none',
-              padding: '6px 12px',
-              borderRadius: '6px',
-              backgroundColor: '#f0f9ff',
-            }}
-          >
-            <Search size={14} />
-            <span>Find Your Organization</span>
-          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Link
+              href="/"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#0284c7',
+                textDecoration: 'none',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                backgroundColor: '#f0f9ff',
+              }}
+            >
+              <Search size={14} />
+              <span>Find Your School</span>
+            </Link>
+          </div>
         </div>
       </header>
 
-      {/* Main Sign In Form Container */}
+      {/* Main Sign In Surface */}
       <main
         style={{
           flex: 1,
@@ -142,7 +148,7 @@ export default function LoginPage() {
         }}
       >
         <div style={{ maxWidth: '440px', width: '100%' }}>
-          {/* Organization Discovery Notice */}
+          {/* Quick Notice Card */}
           <div
             style={{
               backgroundColor: '#f8fafc',
@@ -157,7 +163,7 @@ export default function LoginPage() {
               color: '#475569',
             }}
           >
-            <span>Have a specific school link?</span>
+            <span>Looking for your school portal?</span>
             <Link
               href="/"
               style={{
@@ -184,7 +190,7 @@ export default function LoginPage() {
               boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
             }}
           >
-            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
               <div
                 style={{
                   width: '48px',
@@ -204,9 +210,181 @@ export default function LoginPage() {
               <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>
                 Sign In to AURXON
               </h1>
-              <p style={{ fontSize: '13.5px', color: '#64748b', margin: 0 }}>
-                Enter your official credentials to access your workspace
+              <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
+                Sign in to your secure academic workspace
               </p>
+            </div>
+
+            {/* Portal Tab Switcher (Staff vs Student/Parent) */}
+            <div
+              style={{
+                display: 'flex',
+                backgroundColor: '#f1f5f9',
+                borderRadius: '8px',
+                padding: '4px',
+                marginBottom: '20px',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setActiveTab('staff')}
+                style={{
+                  flex: 1,
+                  padding: '8px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: activeTab === 'staff' ? '#ffffff' : 'transparent',
+                  color: activeTab === 'staff' ? '#0f172a' : '#64748b',
+                  fontSize: '12.5px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  boxShadow: activeTab === 'staff' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+                }}
+              >
+                <Users size={14} />
+                <span>Staff & Management</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('student')}
+                style={{
+                  flex: 1,
+                  padding: '8px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: activeTab === 'student' ? '#ffffff' : 'transparent',
+                  color: activeTab === 'student' ? '#0f172a' : '#64748b',
+                  fontSize: '12.5px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  boxShadow: activeTab === 'student' ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+                }}
+              >
+                <GraduationCap size={14} />
+                <span>Student / Parent</span>
+              </button>
+            </div>
+
+            {/* Quick Demo Credentials Autofill Bar */}
+            <div style={{ marginBottom: '18px', padding: '10px 12px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
+                Quick Test Role Autofill:
+              </div>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('staff');
+                    setIdentifier('principal.rkp@dps-society.edu');
+                    setPassword('Password@123');
+                    setError('');
+                  }}
+                  style={{
+                    padding: '3px 8px',
+                    borderRadius: '4px',
+                    border: '1px solid #bae6fd',
+                    backgroundColor: '#f0f9ff',
+                    color: '#0369a1',
+                    fontSize: '11.5px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Principal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('staff');
+                    setIdentifier('teacher.math@dps-society.edu');
+                    setPassword('Password@123');
+                    setError('');
+                  }}
+                  style={{
+                    padding: '3px 8px',
+                    borderRadius: '4px',
+                    border: '1px solid #bae6fd',
+                    backgroundColor: '#f0f9ff',
+                    color: '#0369a1',
+                    fontSize: '11.5px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Faculty
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('staff');
+                    setIdentifier('accountant@dps-society.edu');
+                    setPassword('Password@123');
+                    setError('');
+                  }}
+                  style={{
+                    padding: '3px 8px',
+                    borderRadius: '4px',
+                    border: '1px solid #bae6fd',
+                    backgroundColor: '#f0f9ff',
+                    color: '#0369a1',
+                    fontSize: '11.5px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Accountant
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('student');
+                    setIdentifier('student.aarav@dps-society.edu');
+                    setPassword('Password@123');
+                    setError('');
+                  }}
+                  style={{
+                    padding: '3px 8px',
+                    borderRadius: '4px',
+                    border: '1px solid #bbf7d0',
+                    backgroundColor: '#f0fdf4',
+                    color: '#166534',
+                    fontSize: '11.5px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Student
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('staff');
+                    setIdentifier('superadmin@aurxon.io');
+                    setPassword('Password@123');
+                    setError('');
+                  }}
+                  style={{
+                    padding: '3px 8px',
+                    borderRadius: '4px',
+                    border: '1px solid #e2e8f0',
+                    backgroundColor: '#ffffff',
+                    color: '#475569',
+                    fontSize: '11.5px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  HQ Admin
+                </button>
+              </div>
             </div>
 
             {error && (
@@ -232,7 +410,7 @@ export default function LoginPage() {
             <form onSubmit={handleLogin}>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                  Official Email, Username or Employee ID
+                  {activeTab === 'staff' ? 'Official Email or Employee ID' : 'Student Enrollment No. or Parent Email'}
                 </label>
                 <div style={{ position: 'relative' }}>
                   <Mail
@@ -245,7 +423,7 @@ export default function LoginPage() {
                     required
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder="e.g. principal@sharma-group.in"
+                    placeholder={activeTab === 'staff' ? 'e.g. principal@dps-society.edu' : 'e.g. student@school.edu'}
                     style={{
                       width: '100%',
                       padding: '10px 12px 10px 38px',
@@ -261,7 +439,7 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <div style={{ marginBottom: '20px' }}>
+              <div style={{ marginBottom: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                   <label style={{ fontSize: '12.5px', fontWeight: 600, color: '#334155' }}>
                     Password
@@ -313,6 +491,19 @@ export default function LoginPage() {
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
+              </div>
+
+              {/* Remember Me */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+                <input
+                  type="checkbox"
+                  id="rememberMe"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                <label htmlFor="rememberMe" style={{ fontSize: '12.5px', color: '#64748b', cursor: 'pointer' }}>
+                  Remember me on this browser
+                </label>
               </div>
 
               <button
@@ -381,13 +572,15 @@ export default function LoginPage() {
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>Powered by <strong>AURXON Education OS</strong></span>
           <div style={{ display: 'flex', gap: '16px' }}>
+            <Link href="/onboard" style={{ color: '#0284c7', textDecoration: 'none', fontWeight: 600 }}>
+              Register Institution
+            </Link>
+            <span>•</span>
             <Link href="/aurxon" style={{ color: '#64748b', textDecoration: 'none' }}>
               Platform Operations
             </Link>
             <span>•</span>
             <span>Support</span>
-            <span>•</span>
-            <span>Privacy Policy</span>
           </div>
         </div>
       </footer>

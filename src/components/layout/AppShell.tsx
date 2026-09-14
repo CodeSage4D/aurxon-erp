@@ -20,6 +20,10 @@ import {
   DollarSign,
   ShieldCheck,
   Compass,
+  Bus,
+  Briefcase,
+  FileText,
+  Settings,
 } from 'lucide-react';
 
 import ContextSwitcher from '@/components/layout/ContextSwitcher';
@@ -73,7 +77,12 @@ export const AppShell: React.FC<AppShellProps> = ({ user, children }) => {
             { href: '/students', label: 'Students Directory', icon: <Users /> },
             { href: '/academics', label: 'Academics & Structure', icon: <GraduationCap /> },
             { href: '/attendance', label: 'Daily Attendance', icon: <CalendarCheck /> },
+            { href: '/transport', label: 'Transport & Fleet', icon: <Bus /> },
+            { href: '/library', label: 'Library Circulation', icon: <BookOpen /> },
+            { href: '/staff', label: 'Faculty & Staff HR', icon: <Briefcase /> },
+            { href: '/reports', label: 'CBSE Reports & TC', icon: <FileText /> },
             { href: '/fees', label: 'Fees & Collections', icon: <Receipt /> },
+            { href: '/settings', label: 'Institution Settings', icon: <Settings /> },
           ],
         },
       ];
@@ -82,13 +91,14 @@ export const AppShell: React.FC<AppShellProps> = ({ user, children }) => {
     if (role === 'TEACHER' || role === 'FACULTY') {
       return [
         {
-          title: 'Classroom',
+          title: 'Classroom & Academics',
           items: [
             { href: '/dashboard', label: "Today's Schedule", icon: <LayoutDashboard /> },
             { href: '/academics', label: 'My Classes & Batches', icon: <BookOpen /> },
             { href: '/attendance', label: 'Take Attendance', icon: <CalendarCheck /> },
             { href: '/timetable', label: 'Class Timetable', icon: <CalendarDays /> },
             { href: '/examinations', label: 'Marks & Assessments', icon: <FileSpreadsheet /> },
+            { href: '/library', label: 'Library Catalog', icon: <BookOpen /> },
             { href: '/communication', label: 'Noticeboard', icon: <Bell /> },
           ],
         },
@@ -98,12 +108,14 @@ export const AppShell: React.FC<AppShellProps> = ({ user, children }) => {
     if (role === 'ACCOUNTANT') {
       return [
         {
-          title: 'Finance & Billing',
+          title: 'Finance & Operations',
           items: [
             { href: '/dashboard', label: 'Collections Hub', icon: <LayoutDashboard /> },
             { href: '/fees', label: 'Fee Structures & Dues', icon: <Receipt /> },
             { href: '/fees/collect', label: 'Collect Payment', icon: <DollarSign /> },
             { href: '/finance', label: 'Income & Expenses', icon: <FileSpreadsheet /> },
+            { href: '/staff', label: 'Staff Payroll Ledger', icon: <Briefcase /> },
+            { href: '/reports', label: 'Dues & Financial Reports', icon: <FileText /> },
             { href: '/students', label: 'Student Directory', icon: <Users /> },
           ],
         },
@@ -119,6 +131,8 @@ export const AppShell: React.FC<AppShellProps> = ({ user, children }) => {
             { href: '/attendance', label: 'My Attendance', icon: <CalendarCheck /> },
             { href: '/examinations', label: 'My Report Card', icon: <FileSpreadsheet /> },
             { href: '/timetable', label: 'Weekly Schedule', icon: <CalendarDays /> },
+            { href: '/transport', label: 'My Bus & Tracking', icon: <Bus /> },
+            { href: '/library', label: 'My Issued Books', icon: <BookOpen /> },
             { href: '/fees', label: 'Fee Invoices & Receipts', icon: <Receipt /> },
             { href: '/communication', label: 'Notices', icon: <Bell /> },
           ],
@@ -139,14 +153,24 @@ export const AppShell: React.FC<AppShellProps> = ({ user, children }) => {
         ],
       },
       {
-        title: 'Operations & Results',
+        title: 'Academic & Operations',
         items: [
           { href: '/attendance', label: 'Daily Attendance', icon: <CalendarCheck /> },
           { href: '/examinations', label: 'Exams & Results', icon: <FileSpreadsheet /> },
+          { href: '/transport', label: 'Transport & Fleet', icon: <Bus /> },
+          { href: '/library', label: 'Library Circulation', icon: <BookOpen /> },
+          { href: '/staff', label: 'Faculty & Staff HR', icon: <Briefcase /> },
+        ],
+      },
+      {
+        title: 'Finance & Governance',
+        items: [
           { href: '/fees', label: 'Fees & Collections', icon: <Receipt /> },
           { href: '/finance', label: 'Finance & Ledgers', icon: <DollarSign /> },
+          { href: '/reports', label: 'CBSE Reports & TC', icon: <FileText /> },
           { href: '/communication', label: 'Announcements', icon: <Bell /> },
           { href: '/audit', label: 'Audit Trail', icon: <ShieldCheck /> },
+          { href: '/settings', label: 'Institutional Settings', icon: <Settings /> },
         ],
       },
     ];

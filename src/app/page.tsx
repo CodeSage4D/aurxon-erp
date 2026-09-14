@@ -24,6 +24,12 @@ import {
   Compass,
   AlertCircle,
   X,
+  Bus,
+  BookOpen,
+  Briefcase,
+  FileText,
+  Settings,
+  Bell,
 } from 'lucide-react';
 
 interface OrganizationResult {
@@ -672,6 +678,39 @@ export default function RootLandingPage() {
             </div>
           )}
 
+          {/* QUICK INTERACTIVE CAMPUS LAUNCHERS */}
+          <div style={{ maxWidth: '640px', margin: '0 auto 18px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Quick Enrolled Previews:</span>
+            {[
+              { name: 'DPS R.K. Puram', slug: 'dps-society' },
+              { name: 'Apex IIT-JEE Academy', slug: 'apex-coaching' },
+              { name: 'Shri Ram Public School', slug: 'sris' },
+              { name: 'Global Indian World School', slug: 'giws' },
+            ].map((campus) => (
+              <button
+                key={campus.slug}
+                type="button"
+                onClick={() => router.push(`/s/${campus.slug}`)}
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  border: '1px solid #bae6fd',
+                  backgroundColor: '#f0f9ff',
+                  color: '#0369a1',
+                  fontSize: '11.5px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                <span>{campus.name}</span>
+                <ExternalLink size={11} />
+              </button>
+            ))}
+          </div>
+
           {/* DIRECT LINK FAST-PATH (Clean, Properly Proportioned Card) */}
           <div
             style={{
@@ -1036,6 +1075,365 @@ export default function RootLandingPage() {
                 Hierarchical governance across Organization → Institution → Branch → Academic Session with
                 cryptographic tenant isolation and consolidated executive reporting.
               </p>
+            </div>
+
+            {/* Module 7: Transport & Fleet */}
+            <div
+              style={{
+                backgroundColor: '#ffffff',
+                borderRadius: '14px',
+                border: '1px solid #e2e8f0',
+                padding: '24px',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+              }}
+            >
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '10px',
+                  backgroundColor: '#f0f9ff',
+                  color: '#0284c7',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <Bus size={20} />
+              </div>
+              <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
+                Transport & Live Fleet GPS
+              </h3>
+              <p style={{ fontSize: '13.5px', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
+                AIS-140 compliant GPS telematics, multi-stop morning and afternoon routes, driver rosters, vehicle fitness
+                alerts, and student bus seat allocations.
+              </p>
+            </div>
+
+            {/* Module 8: Library & Books */}
+            <div
+              style={{
+                backgroundColor: '#ffffff',
+                borderRadius: '14px',
+                border: '1px solid #e2e8f0',
+                padding: '24px',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+              }}
+            >
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '10px',
+                  backgroundColor: '#fef3c7',
+                  color: '#d97706',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <BookOpen size={20} />
+              </div>
+              <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
+                Library & Book Circulation
+              </h3>
+              <p style={{ fontSize: '13.5px', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
+                Accession register, barcode scanner circulation, loan renewals, automated ₹5/day fine ledger, and integrated
+                NCERT digital e-library repository.
+              </p>
+            </div>
+
+            {/* Module 9: Staff HR */}
+            <div
+              style={{
+                backgroundColor: '#ffffff',
+                borderRadius: '14px',
+                border: '1px solid #e2e8f0',
+                padding: '24px',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+              }}
+            >
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '10px',
+                  backgroundColor: '#ecfdf5',
+                  color: '#059669',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <Briefcase size={20} />
+              </div>
+              <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
+                Faculty HR & Payroll
+              </h3>
+              <p style={{ fontSize: '13.5px', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
+                Biometric RFID attendance sync, faculty qualifications directory, digital leave approval workflows, and
+                EPF/TDS compliant salary statement slips.
+              </p>
+            </div>
+
+            {/* Module 10: Official Reports & TC */}
+            <div
+              style={{
+                backgroundColor: '#ffffff',
+                borderRadius: '14px',
+                border: '1px solid #e2e8f0',
+                padding: '24px',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+              }}
+            >
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '10px',
+                  backgroundColor: '#f3e8ff',
+                  color: '#7c3aed',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <FileText size={20} />
+              </div>
+              <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
+                Official CBSE Reports & TC
+              </h3>
+              <p style={{ fontSize: '13.5px', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
+                1-click generation of CBSE 2-Term report cards, official Transfer Certificates (TC) with UDISE numbers, class
+                tabulation registers, and fee defaulter recovery lists.
+              </p>
+            </div>
+
+            {/* Module 11: Institutional Settings */}
+            <div
+              style={{
+                backgroundColor: '#ffffff',
+                borderRadius: '14px',
+                border: '1px solid #e2e8f0',
+                padding: '24px',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+              }}
+            >
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '10px',
+                  backgroundColor: '#e0f2fe',
+                  color: '#0284c7',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <Settings size={20} />
+              </div>
+              <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
+                Institutional Configuration
+              </h3>
+              <p style={{ fontSize: '13.5px', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
+                School profile with CBSE/ICSE board credentials, academic sessions, module entitlement switchboards, and
+                MeitY sovereign cloud data backups.
+              </p>
+            </div>
+
+            {/* Module 12: Communication */}
+            <div
+              style={{
+                backgroundColor: '#ffffff',
+                borderRadius: '14px',
+                border: '1px solid #e2e8f0',
+                padding: '24px',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+              }}
+            >
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '10px',
+                  backgroundColor: '#fee2e2',
+                  color: '#dc2626',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '16px',
+                }}
+              >
+                <Bell size={20} />
+              </div>
+              <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
+                Circulars & SMS/WhatsApp
+              </h3>
+              <p style={{ fontSize: '13.5px', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
+                Instant broadcast of school circulars to parents and staff via TRAI DLT approved SMS pipes and official Meta
+                verified WhatsApp Business channels.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* WHY CHOOSE AURXON SECTION (Blueprint Reference) */}
+        <section
+          style={{
+            backgroundColor: '#f8fafc',
+            borderTop: '1px solid #e2e8f0',
+            borderBottom: '1px solid #e2e8f0',
+            padding: '64px 24px',
+          }}
+        >
+          <div style={{ maxWidth: '1240px', margin: '0 auto' }}>
+            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+              <span
+                style={{
+                  fontSize: '11.5px',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  color: '#0284c7',
+                  backgroundColor: '#e0f2fe',
+                  padding: '4px 12px',
+                  borderRadius: '4px',
+                }}
+              >
+                Institutional Advantages
+              </span>
+              <h2 style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', marginTop: '12px' }}>
+                Why Leading Education Leaders Choose AURXON
+              </h2>
+              <p style={{ fontSize: '14.5px', color: '#64748b', maxWidth: '600px', margin: '6px auto 0' }}>
+                Engineered from the ground up for the Indian educational ecosystem.
+              </p>
+            </div>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                gap: '20px',
+              }}
+            >
+              {[
+                {
+                  title: 'All-in-One Platform',
+                  desc: 'Schools, coaching institutes, and higher education administrative units operated seamlessly from a single workspace.',
+                  color: '#0284c7',
+                },
+                {
+                  title: 'Cost-Effective Enterprise Value',
+                  desc: 'Enterprise-grade features at an affordable Indian school budget with no hidden module fees or per-student extortion.',
+                  color: '#059669',
+                },
+                {
+                  title: 'Future-Ready Architecture',
+                  desc: 'Modern Next.js 14 stack, RESTful APIs, biometric/RFID device hooks, and scalable multi-tenant isolation.',
+                  color: '#7c3aed',
+                },
+                {
+                  title: 'Indian Compliance Built-in',
+                  desc: 'CBSE 9-point scale grading, national U-DISE+ data sync, RTE 25% quota tracking, and FY April–March fee structures.',
+                  color: '#d97706',
+                },
+                {
+                  title: 'Stakeholder Engagement',
+                  desc: 'Real-time connectivity between management, principals, teachers, parents, and students through dedicated portals.',
+                  color: '#dc2626',
+                },
+                {
+                  title: 'Authoritative Financial Health',
+                  desc: 'Computerized GST-ready fee invoices, bank reconciliation, concession tracking, and live collection summaries.',
+                  color: '#0c4a6e',
+                },
+              ].map((item, i) => (
+                <div
+                  key={i}
+                  style={{
+                    backgroundColor: '#ffffff',
+                    borderRadius: '12px',
+                    border: '1px solid #e2e8f0',
+                    padding: '20px',
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: item.color }} />
+                    <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+                      {item.title}
+                    </h3>
+                  </div>
+                  <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.5, margin: 0 }}>
+                    {item.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CALL TO ACTION BANNER */}
+        <section style={{ padding: '64px 24px', maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
+          <div
+            style={{
+              backgroundColor: '#0c4a6e',
+              borderRadius: '20px',
+              padding: '48px 32px',
+              color: '#ffffff',
+            }}
+          >
+            <h2 style={{ fontSize: '28px', fontWeight: 800, letterSpacing: '-0.02em', margin: '0 0 12px' }}>
+              Empower Your Educational Entity Today
+            </h2>
+            <p style={{ fontSize: '15px', color: '#bae6fd', maxWidth: '600px', margin: '0 auto 28px', lineHeight: 1.6 }}>
+              Join hundreds of forward-thinking schools, coaching chains, and educational trusts across India.
+              Setup takes less than 2 minutes.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '14px', flexWrap: 'wrap' }}>
+              <Link
+                href="/onboard"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '12px 24px',
+                  borderRadius: '10px',
+                  backgroundColor: '#ffffff',
+                  color: '#0c4a6e',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                }}
+              >
+                <span>Register Institution Free</span>
+                <ArrowRight size={16} />
+              </Link>
+              <Link
+                href="/login"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '12px 24px',
+                  borderRadius: '10px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                  color: '#ffffff',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  border: '1px solid rgba(255, 255, 255, 0.25)',
+                }}
+              >
+                <span>Sign In to Existing Workspace</span>
+              </Link>
             </div>
           </div>
         </section>
