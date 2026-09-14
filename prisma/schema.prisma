@@ -60,8 +60,10 @@ model Organization {
   auditLogs           AuditLog[]
   staffProfiles       StaffProfile[]
   staffDocuments      StaffDocument[]
-  staffLeaveRequests  StaffLeaveRequest[]
-  approvalRequests    ApprovalRequest[]
+  staffLeaveRequests     StaffLeaveRequest[]
+  staffAttendanceRecords StaffAttendanceRecord[]
+  studentLeaveRequests   StudentLeaveRequest[]
+  approvalRequests       ApprovalRequest[]
 }
 
 model ModuleEntitlement {
@@ -400,6 +402,7 @@ model Student {
   marksEntries      MarksEntry[]
   feeAllocations    StudentFeeAllocation[]
   feePayments       FeePayment[]
+  leaveRequests     StudentLeaveRequest[]
 
   @@unique([organizationId, admissionNumber])
   @@index([organizationId, institutionId])
@@ -849,6 +852,8 @@ model StaffProfile {
   careerTimeline         StaffCareerEvent[]
   responsibilities       StaffResponsibility[]
   leaveRequests          StaffLeaveRequest[]
+  leaveBalances          StaffLeaveBalance[]
+  attendanceRecords      StaffAttendanceRecord[]
 
   @@unique([organizationId, employeeId])
   @@index([organizationId, institutionId])
@@ -1005,27 +1010,111 @@ model StaffResponsibility {
 }
 
 model StaffLeaveRequest {
-  id                String    @id @default(cuid())
-  staffId           String
-  organizationId    String
-  leaveType         String    // "CASUAL", "SICK", "MATERNITY", "PATERNITY", "EARNED", "UNPAID"
-  startDate         DateTime
-  endDate           DateTime
-  totalDays         Float
-  reason            String
-  substituteStaffId String?
-  status            String    @default("PENDING") // "PENDING", "APPROVED", "REJECTED", "CANCELLED"
-  reviewedByUserId  String?
-  reviewedAt        DateTime?
-  reviewRemarks     String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id                    String    @id @default(cuid())
+  staffId               String
+  organizationId        String
+  institutionId         String?
+  branchId              String?
+  academicSessionId     String?
+  leaveType             String    // "CASUAL", "SICK", "EARNED", "HALF_DAY", "EMERGENCY", "MATERNITY", "PATERNITY", "UNPAID", "SPECIAL", "DUTY"
+  startDate             DateTime
+  endDate               DateTime
+  totalDays             Float
+  halfDay               Boolean   @default(false)
+  halfDayPeriod         String?   // "FIRST_HALF", "SECOND_HALF"
+  emergency             Boolean   @default(false)
+  reason                String
+  contactDuringLeave    String?
+  supportingDocUrl      String?
+  academicImpactJson    String?   // JSON of affected classes/subjects/periods
+  substituteStaffId     String?
+  suggestedSubstituteId String?
+  status                String    @default("PENDING") // "DRAFT", "SUBMITTED", "PENDING", "UNDER_REVIEW", "APPROVED", "REJECTED", "CANCEL_REQUESTED", "CANCELLED", "WITHDRAWN"
+  currentReviewStep     String    @default("COORDINATOR") // "COORDINATOR", "HOD", "VICE_PRINCIPAL", "PRINCIPAL"
+  reviewedByUserId      String?
+  reviewedAt            DateTime?
+  reviewRemarks         String?
+  workflowStepsJson     String?   // JSON tracking multi-tier approval signatures
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
-  staff             StaffProfile @relation(fields: [staffId], references: [id], onDelete: Cascade)
-  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  staff                 StaffProfile @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  organization          Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([staffId, status])
   @@index([organizationId, status])
+}
+
+model StaffLeaveBalance {
+  id                String   @id @default(cuid())
+  staffId           String
+  academicSessionId String?
+  leaveType         String   // "CASUAL", "SICK", "EARNED", "MATERNITY", "PATERNITY", "UNPAID", "SPECIAL", "DUTY"
+  totalAllocated    Float
+  usedDays          Float    @default(0)
+  pendingDays       Float    @default(0)
+  availableDays     Float
+  updatedAt         DateTime @updatedAt
+  createdAt         DateTime @default(now())
+
+  staff             StaffProfile @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@unique([staffId, leaveType, academicSessionId])
+  @@index([staffId])
+}
+
+model StaffAttendanceRecord {
+  id                String   @id @default(cuid())
+  organizationId    String
+  institutionId     String?
+  branchId          String?
+  staffId           String
+  date              DateTime
+  status            String   // "PRESENT", "ABSENT", "LATE", "HALF_DAY", "LEAVE"
+  leaveRequestId    String?
+  remarks           String?
+  markedById        String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  staff             StaffProfile @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@unique([staffId, date])
+  @@index([organizationId, date])
+  @@index([staffId, status])
+}
+
+model StudentLeaveRequest {
+  id                  String   @id @default(cuid())
+  organizationId      String
+  institutionId       String?
+  academicSessionId   String?
+  studentId           String
+  appliedByUserId     String   // Parent or Student user ID
+  appliedByRole       String   // "PARENT" or "STUDENT"
+  leaveType           String   // "SICK", "MEDICAL", "CASUAL", "FAMILY_EMERGENCY", "PLANNED_ABSENCE", "BEREAVEMENT"
+  startDate           DateTime
+  endDate             DateTime
+  totalDays           Float
+  reason              String
+  parentConfirmation  Boolean  @default(true)
+  hasExamConflict     Boolean  @default(false)
+  examConflictDetails String?
+  supportingDocUrl    String?
+  status              String   @default("PENDING") // "PENDING", "UNDER_REVIEW", "APPROVED", "REJECTED", "WITHDRAWN", "CANCELLED"
+  reviewedByUserId    String?
+  reviewedAt          DateTime?
+  reviewRemarks       String?
+  currentReviewStep   String   @default("CLASS_TEACHER") // "CLASS_TEACHER", "COORDINATOR", "VICE_PRINCIPAL", "PRINCIPAL"
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  student             Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, status])
+  @@index([studentId, status])
 }
 
 // -------------------------------------------------------------
@@ -1033,25 +1122,29 @@ model StaffLeaveRequest {
 // -------------------------------------------------------------
 
 model ApprovalRequest {
-  id               String    @id @default(cuid())
-  organizationId   String
-  institutionId    String?
-  workflowType     String    // "ATTENDANCE_CORRECTION", "FEE_ADJUSTMENT", "FEE_REFUND", "EXAM_PUBLICATION", "STAFF_TRANSFER", "ROLE_CHANGE", "SENSITIVE_DOC_VERIFICATION"
-  title            String
-  description      String
-  payloadJson      String    // JSON state of requested change
-  requesterUserId  String
-  targetResourceId String?
-  status           String    @default("PENDING") // "PENDING", "APPROVED", "REJECTED", "CANCELLED"
-  approverUserId   String?
-  approvalRemarks  String?
-  actedAt          DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  id                      String    @id @default(cuid())
+  organizationId          String
+  institutionId           String?
+  workflowType            String    // "ATTENDANCE_CORRECTION", "FEE_ADJUSTMENT", "FEE_REFUND", "FEE_CONCESSION", "EXAM_PUBLICATION", "STAFF_TRANSFER", "STAFF_LEAVE_ESCALATION", "STUDENT_LEAVE_ESCALATION", "ROLE_CHANGE", "SENSITIVE_DOC_VERIFICATION"
+  title                   String
+  description             String
+  payloadJson             String    // JSON state of requested change
+  requesterUserId         String
+  targetResourceId        String?
+  status                  String    @default("PENDING") // "PENDING", "UNDER_REVIEW", "APPROVED", "REJECTED", "CANCELLED"
+  currentStep             String    @default("INITIAL_REVIEW") // "INITIAL_REVIEW", "FINANCE_MANAGER", "HOD", "VICE_PRINCIPAL", "PRINCIPAL"
+  stepsJson               String?   // JSON array of defined workflow steps
+  actionHistoryJson       String?   // JSON array of approvals/reviews performed
+  requiresFourEyesApproval Boolean  @default(true)
+  approverUserId          String?
+  approvalRemarks         String?
+  actedAt                 DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
 
-  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  requester        User         @relation("ApprovalsRequested", fields: [requesterUserId], references: [id], onDelete: Cascade)
-  approver         User?        @relation("ApprovalsActed", fields: [approverUserId], references: [id], onDelete: SetNull)
+  organization            Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requester               User         @relation("ApprovalsRequested", fields: [requesterUserId], references: [id], onDelete: Cascade)
+  approver                User?        @relation("ApprovalsActed", fields: [approverUserId], references: [id], onDelete: SetNull)
 
   @@index([organizationId, status])
   @@index([requesterUserId])

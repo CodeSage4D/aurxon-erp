@@ -85,6 +85,20 @@ export async function getSecurityActor(
     }
   }
 
+  // 4. Fetch staff profile department if actor is staff/faculty
+  let department: string | null = null;
+  try {
+    const staff = await prisma.staffProfile.findFirst({
+      where: { userId: user.id },
+      select: { id: true, department: true, branchId: true },
+    });
+    if (staff) {
+      department = staff.department || null;
+    }
+  } catch {
+    // Ignore
+  }
+
   return {
     id: user.id,
     email: user.email,
@@ -94,6 +108,7 @@ export async function getSecurityActor(
     organizationId: user.organizationId,
     institutionId: user.institutionId,
     branchId: user.branchId,
+    department,
     responsibilities,
     verifiedChildIds,
     studentProfileId,

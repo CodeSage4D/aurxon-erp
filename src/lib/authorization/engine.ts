@@ -8,11 +8,13 @@ import {
   AuthorizationDecision,
   EffectivePermissionInfo,
   ScopeLevel,
+  AccessLevel,
 } from './types';
 import {
   ACTION_DEFINITIONS,
   BASE_ROLE_PERMISSIONS,
   RESPONSIBILITY_PERMISSIONS,
+  getModuleAccessLevel,
 } from './permissions-registry';
 
 export class AuthorizationError extends Error {
@@ -94,34 +96,70 @@ export function authorize(
     };
   }
 
-  // 6. Enforce Subject & Section Assignment Boundaries for Teaching Staff
-  if (actor.role === 'TEACHER' || actor.role === 'FACULTY') {
+  // 6. Multi-dimensional Institutional Scoping (Institution, Branch, Session, Department)
+  const isElevated = actor.role === 'SUPER_ADMIN' || actor.role === 'ORG_ADMIN';
+
+  // Institution Boundary Check
+  if (!isElevated && actor.institutionId && resource.institutionId && actor.institutionId !== resource.institutionId) {
+    return {
+      allowed: false,
+      reason: `Institution mismatch: actor belongs to '${actor.institutionId}', resource belongs to '${resource.institutionId}'`,
+      denialCode: 'INSTITUTION_MISMATCH',
+    };
+  }
+
+  // Branch Boundary Check
+  if (!isElevated && actor.branchId && resource.branchId && actor.branchId !== resource.branchId) {
+    return {
+      allowed: false,
+      reason: `Branch mismatch: actor belongs to branch '${actor.branchId}', resource belongs to '${resource.branchId}'`,
+      denialCode: 'BRANCH_MISMATCH',
+    };
+  }
+
+  // Academic Session Check
+  if (!isElevated && actor.academicSessionId && resource.academicSessionId && actor.academicSessionId !== resource.academicSessionId) {
+    return {
+      allowed: false,
+      reason: `Academic Session mismatch: actor is in session '${actor.academicSessionId}', resource is for session '${resource.academicSessionId}'`,
+      denialCode: 'SESSION_MISMATCH',
+    };
+  }
+
+  // Department Boundary Check (for HODs)
+  if (actor.role === 'HOD' && actor.department && resource.department && actor.department !== resource.department) {
+    return {
+      allowed: false,
+      reason: `Department mismatch: HOD of '${actor.department}' cannot review '${resource.department}'`,
+      denialCode: 'DEPARTMENT_MISMATCH',
+    };
+  }
+
+  // 7. Enforce Subject & Section Assignment Boundaries for Teaching Staff
+  const isTeachingStaff = ['TEACHER', 'FACULTY', 'CLASS_TEACHER', 'SUBJECT_TEACHER'].includes(actor.role);
+  if (isTeachingStaff) {
     // Subject scoping: If teacher has subject assignments, restrict marks entry to assigned subjects
-    const subjectResponsibilities = activeResponsibilities.filter(
-      (r) => r.scopeLevel === 'SUBJECT' && r.subjectId
-    );
-    if (subjectResponsibilities.length > 0 && resource.subjectId) {
-      const isAssignedSubject = subjectResponsibilities.some(
-        (r) => r.subjectId === resource.subjectId
-      );
-      if (!isAssignedSubject) {
+    const assignedSubjects = activeResponsibilities
+      .filter((r) => r.scopeLevel === 'SUBJECT' && r.subjectId)
+      .map((r) => r.subjectId);
+
+    if (assignedSubjects.length > 0 && resource.subjectId && (action === 'examinations.enter_marks' || action === 'marks.enter')) {
+      if (!assignedSubjects.includes(resource.subjectId)) {
         return {
           allowed: false,
-          reason: `Subject Teacher is not assigned to subject '${resource.subjectId}'`,
+          reason: `Subject Teacher is assigned to [${assignedSubjects.join(', ')}], but target is '${resource.subjectId}'`,
           denialCode: 'OUT_OF_SCOPE',
         };
       }
     }
 
     // Section scoping: If teacher has section assignments and performs class-level action
-    const sectionResponsibilities = activeResponsibilities.filter(
-      (r) => r.scopeLevel === 'SECTION' && r.sectionId
-    );
-    if (sectionResponsibilities.length > 0 && resource.sectionId && action === 'attendance.correct') {
-      const isAssignedSection = sectionResponsibilities.some(
-        (r) => r.sectionId === resource.sectionId
-      );
-      if (!isAssignedSection) {
+    const assignedSections = activeResponsibilities
+      .filter((r) => (r.scopeLevel === 'SECTION' || r.responsibilityType === 'CLASS_TEACHER') && r.sectionId)
+      .map((r) => r.sectionId);
+
+    if (assignedSections.length > 0 && resource.sectionId && (action === 'attendance.correct' || action === 'leave.approve_student')) {
+      if (!assignedSections.includes(resource.sectionId)) {
         return {
           allowed: false,
           reason: `Teacher is not assigned to Section '${resource.sectionId}'`,
@@ -164,21 +202,10 @@ export function authorize(
     }
   }
 
-  // 7. Enforce Role-Specific Organizational Scoping
-  // Branch Head: strictly bound to assigned branch
-  if (actor.role === 'BRANCH_HEAD' && actor.branchId) {
-    if (resource.branchId && resource.branchId !== actor.branchId) {
-      return {
-        allowed: false,
-        reason: `Branch Head is restricted to Branch '${actor.branchId}', resource belongs to '${resource.branchId}'`,
-        denialCode: 'BRANCH_MISMATCH',
-      };
-    }
-  }
-
+  // 8. Parent & Student Self-Service Constraints
   // Parent: strictly bound to verified children
   if (actor.role === 'PARENT') {
-    if (action.endsWith('_own') || resource.type === 'STUDENT' || resource.type === 'ATTENDANCE' || resource.type === 'FEE' || resource.type === 'EXAMINATION') {
+    if (action.endsWith('_own') || resource.type === 'STUDENT' || resource.type === 'ATTENDANCE' || resource.type === 'FEE' || resource.type === 'EXAMINATION' || resource.type === 'LEAVE') {
       if (resource.studentId && !actor.verifiedChildIds.includes(resource.studentId)) {
         return {
           allowed: false,
@@ -201,16 +228,27 @@ export function authorize(
   }
 
   // Class Monitor (CR): explicitly barred from official marks and attendance edits
-  const isCR = activeResponsibilities.some((r) => r.responsibilityType === 'CLASS_MONITOR');
-  if (isCR && (action === 'attendance.mark' || action === 'attendance.correct' || action === 'examinations.enter_marks' || action.startsWith('fees.'))) {
+  const isCR = actor.role === 'CLASS_MONITOR' || activeResponsibilities.some((r) => r.responsibilityType === 'CLASS_MONITOR');
+  if (isCR && (
+    action === 'attendance.mark' ||
+    action === 'attendance.correct' ||
+    action === 'attendance.approve' ||
+    action === 'examinations.enter_marks' ||
+    action === 'examinations.create' ||
+    action === 'examinations.publish' ||
+    action.startsWith('fees.') ||
+    action.startsWith('staff.') ||
+    action.startsWith('roles.') ||
+    action.startsWith('approvals.')
+  )) {
     return {
       allowed: false,
-      reason: 'Class Monitor role is strictly advisory and cannot modify official student records',
+      reason: 'Class Monitor (CR) is strictly advisory and cannot modify official student or financial records',
       denialCode: 'INSUFFICIENT_ROLE_PERMISSIONS',
     };
   }
 
-  // 8. Sensitive HR Data Redaction
+  // 9. Sensitive HR Data Redaction
   let redactedFields: string[] | undefined;
   if (resource.type === 'STAFF') {
     const canViewSensitiveHR = basePerms.has('staff.view_sensitive_hr') || actor.role === 'ORG_ADMIN' || actor.role === 'HR_MANAGER';
@@ -322,10 +360,11 @@ export function getEffectivePermissions(actor: SecurityActor): EffectivePermissi
     return Object.keys(ACTION_DEFINITIONS).map((action) => ({
       action,
       allowed: true,
-      source: 'PLATFORM_SUPERADMIN',
-      applicableScope: 'PLATFORM',
-      isSensitive: ACTION_DEFINITIONS[action].isSensitive,
-      requiresFourEyesApproval: ACTION_DEFINITIONS[action].requiresFourEyesApproval,
+      accessLevel: 'FINALIZE' as const,
+      source: 'PLATFORM_SUPERADMIN' as const,
+      applicableScope: 'PLATFORM' as const,
+      isSensitive: ACTION_DEFINITIONS[action]?.isSensitive || false,
+      requiresFourEyesApproval: false,
     }));
   }
 
@@ -334,13 +373,13 @@ export function getEffectivePermissions(actor: SecurityActor): EffectivePermissi
 
   return Object.values(ACTION_DEFINITIONS).map((def) => {
     let allowed = basePerms.has('*') || basePerms.has(def.action);
-    let source: 'ROLE' | 'RESPONSIBILITY' | 'PLATFORM_SUPERADMIN' | 'NONE' = allowed ? 'ROLE' : 'NONE';
-    let sourceName = allowed ? actor.role : undefined;
+    let source: 'ROLE' | 'RESPONSIBILITY' | 'NONE' = allowed ? 'ROLE' : 'NONE';
+    let sourceName: string | undefined = allowed ? actor.role : undefined;
 
     if (!allowed) {
       for (const resp of activeResponsibilities) {
         const respPerms = new Set(RESPONSIBILITY_PERMISSIONS[resp.responsibilityType] || []);
-        if (respPerms.has(def.action) || respPerms.has('*')) {
+        if (respPerms.has('*') || respPerms.has(def.action)) {
           allowed = true;
           source = 'RESPONSIBILITY';
           sourceName = resp.responsibilityType;
@@ -352,6 +391,7 @@ export function getEffectivePermissions(actor: SecurityActor): EffectivePermissi
     return {
       action: def.action,
       allowed,
+      accessLevel: allowed ? (def.isSensitive ? 'VIEW_SENSITIVE' : 'EDIT') : 'NONE',
       source,
       sourceName,
       applicableScope: def.defaultScope,
@@ -393,3 +433,43 @@ export function sanitizeStaffRecord<T extends Record<string, any>>(
   delete sanitized.aadhaarNumber;
   return sanitized;
 }
+
+/**
+ * Validates that core school ERP records cannot be hard deleted casually.
+ * Enforces corrections, voids, cancellations, or archives with audit trails.
+ */
+export function assertNoHardDelete(resourceType: string, action: string): void {
+  const protectedTypes = [
+    'STUDENT',
+    'ATTENDANCE',
+    'EXAMINATION',
+    'MARKS',
+    'FEE',
+    'STAFF',
+    'LEAVE',
+    'AUDIT',
+  ];
+  const deleteActions = ['delete', 'remove', 'hard_delete', 'destroy', 'purge'];
+  if (
+    protectedTypes.includes(resourceType.toUpperCase()) &&
+    deleteActions.includes(action.toLowerCase())
+  ) {
+    throw new AuthorizationError(
+      `Hard delete prohibited for core entity '${resourceType}'. School ERP integrity requires correction, void, cancellation, or archiving with an audit trail.`,
+      'HARD_DELETE_PROHIBITED',
+      400
+    );
+  }
+}
+
+/**
+ * Resolves standard effective AccessLevel for an actor in a module
+ */
+export function evaluateAccessLevel(
+  actor: SecurityActor,
+  moduleName: string
+): AccessLevel {
+  if (actor.role === 'SUPER_ADMIN') return 'FINALIZE';
+  return getModuleAccessLevel(actor.role, moduleName);
+}
+
