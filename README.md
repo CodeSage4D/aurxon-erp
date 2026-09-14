@@ -1,15 +1,14 @@
-# aurxon-erp
-
 # AURXON Centralized School & Coaching ERP
 
-> **The Complete Education Operating System for Modern Schools, Coaching Institutes, and Multi-Branch Educational Groups.**
-> Built for the Indian Education Ecosystem • CBSE, U-DISE+, APAAR & RTE Compliant • Pure White Enterprise Design System.
+> **The Complete Education Operating System for Modern Schools, Coaching Networks, and Multi-Branch Educational Trusts.**  
+> Built for the Indian Education Ecosystem • CBSE, U-DISE+, APAAR & RTE Compliant • Pure White Enterprise Design System.  
+> **Engineering Specification:** Formally documented under **IEEE Std 830 / IEEE Std 1016** in [`docs/IEEE_SRS_SDD.md`](docs/IEEE_SRS_SDD.md).
 
 ---
 
 ## Architecture & Multi-Tenant Hierarchy
 
-AURXON is architected around strict multi-level tenancy:
+AURXON is architected around strict 4-level relational tenancy:
 
 ```text
 AURXON PLATFORM
@@ -20,48 +19,67 @@ AURXON PLATFORM
         │      │       │
         │      │       └── Branch / Campus (Physical Facility)
         │      │                │
-        │      │                └── Academic Session (e.g. 2026–2027)
+        │      │                └── Academic Session (e.g. 2025–2026)
         │      │
         │      └── Institution
         │
         └── Organization
 ```
 
-- **Control Plane A (Customer Workspace)**: Customer school branding dominates completely (e.g. *Delhi Public School*, *Sharma Education Group*). Built with a Pure White (`#ffffff`) canvas, Glacier Blue accents, and high-density operational data tables.
-- **Control Plane B (AURXON Platform Operations)**: Isolated strictly at `/aurxon` for platform provisioning, health monitoring, and SaaS licensing.
+- **Customer Workspace**: Dominated by customer school branding (e.g., *Delhi Public School*, *Sharma Education Group*). Built with a Pure White (`#ffffff`) canvas, Glacier Blue (`#0284c7`) and Deep Ocean (`#0c4a6e`) accents, and high-density operational data tables. Zero 3D tilt, zero performance overhead.
+- **Platform Operations**: Isolated at `/aurxon` for multi-tenant provisioning, health telemetry, and licensing.
 
 ---
 
-## Key Features
+## Comprehensive 12-Module Operating Matrix
 
-1. **Find Your Organization (Live Auto-Predict Search)**:
-   - Real-time debounced database query matching registered educational entities by name, acronym, slug, code, or city.
-   - Strict Data Minimization: Exposes only safe public metadata; zero internal IDs or user credentials leaked.
-2. **Direct School Workspace Links**:
-   - Instant routing via `/s/:slug` (e.g., `aurxon.app/s/dps`) directly into the institution's dedicated workspace.
-3. **Indian Education & Regulatory Standards**:
-   - **CBSE 9-Point Scale**: Automated A1–E2 letter grade evaluation and term report cards.
-   - **U-DISE+ & APAAR**: Unified student master records and national identifier readiness.
-   - **RTE 25% Quota Tracking**: Dedicated ledger management for subsidized and quota seats.
-   - **Quarterly Indian Financial Year Fee Cycles**: Installment ledgers, concessions, and computerized GST receipts.
-4. **Operational Modules**:
-   - Student Information System (SIS)
-   - Daily Roll Call & Biometric Attendance
-   - Examinations & Grading Engine
-   - Fee Allocation & Collections Reconciler
-   - Admissions & Inquiry Pipeline
-   - Financial Accounting Ledgers
-   - Timetable & Period Scheduling
-   - Secure Layered RBAC (Super Admin, Principal, Teacher, Accountant, Parent, Student)
+AURXON provides complete coverage across academic, administrative, and facility lifecycles:
+
+| # | Module | Route | Capabilities |
+| :---: | :--- | :--- | :--- |
+| 1 | **Student Information (SIS)** | `/students` | Master student profiles, guardian relationships, APAAR/UDISE+ registration, category tracking (GEN/OBC/SC/ST/EWS). |
+| 2 | **Admissions Pipeline** | `/admissions` | Multi-stage inquiry management, entrance exam evaluations, document verification, and 1-click student conversion. |
+| 3 | **Attendance & Biometrics** | `/attendance` | Period and roll-call attendance, composite-key idempotency `(studentId, date)`, automated absent SMS notifications. |
+| 4 | **Academics & Timetable** | `/academics`, `/timetable` | Class and section hierarchy, subject allocations, teacher load balancing, weekly grid scheduling, room collision prevention. |
+| 5 | **Exams & Grading** | `/examinations` | CBSE scholastic (Periodic Test, Notebook, Subject Enrichment, Term Exam) and co-scholastic grading; automated 9-point letter grade assignment (A1 to E2). |
+| 6 | **Fees & Collections** | `/fees` | Multi-head fee structures (Tuition, Lab, Exam, Transport), installment schedule, partial payments, computerized GST receipts. |
+| 7 | **Financial Accounting** | `/finance` | Institutional cashbooks, income and expense ledgers, balance sheet reconciliation, transaction category tracking. |
+| 8 | **Transport & Fleet GPS** | `/transport` | Fleet vehicle fitness/insurance tracking, multi-point routes with arrival/departure timestamps, commuter allocations, AIS-140 GPS radar. |
+| 9 | **Library & Circulation** | `/library` | Accession register with ISBN and shelf locations, circulation desk for book issue and return, automated ₹5/day overdue fines, NCERT e-library. |
+| 10 | **Faculty & Staff HR** | `/staff` | Teaching and administrative directory, biometric punch logs, multi-type leave approval workflows, EPF/TDS salary statement slips. |
+| 11 | **CBSE Reports & TC** | `/reports` | Formatted CBSE 2-Term report cards, official Transfer Certificates (TC) with UDISE numbers, class tabulation registers, fee defaulter statements. |
+| 12 | **Institutional Settings** | `/settings` | Board affiliation profile, active academic session switcher, modular entitlement switchboards, TRAI DLT SMS and WhatsApp Cloud API settings. |
+
+---
+
+## IEEE Engineering & Verification Standards
+
+AURXON development strictly adheres to IEEE standards:
+- **IEEE Std 830 / ISO/IEC/IEEE 29148**: Software Requirements Specification baseline.
+- **IEEE Std 1016**: Software Design Description and modular decomposition.
+- **IEEE Std 829**: Automated test documentation and test cases (`npm test` executes 36 automated suites).
+- **IEEE Std 828**: Configuration Management and Conventional Commit standards.
+
+### Conventional Commit Standard
+All commits must follow the IEEE / Conventional Commits format:
+```text
+<type>(<scope>): <short imperative description>
+
+[Detailed body with technical context and architectural rationale]
+
+[Footer: Traceability reference, e.g. IEEE-SRS: MOD-08]
+```
+
+Permitted types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`.
 
 ---
 
 ## Technology Stack
 
-- **Framework**: Next.js 14 (App Router, Server Actions, API Routes)
-- **Language**: TypeScript (Strict Mode)
+- **Framework**: Next.js 14 (App Router, Server Actions, Dynamic & Static Route Optimization)
+- **Language**: TypeScript (Strict Mode, 0 compile errors)
 - **Database & ORM**: SQLite (Dev) / PostgreSQL (Prod) via Prisma ORM
-- **Security**: 256-bit signed HttpOnly JWT sessions, Argon2/Bcrypt password hashing, Tenant-Isolation middleware
+- **Security**: 256-bit signed `HttpOnly` JWT sessions, Argon2/Bcrypt password hashing, Tenant-Isolation middleware
 - **Testing**: Vitest (36 automated unit, adversarial security, and multi-tenant isolation tests)
 - **Styling**: Pure Vanilla CSS Design System with CSS Tokens (`tokens.css`, `components.css`)
 
@@ -85,11 +103,33 @@ npx tsx prisma/seed.ts
 npm test
 ```
 
-### 4. Start Development Server
+### 4. Verify TypeScript Compilation
+```bash
+npx tsc --noEmit
+```
+
+### 5. Build for Production
+```bash
+npm run build
+```
+
+### 6. Start Development Server
 ```bash
 npm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+## Default Seed Credentials (1-Click Fill on Login Page)
+
+| Role | Email | Password | Scope |
+| :--- | :--- | :--- | :--- |
+| **Principal** | `principal.rkp@dps-society.edu` | `Password@123` | DPS R.K. Puram |
+| **Faculty** | `teacher.math@dps-society.edu` | `Password@123` | DPS R.K. Puram |
+| **Accountant** | `accountant@dps-society.edu` | `Password@123` | DPS R.K. Puram |
+| **Student** | `student.aarav@dps-society.edu` | `Password@123` | DPS R.K. Puram |
+| **HQ Admin** | `superadmin@aurxon.io` | `Password@123` | AURXON SaaS Platform |
 
 ---
 
