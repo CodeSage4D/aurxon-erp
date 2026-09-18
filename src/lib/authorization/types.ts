@@ -212,6 +212,7 @@ export type LeaveType =
   | 'CASUAL'
   | 'SICK'
   | 'EARNED'
+  | 'PRIVILEGE'
   | 'HALF_DAY'
   | 'EMERGENCY'
   | 'MATERNITY'

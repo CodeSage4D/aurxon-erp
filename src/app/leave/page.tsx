@@ -864,6 +864,11 @@ export default function LeaveManagementPage() {
                       <option value="CASUAL">Casual Leave (CL)</option>
                       <option value="SICK">Sick Leave (SL)</option>
                       <option value="EARNED">Earned Leave (EL)</option>
+                      <option value="PRIVILEGE">Privilege Leave (PL)</option>
+                      <option value="HALF_DAY">Half-Day Leave</option>
+                      <option value="EMERGENCY">Emergency Leave</option>
+                      <option value="MATERNITY">Maternity Leave</option>
+                      <option value="PATERNITY">Paternity Leave</option>
                       <option value="DUTY">Duty Leave (OD)</option>
                       <option value="SPECIAL">Special Leave</option>
                       <option value="UNPAID">Unpaid Leave</option>

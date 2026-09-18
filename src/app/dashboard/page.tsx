@@ -23,6 +23,9 @@ import {
   DollarSign,
   ChevronRight,
   AlertCircle,
+  BarChart3,
+  PieChart,
+  Activity,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -396,6 +399,265 @@ export default function DashboardPage() {
               <span style={{ color: '#64748b' }}>• Session 2026–27</span>
             </div>
           </Link>
+        </div>
+
+        {/* =========================================================
+            VISUAL ANALYTICS & OPERATIONAL TELEMETRY CHARTS
+            ========================================================= */}
+        <div style={{ marginBottom: '28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Activity size={18} color="#2270AF" />
+              <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#192D55', margin: 0 }}>
+                Operational Telemetry & Visual Analytics
+              </h3>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', color: '#16a34a', fontWeight: 700, backgroundColor: '#f0fdf4', padding: '4px 10px', borderRadius: '9999px', border: '1px solid #bbf7d0' }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#16a34a', animation: 'pulse 1.5s infinite' }} />
+              <span>Real-Time Biometric & Financial Feed</span>
+            </div>
+          </div>
+
+          {/* ROW 1: ATTENDANCE TREND + CASHFLOW TRAJECTORY */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '20px' }}>
+            {/* CHART 1: WEEKLY ATTENDANCE RATE (SVG BAR CHART) */}
+            <div style={{ backgroundColor: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <BarChart3 size={15} color="#0284c7" />
+                    <strong style={{ fontSize: '14px', color: '#0f172a' }}>Weekly Attendance Rate</strong>
+                  </div>
+                  <p style={{ fontSize: '11.5px', color: '#64748b', margin: '2px 0 0' }}>Daily presence percentage across all campuses</p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '18px', fontWeight: 800, color: '#0284c7' }}>95.8%</div>
+                  <div style={{ fontSize: '11px', color: '#16a34a', fontWeight: 600 }}>+1.4% vs last week</div>
+                </div>
+              </div>
+
+              {/* SVG Visual Bar Chart */}
+              <div style={{ height: '160px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '12px', padding: '10px 10px 0', borderBottom: '1px solid #e2e8f0', position: 'relative' }}>
+                {/* 95% Benchmark Line */}
+                <div style={{ position: 'absolute', top: '15px', left: 0, right: 0, borderTop: '1px dashed #cbd5e1', zIndex: 1 }}>
+                  <span style={{ position: 'absolute', right: 0, top: '-14px', fontSize: '10px', color: '#94a3b8', fontWeight: 600 }}>Target: 95%</span>
+                </div>
+
+                {[
+                  { day: 'Mon', total: 94.2, boys: 93.8, girls: 94.6 },
+                  { day: 'Tue', total: 96.8, boys: 96.1, girls: 97.5 },
+                  { day: 'Wed', total: 95.4, boys: 95.0, girls: 95.8 },
+                  { day: 'Thu', total: 97.2, boys: 96.9, girls: 97.5 },
+                  { day: 'Fri', total: 94.6, boys: 94.0, girls: 95.2 },
+                ].map((item, idx) => {
+                  const barHeight = Math.max(10, Math.round(((item.total - 70) / 30) * 120));
+                  return (
+                    <div key={idx} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', zIndex: 2, height: '100%', justifyContent: 'flex-end' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: item.total >= 95 ? '#0284c7' : '#d97706' }}>
+                        {item.total}%
+                      </span>
+                      <div style={{ width: '100%', maxWidth: '36px', height: `${barHeight}px`, borderRadius: '6px 6px 2px 2px', background: 'linear-gradient(180deg, #0284c7 0%, #38bdf8 100%)', boxShadow: '0 2px 4px rgba(2,132,199,0.2)', transition: 'transform 150ms ease' }} />
+                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, marginTop: '4px' }}>{item.day}</span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '18px', marginTop: '12px', fontSize: '11px', color: '#64748b' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '2px', backgroundColor: '#0284c7' }} /> Overall Attendance
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '2px', backgroundColor: '#10b981' }} /> Biometric Verified
+                </span>
+              </div>
+            </div>
+
+            {/* CHART 2: REVENUE & CASHFLOW (SVG GRADIENT AREA CHART) */}
+            <div style={{ backgroundColor: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <TrendingUp size={15} color="#0f766e" />
+                    <strong style={{ fontSize: '14px', color: '#0f172a' }}>Fee Collection Trajectory</strong>
+                  </div>
+                  <p style={{ fontSize: '11.5px', color: '#64748b', margin: '2px 0 0' }}>Billed dues vs Realized cashflow (₹ in Lakhs)</p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '18px', fontWeight: 800, color: '#0f766e' }}>87.4%</div>
+                  <div style={{ fontSize: '11px', color: '#64748b' }}>Realization rate</div>
+                </div>
+              </div>
+
+              {/* Area SVG Chart */}
+              <div style={{ height: '160px', position: 'relative', overflow: 'hidden' }}>
+                <svg viewBox="0 0 400 140" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+                  <defs>
+                    <linearGradient id="feeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#0f766e" stopOpacity="0.35" />
+                      <stop offset="100%" stopColor="#0f766e" stopOpacity="0.0" />
+                    </linearGradient>
+                  </defs>
+
+                  {/* Grid Lines */}
+                  <line x1="0" y1="30" x2="400" y2="30" stroke="#f1f5f9" strokeDasharray="3,3" />
+                  <line x1="0" y1="70" x2="400" y2="70" stroke="#f1f5f9" strokeDasharray="3,3" />
+                  <line x1="0" y1="110" x2="400" y2="110" stroke="#f1f5f9" strokeDasharray="3,3" />
+
+                  {/* Target Line (Dotted Gray) */}
+                  <polyline
+                    fill="none"
+                    stroke="#94a3b8"
+                    strokeWidth="1.5"
+                    strokeDasharray="4,4"
+                    points="20,50 80,45 140,40 200,35 260,30 320,25 380,20"
+                  />
+
+                  {/* Area Fill */}
+                  <polygon
+                    fill="url(#feeGrad)"
+                    points="20,130 20,80 80,68 140,55 200,60 260,42 320,35 380,28 380,130"
+                  />
+
+                  {/* Realized Collection Line */}
+                  <polyline
+                    fill="none"
+                    stroke="#0f766e"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    points="20,80 80,68 140,55 200,60 260,42 320,35 380,28"
+                  />
+
+                  {/* Data Points */}
+                  {[
+                    { cx: 20, cy: 80, m: 'Apr' },
+                    { cx: 80, cy: 68, m: 'Jun' },
+                    { cx: 140, cy: 55, m: 'Aug' },
+                    { cx: 200, cy: 60, m: 'Oct' },
+                    { cx: 260, cy: 42, m: 'Dec' },
+                    { cx: 320, cy: 35, m: 'Jan' },
+                    { cx: 380, cy: 28, m: 'Mar' },
+                  ].map((pt, i) => (
+                    <g key={i}>
+                      <circle cx={pt.cx} cy={pt.cy} r="4" fill="#ffffff" stroke="#0f766e" strokeWidth="2.5" />
+                      <text x={pt.cx} y="138" fontSize="9.5" fill="#64748b" textAnchor="middle" fontWeight="600">{pt.m}</text>
+                    </g>
+                  ))}
+                </svg>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', fontSize: '11px', color: '#64748b' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '2px', backgroundColor: '#0f766e' }} /> Realized Collection
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span style={{ width: '12px', borderTop: '2px dashed #94a3b8' }} /> Projected Target
+                </span>
+                <Link href="/fees" style={{ color: '#0f766e', fontWeight: 700, textDecoration: 'none' }}>
+                  Full Ledger &rarr;
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* ROW 2: GRADE STRENGTH DISTRIBUTION + ACADEMIC PERFORMANCE */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '20px' }}>
+            {/* CHART 3: GRADE STRENGTH DISTRIBUTION */}
+            <div style={{ backgroundColor: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <div>
+                  <strong style={{ fontSize: '14px', color: '#0f172a' }}>Enrollment by Grade Level</strong>
+                  <p style={{ fontSize: '11.5px', color: '#64748b', margin: '2px 0 0' }}>Classroom capacity & student density</p>
+                </div>
+                <Link href="/students" style={{ fontSize: '11.5px', color: '#2270AF', fontWeight: 700, textDecoration: 'none' }}>
+                  Class Directory
+                </Link>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {[
+                  { grade: 'Class 12 (Senior Sec)', count: 245, max: 250, pct: 98, color: '#192D55' },
+                  { grade: 'Class 11 (Senior Sec)', count: 238, max: 250, pct: 95, color: '#2270AF' },
+                  { grade: 'Class 10 (Secondary)', count: 260, max: 260, pct: 100, color: '#0f766e' },
+                  { grade: 'Class 9 (Secondary)', count: 248, max: 260, pct: 95, color: '#0284c7' },
+                  { grade: 'Class 8 (Middle)', count: 230, max: 250, pct: 92, color: '#9E3BB3' },
+                ].map((row, i) => (
+                  <div key={i}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '4px' }}>
+                      <span style={{ fontWeight: 600, color: '#334155' }}>{row.grade}</span>
+                      <span style={{ color: '#64748b', fontWeight: 600 }}>{row.count} / {row.max} ({row.pct}%)</span>
+                    </div>
+                    <div style={{ height: '7px', width: '100%', backgroundColor: '#f1f5f9', borderRadius: '9999px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${row.pct}%`, backgroundColor: row.color, borderRadius: '9999px', transition: 'width 300ms ease' }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* CHART 4: ACADEMIC PERFORMANCE (DONUT RING CHART) */}
+            <div style={{ backgroundColor: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <PieChart size={15} color="#9E3BB3" />
+                    <strong style={{ fontSize: '14px', color: '#0f172a' }}>Assessment Performance Profile</strong>
+                  </div>
+                  <p style={{ fontSize: '11.5px', color: '#64748b', margin: '2px 0 0' }}>Term assessment distribution & grade tiers</p>
+                </div>
+                <Link href="/examinations" style={{ fontSize: '11.5px', color: '#9E3BB3', fontWeight: 700, textDecoration: 'none' }}>
+                  Exam Records
+                </Link>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', gap: '20px' }}>
+                {/* SVG Donut Ring */}
+                <div style={{ position: 'relative', width: '130px', height: '130px' }}>
+                  <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
+                    {/* Ring 1: Background */}
+                    <circle cx="18" cy="18" r="14" fill="none" stroke="#f1f5f9" strokeWidth="4.5" />
+                    {/* Ring 2: Distinction (A+ 42%) */}
+                    <circle cx="18" cy="18" r="14" fill="none" stroke="#192D55" strokeWidth="4.5" strokeDasharray="37 100" strokeDashoffset="0" />
+                    {/* Ring 3: First Div (A 34%) */}
+                    <circle cx="18" cy="18" r="14" fill="none" stroke="#2270AF" strokeWidth="4.5" strokeDasharray="30 100" strokeDashoffset="-37" />
+                    {/* Ring 4: Second Div (B 18%) */}
+                    <circle cx="18" cy="18" r="14" fill="none" stroke="#0f766e" strokeWidth="4.5" strokeDasharray="16 100" strokeDashoffset="-67" />
+                    {/* Ring 5: Needs Support (6%) */}
+                    <circle cx="18" cy="18" r="14" fill="none" stroke="#f59e0b" strokeWidth="4.5" strokeDasharray="6 100" strokeDashoffset="-83" />
+                  </svg>
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontSize: '17px', fontWeight: 900, color: '#192D55', lineHeight: 1 }}>98.4%</span>
+                    <span style={{ fontSize: '9px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Pass Rate</span>
+                  </div>
+                </div>
+
+                {/* Donut Legend */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '11.5px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: '10px', height: '10px', borderRadius: '3px', backgroundColor: '#192D55' }} />
+                    <span style={{ color: '#334155', fontWeight: 600 }}>Distinction (A+ 90%+)</span>
+                    <strong style={{ marginLeft: 'auto', color: '#0f172a' }}>42%</strong>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: '10px', height: '10px', borderRadius: '3px', backgroundColor: '#2270AF' }} />
+                    <span style={{ color: '#334155', fontWeight: 600 }}>First Division (75-89%)</span>
+                    <strong style={{ marginLeft: 'auto', color: '#0f172a' }}>34%</strong>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: '10px', height: '10px', borderRadius: '3px', backgroundColor: '#0f766e' }} />
+                    <span style={{ color: '#334155', fontWeight: 600 }}>Second Division (60-74%)</span>
+                    <strong style={{ marginLeft: 'auto', color: '#0f172a' }}>18%</strong>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: '10px', height: '10px', borderRadius: '3px', backgroundColor: '#f59e0b' }} />
+                    <span style={{ color: '#334155', fontWeight: 600 }}>Academic Support (&lt;60%)</span>
+                    <strong style={{ marginLeft: 'auto', color: '#0f172a' }}>6%</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* TWO-COLUMN OPERATIONAL GRID */}

@@ -23,6 +23,7 @@ const StaffLeaveSchema = z.object({
     'CASUAL',
     'SICK',
     'EARNED',
+    'PRIVILEGE',
     'HALF_DAY',
     'EMERGENCY',
     'MATERNITY',
