@@ -243,8 +243,8 @@ export default function ReportsPage() {
                 <div><span style={{ color: '#64748b' }}>Class & Section:</span> <strong>{card.classAndSection}</strong></div>
                 <div><span style={{ color: '#64748b' }}>Date of Birth:</span> <strong>{card.dob}</strong></div>
                 <div><span style={{ color: '#64748b' }}>Attendance:</span> <strong>{card.attendance}</strong></div>
-                <div><span style={{ color: '#64748b' }}>Father's Name:</span> <strong>{card.fatherName}</strong></div>
-                <div><span style={{ color: '#64748b' }}>Mother's Name:</span> <strong>{card.motherName}</strong></div>
+                <div><span style={{ color: '#64748b' }}>Father&apos;s Name:</span> <strong>{card.fatherName}</strong></div>
+                <div><span style={{ color: '#64748b' }}>Mother&apos;s Name:</span> <strong>{card.motherName}</strong></div>
                 <div><span style={{ color: '#64748b' }}>Curriculum:</span> <strong>CBSE NEP-2020</strong></div>
               </div>
             </div>

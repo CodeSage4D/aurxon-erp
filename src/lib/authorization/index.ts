@@ -5,3 +5,4 @@ export * from './engine';
 export * from './context';
 export * from './id-generator';
 export * from './qr';
+export * from './query-scoper';

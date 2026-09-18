@@ -733,6 +733,7 @@ export const BASE_ROLE_PERMISSIONS: Record<string, string[]> = {
 
   ACCOUNTANT: [
     'students.view',
+    'staff.view',
     'fees.view',
     'fees.create',
     'fees.collect',
@@ -1238,4 +1239,139 @@ export function getModuleAccessLevel(role: string, module: string): AccessLevel 
   return moduleMatrix[role.toUpperCase()] || 'NONE';
 }
 
-export const ALL_PERMISSIONS = Object.keys(ACTION_DEFINITIONS);
+// --- CANONICAL GRANULAR PERMISSIONS VOCABULARY ---
+export const CANONICAL_PERMISSIONS = [
+  'student.read', 'student.create', 'student.update', 'student.archive',
+  'guardian.read', 'guardian.create', 'guardian.update',
+  'attendance.read', 'attendance.create', 'attendance.update', 'attendance.lock',
+  'class.read', 'class.create', 'class.update',
+  'section.read', 'section.create', 'section.update',
+  'subject.read', 'subject.create', 'subject.update',
+  'exam.read', 'exam.create', 'exam.update', 'exam.publish',
+  'result.read', 'result.create', 'result.update', 'result.publish',
+  'fee.read', 'fee.create', 'fee.update',
+  'payment.read', 'payment.create', 'payment.reverse',
+  'receipt.read', 'receipt.create',
+  'staff.read', 'staff.create', 'staff.update',
+  'payroll.read', 'payroll.create', 'payroll.approve',
+  'document.read', 'document.upload', 'document.verify', 'document.download',
+  'report.read',
+  'account.read', 'account.create', 'account.update', 'account.disable',
+  'role.read', 'role.create', 'role.update',
+  'audit.read',
+  'settings.read', 'settings.update',
+] as const;
+
+export const PERMISSION_ALIASES: Record<string, string[]> = {
+  'student.read': ['students.view', 'students.view_own', 'student.view', 'student.view_own'],
+  'student.create': ['students.create', 'admissions.create'],
+  'student.update': ['students.update'],
+  'student.archive': ['students.archive', 'students.delete'],
+  'guardian.read': ['guardians.view', 'parents.view'],
+  'guardian.create': ['guardians.create', 'parents.create'],
+  'guardian.update': ['guardians.update', 'parents.update'],
+  'attendance.read': ['attendance.view', 'attendance.view_own'],
+  'attendance.create': ['attendance.mark'],
+  'attendance.update': ['attendance.correct'],
+  'attendance.lock': ['attendance.approve', 'attendance.finalize'],
+  'class.read': ['academics.view', 'classes.view'],
+  'class.create': ['academics.manage', 'classes.create'],
+  'class.update': ['academics.manage', 'classes.update'],
+  'section.read': ['academics.view', 'sections.view'],
+  'section.create': ['academics.manage', 'sections.create'],
+  'section.update': ['academics.manage', 'sections.update'],
+  'subject.read': ['academics.view', 'subjects.view'],
+  'subject.create': ['academics.manage', 'subjects.create'],
+  'subject.update': ['academics.manage', 'subjects.update'],
+  'exam.read': ['examinations.view', 'examinations.view_own'],
+  'exam.create': ['examinations.create'],
+  'exam.update': ['examinations.review'],
+  'exam.publish': ['examinations.publish'],
+  'result.read': ['examinations.view', 'examinations.view_own'],
+  'result.create': ['examinations.enter_marks', 'marks.enter'],
+  'result.update': ['examinations.enter_marks', 'marks.enter'],
+  'result.publish': ['examinations.publish'],
+  'fee.read': ['fees.view', 'fees.view_own'],
+  'fee.create': ['fees.create', 'fees.adjust'],
+  'fee.update': ['fees.adjust', 'fees.refund', 'fees.approve'],
+  'payment.read': ['fees.view', 'fees.receipt', 'fees.view_own'],
+  'payment.create': ['fees.collect'],
+  'payment.reverse': ['fees.refund', 'fees.adjust'],
+  'receipt.read': ['fees.receipt', 'fees.view', 'fees.view_own'],
+  'receipt.create': ['fees.receipt', 'fees.collect'],
+  'staff.read': ['staff.view'],
+  'staff.create': ['staff.create'],
+  'staff.update': ['staff.update', 'staff.assign_responsibility', 'staff.transfer', 'staff.provision_account'],
+  'payroll.read': ['staff.view_sensitive_hr', 'payroll.view'],
+  'payroll.create': ['payroll.manage'],
+  'payroll.approve': ['approvals.act', 'payroll.approve'],
+  'document.read': ['staff.verify_document', 'documents.view'],
+  'document.upload': ['documents.upload', 'staff.upload_document'],
+  'document.verify': ['staff.verify_document'],
+  'document.download': ['documents.download', 'reports.export'],
+  'report.read': ['reports.view', 'reports.export'],
+  'account.read': ['staff.view', 'roles.view', 'accounts.view'],
+  'account.create': ['staff.provision_account', 'accounts.create'],
+  'account.update': ['staff.provision_account', 'accounts.update'],
+  'account.disable': ['staff.provision_account', 'accounts.disable'],
+  'role.read': ['roles.view'],
+  'role.create': ['roles.manage'],
+  'role.update': ['roles.manage'],
+  'audit.read': ['audit.view'],
+  'settings.read': ['license.view', 'settings.view'],
+  'settings.update': ['settings.manage', 'license.manage'],
+};
+
+/**
+ * Normalizes a permission to its canonical representation
+ */
+export function toCanonicalPermission(perm: string): string {
+  if ((CANONICAL_PERMISSIONS as readonly string[]).includes(perm)) {
+    return perm;
+  }
+  for (const [canonical, aliases] of Object.entries(PERMISSION_ALIASES)) {
+    if (aliases.includes(perm)) return canonical;
+  }
+  return perm;
+}
+
+/**
+ * Checks if a granted permission satisfies the requested permission
+ * Handles wildcards ('*', 'student.*') and legacy aliases bidirectionally.
+ */
+export function matchesPermission(grantedPerm: string, requestedPerm: string): boolean {
+  if (grantedPerm === '*' || grantedPerm === requestedPerm) return true;
+
+  const [grantedDomain] = grantedPerm.split('.');
+  const [reqDomain] = requestedPerm.split('.');
+
+  if (grantedPerm === `${grantedDomain}.*` && grantedDomain === reqDomain) {
+    return true;
+  }
+
+  // Canonical alias checks
+  const canonicalRequested = toCanonicalPermission(requestedPerm);
+  const canonicalGranted = toCanonicalPermission(grantedPerm);
+
+  if (canonicalGranted === canonicalRequested) return true;
+
+  // Wildcard check on canonical domain
+  const [canGrantedDomain] = canonicalGranted.split('.');
+  const [canReqDomain] = canonicalRequested.split('.');
+  if (grantedPerm === `${canGrantedDomain}.*` && canGrantedDomain === canReqDomain) {
+    return true;
+  }
+
+  // Check alias sets
+  for (const [canonical, aliases] of Object.entries(PERMISSION_ALIASES)) {
+    const isGrantedMatching = grantedPerm === canonical || aliases.includes(grantedPerm);
+    const isRequestedMatching = requestedPerm === canonical || aliases.includes(requestedPerm);
+    if (isGrantedMatching && isRequestedMatching) return true;
+  }
+
+  return false;
+}
+
+export const ALL_PERMISSIONS = Array.from(
+  new Set([...Object.keys(ACTION_DEFINITIONS), ...CANONICAL_PERMISSIONS])
+);

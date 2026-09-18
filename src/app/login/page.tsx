@@ -35,7 +35,7 @@ interface SearchResultOrg {
   campusesCount: number;
 }
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const orgParam = searchParams.get('org');
@@ -1454,3 +1454,18 @@ export default function LoginPage() {
     </div>
   );
 }
+
+export default function LoginPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0B1528', color: '#fff' }}>
+          Loading Access Portal...
+        </div>
+      }
+    >
+      <LoginForm />
+    </React.Suspense>
+  );
+}
+

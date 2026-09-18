@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { logAudit } from '@/lib/audit';
+import { getSecurityActor, getScopedStudentQuery } from '@/lib/authorization';
 
 const createStudentSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
@@ -36,7 +37,7 @@ export async function GET(req: Request) {
   const sectionId = searchParams.get('sectionId');
   const batchId = searchParams.get('batchId');
 
-  const whereClause: any = {
+  let whereClause: any = {
     organizationId: user.organizationId,
   };
 
@@ -68,8 +69,15 @@ export async function GET(req: Request) {
   }
 
   try {
+    const actor = await getSecurityActor(user);
+    if (!actor) {
+      return NextResponse.json({ success: false, error: 'User session invalid or suspended' }, { status: 403 });
+    }
+
+    const finalWhere = getScopedStudentQuery(actor, whereClause);
+
     const students = await prisma.student.findMany({
-      where: whereClause,
+      where: finalWhere,
       include: {
         branch: { select: { id: true, name: true, code: true } },
         section: { include: { classLevel: true } },

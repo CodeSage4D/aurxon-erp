@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { getFallbackUser } from '@/lib/auth-fallbacks';
+import { getSecurityActor, getEffectivePermissions } from '@/lib/authorization';
 
 export async function GET() {
   const sessionUser = await getCurrentUser();
@@ -40,6 +41,18 @@ export async function GET() {
 
   const fallback = getFallbackUser(sessionUser.email);
 
+  let permissions: string[] = [];
+  try {
+    const actor = await getSecurityActor(sessionUser);
+    if (actor) {
+      permissions = getEffectivePermissions(actor)
+        .filter((p) => p.allowed)
+        .map((p) => p.action);
+    }
+  } catch (err) {
+    console.warn('[AUTH_ME_PERMISSIONS_WARN] Failed resolving security actor permissions:', err);
+  }
+
   return NextResponse.json({
     success: true,
     user: {
@@ -47,6 +60,9 @@ export async function GET() {
       name: dbUser ? `${dbUser.firstName} ${dbUser.lastName}` : `${sessionUser.firstName} ${sessionUser.lastName}`,
       email: sessionUser.email,
       role: sessionUser.role,
+      actorType: dbUser?.actorType || null,
+      scope: dbUser?.scope || null,
+      permissions,
       organizationId: sessionUser.organizationId,
       organizationName: dbUser?.organization?.name || fallback?.organizationName || 'Delhi Public School Society',
       institutionId: sessionUser.institutionId,

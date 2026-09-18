@@ -37,8 +37,21 @@ export async function signToken(user: AuthUser): Promise<string> {
     .sign(JWT_SECRET);
 }
 
+const revokedTokens = new Set<string>();
+
+export function revokeToken(token: string) {
+  revokedTokens.add(token);
+}
+
+export function isTokenRevoked(token: string): boolean {
+  return revokedTokens.has(token);
+}
+
 export async function verifyToken(token: string): Promise<AuthUser | null> {
   try {
+    if (isTokenRevoked(token)) {
+      return null;
+    }
     const { payload } = await jwtVerify(token, JWT_SECRET);
     return payload as unknown as AuthUser;
   } catch {

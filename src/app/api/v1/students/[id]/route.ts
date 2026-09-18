@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { logAudit } from '@/lib/audit';
+import { getSecurityActor, authorize, sanitizeStudentRecord } from '@/lib/authorization';
 
 export async function GET(
   req: Request,
@@ -44,7 +45,38 @@ export async function GET(
     return NextResponse.json({ success: false, error: 'Student record not found' }, { status: 404 });
   }
 
-  return NextResponse.json({ success: true, student });
+  const actor = await getSecurityActor(user);
+  if (!actor) {
+    return NextResponse.json({ success: false, error: 'User session invalid or suspended' }, { status: 403 });
+  }
+
+  const isEndUser =
+    actor.role === 'PARENT' ||
+    actor.role === 'STUDENT' ||
+    actor.actorType === 'PARENT' ||
+    actor.actorType === 'STUDENT';
+  const targetAction = isEndUser ? 'students.view_own' : 'students.view';
+
+  // Pure Authorization Evaluation: Permission + Scope + Relationship
+  const authDecision = authorize(actor, targetAction, {
+    type: 'STUDENT',
+    organizationId: student.organizationId,
+    institutionId: student.institutionId || undefined,
+    branchId: student.branchId || undefined,
+    sectionId: student.sectionId || undefined,
+    classLevelId: student.section?.classLevelId || undefined,
+    studentId: student.id,
+  });
+
+  if (!authDecision.allowed) {
+    return NextResponse.json(
+      { success: false, error: authDecision.reason || 'Forbidden: Access denied to student record' },
+      { status: 403 }
+    );
+  }
+
+  const sanitized = sanitizeStudentRecord(student, actor);
+  return NextResponse.json({ success: true, student: sanitized });
 }
 
 export async function PATCH(

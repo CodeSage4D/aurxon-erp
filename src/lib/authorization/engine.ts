@@ -15,6 +15,8 @@ import {
   BASE_ROLE_PERMISSIONS,
   RESPONSIBILITY_PERMISSIONS,
   getModuleAccessLevel,
+  matchesPermission,
+  toCanonicalPermission,
 } from './permissions-registry';
 
 export class AuthorizationError extends Error {
@@ -41,7 +43,7 @@ export function authorize(
   const now = options.now || new Date();
 
   // 1. Platform Super Admin Global Bypass (restricted to platform operations)
-  if (actor.role === 'SUPER_ADMIN') {
+  if (actor.role === 'SUPER_ADMIN' || actor.actorType === 'PLATFORM_SUPER_ADMIN') {
     return {
       allowed: true,
       reason: 'Unrestricted platform administrative privilege granted to SUPER_ADMIN',
@@ -58,14 +60,54 @@ export function authorize(
     };
   }
 
-  // 3. Resolve Action Definition
-  const actionDef = ACTION_DEFINITIONS[action];
-  const [domain] = action.split('.');
+  // 3. User account status check: Fail closed if inactive/suspended
+  if (actor.status && actor.status !== 'ACTIVE') {
+    return {
+      allowed: false,
+      reason: `User account is ${actor.status.toLowerCase()}`,
+      denialCode: 'INSUFFICIENT_ROLE_PERMISSIONS',
+    };
+  }
 
   // 4. Resolve Base Role Permissions
   const basePerms = new Set(BASE_ROLE_PERMISSIONS[actor.role] || []);
 
-  // 5. Resolve Active Temporal Responsibilities
+  // 5. Check User Custom Permission Overrides (Explicit User Grants / Denials)
+  let customDenied = false;
+  let customGranted = false;
+  if (actor.customPermissions) {
+    for (const [perm, granted] of Object.entries(actor.customPermissions)) {
+      if (matchesPermission(perm, action)) {
+        if (!granted) {
+          customDenied = true;
+          break;
+        } else {
+          customGranted = true;
+        }
+      }
+    }
+  }
+
+  if (customDenied) {
+    return {
+      allowed: false,
+      reason: `Action '${action}' explicitly denied via user permission override`,
+      denialCode: 'INSUFFICIENT_ROLE_PERMISSIONS',
+    };
+  }
+
+  // 6. Check if base role grants the action
+  let hasRolePermission = customGranted || basePerms.has('*');
+  if (!hasRolePermission) {
+    for (const p of basePerms) {
+      if (matchesPermission(p, action)) {
+        hasRolePermission = true;
+        break;
+      }
+    }
+  }
+
+  // 7. Resolve Active Temporal Responsibilities
   const activeResponsibilities = actor.responsibilities.filter((resp) => {
     if (resp.status !== 'ACTIVE') return false;
     const from = new Date(resp.validFrom);
@@ -74,19 +116,50 @@ export function authorize(
     return true;
   });
 
-  // Check if base role grants the action
-  let hasRolePermission =
-    basePerms.has('*') ||
-    basePerms.has(action) ||
-    basePerms.has(`${domain}.*`);
-
-  // Check if any active responsibility grants the action
   const matchingResponsibilities = activeResponsibilities.filter((resp) => {
-    const respPerms = new Set(RESPONSIBILITY_PERMISSIONS[resp.responsibilityType] || []);
-    return respPerms.has(action) || respPerms.has('*') || respPerms.has(`${domain}.*`);
+    const respPerms = RESPONSIBILITY_PERMISSIONS[resp.responsibilityType] || [];
+    return respPerms.some((p) => matchesPermission(p, action));
   });
 
   const matchedResponsibility = matchingResponsibilities[0] || null;
+
+  // 8. Strict Financial vs Payroll Separation
+  const isPayrollAction =
+    action.startsWith('payroll.') ||
+    action === 'staff.view_sensitive_hr';
+
+  if (isPayrollAction) {
+    const isAccountant = actor.role === 'ACCOUNTANT' || actor.actorType === 'ACCOUNTANT';
+    const isTeacher = actor.role === 'TEACHER' || actor.role === 'FACULTY' || actor.actorType === 'TEACHER';
+    const isEndUser = actor.role === 'PARENT' || actor.role === 'STUDENT' || actor.actorType === 'PARENT' || actor.actorType === 'STUDENT';
+
+    if (isAccountant || isTeacher || isEndUser) {
+      return {
+        allowed: false,
+        reason: `Role '${actor.role}' is strictly prohibited from accessing staff payroll or confidential salary data`,
+        denialCode: 'INSUFFICIENT_ROLE_PERMISSIONS',
+      };
+    }
+  }
+
+  // 9. Reception / Front Desk Data Minimization
+  const isReception = actor.role === 'FRONT_OFFICE' || actor.actorType === 'RECEPTIONIST';
+  if (isReception) {
+    const restrictedForReception =
+      action === 'students.view_sensitive' ||
+      action.startsWith('payroll.') ||
+      action.startsWith('staff.') ||
+      action.startsWith('roles.') ||
+      action.startsWith('settings.');
+
+    if (restrictedForReception) {
+      return {
+        allowed: false,
+        reason: 'Reception / Front Desk is restricted to basic student profile and front-office inquiry records',
+        denialCode: 'RESTRICTED_SENSITIVE_DATA',
+      };
+    }
+  }
 
   if (!hasRolePermission && !matchedResponsibility) {
     return {
@@ -96,7 +169,7 @@ export function authorize(
     };
   }
 
-  // 6. Multi-dimensional Institutional Scoping (Institution, Branch, Session, Department)
+  // 10. Multi-dimensional Institutional Scoping (Institution, Branch, Session, Department)
   const isElevated = actor.role === 'SUPER_ADMIN' || actor.role === 'ORG_ADMIN';
 
   // Institution Boundary Check
@@ -135,15 +208,20 @@ export function authorize(
     };
   }
 
-  // 7. Enforce Subject & Section Assignment Boundaries for Teaching Staff
-  const isTeachingStaff = ['TEACHER', 'FACULTY', 'CLASS_TEACHER', 'SUBJECT_TEACHER'].includes(actor.role);
-  if (isTeachingStaff) {
-    // Subject scoping: If teacher has subject assignments, restrict marks entry to assigned subjects
-    const assignedSubjects = activeResponsibilities
-      .filter((r) => r.scopeLevel === 'SUBJECT' && r.subjectId)
-      .map((r) => r.subjectId);
+  // 11. Enforce Subject & Section Assignment Boundaries for Teaching Staff
+  const isTeachingStaff =
+    ['TEACHER', 'FACULTY', 'CLASS_TEACHER', 'SUBJECT_TEACHER'].includes(actor.role) ||
+    actor.actorType === 'TEACHER';
 
-    if (assignedSubjects.length > 0 && resource.subjectId && (action === 'examinations.enter_marks' || action === 'marks.enter')) {
+  if (isTeachingStaff) {
+    const assignedSubjects = Array.from(new Set([
+      ...(actor.assignedSubjectIds || []),
+      ...activeResponsibilities
+        .filter((r) => r.scopeLevel === 'SUBJECT' && r.subjectId)
+        .map((r) => r.subjectId as string),
+    ]));
+
+    if (assignedSubjects.length > 0 && resource.subjectId && (action.includes('marks') || action.includes('result'))) {
       if (!assignedSubjects.includes(resource.subjectId)) {
         return {
           allowed: false,
@@ -153,12 +231,14 @@ export function authorize(
       }
     }
 
-    // Section scoping: If teacher has section assignments and performs class-level action
-    const assignedSections = activeResponsibilities
-      .filter((r) => (r.scopeLevel === 'SECTION' || r.responsibilityType === 'CLASS_TEACHER') && r.sectionId)
-      .map((r) => r.sectionId);
+    const assignedSections = Array.from(new Set([
+      ...(actor.assignedSectionIds || []),
+      ...activeResponsibilities
+        .filter((r) => (r.scopeLevel === 'SECTION' || r.responsibilityType === 'CLASS_TEACHER') && r.sectionId)
+        .map((r) => r.sectionId as string),
+    ]));
 
-    if (assignedSections.length > 0 && resource.sectionId && (action === 'attendance.correct' || action === 'leave.approve_student')) {
+    if (assignedSections.length > 0 && resource.sectionId && (action === 'attendance.correct' || action === 'leave.approve_student' || action === 'attendance.mark')) {
       if (!assignedSections.includes(resource.sectionId)) {
         return {
           allowed: false,
@@ -167,10 +247,66 @@ export function authorize(
         };
       }
     }
+
+    // Teacher horizontal boundary for Student records:
+    // Teachers are strictly restricted to students in their assigned sections or classes
+    if (
+      (resource.type === 'STUDENT' || action.startsWith('student.') || action.startsWith('students.')) &&
+      (resource.sectionId || resource.classLevelId)
+    ) {
+      const assignedClassIds = actor.assignedClassIds || [];
+      const hasSectionScope = assignedSections.length > 0;
+      const hasClassScope = assignedClassIds.length > 0;
+
+      if (hasSectionScope && resource.sectionId) {
+        if (!assignedSections.includes(resource.sectionId)) {
+          return {
+            allowed: false,
+            reason: `Teacher is not assigned to student's section ('${resource.sectionId}')`,
+            denialCode: 'OUT_OF_SCOPE',
+          };
+        }
+      } else if (hasClassScope && resource.classLevelId) {
+        if (!assignedClassIds.includes(resource.classLevelId)) {
+          return {
+            allowed: false,
+            reason: `Teacher is not assigned to student's class ('${resource.classLevelId}')`,
+            denialCode: 'OUT_OF_SCOPE',
+          };
+        }
+      } else if (!hasSectionScope && !hasClassScope) {
+        return {
+          allowed: false,
+          reason: `Teacher has no active class or section assignments`,
+          denialCode: 'OUT_OF_SCOPE',
+        };
+      }
+    }
   }
 
-  // Enforce explicit responsibility scope if matched through responsibility
-  if (matchedResponsibility) {
+  // Front Office / Receptionist Data Sensitivity Boundary
+  const isFrontOffice =
+    actor.role === 'FRONT_OFFICE' ||
+    actor.role === 'RECEPTIONIST' ||
+    actor.actorType === 'RECEPTIONIST' ||
+    actor.scope === 'BASIC_PROFILE';
+
+  if (
+    isFrontOffice &&
+    (action === 'students.view_sensitive' ||
+      action === 'student.view_sensitive' ||
+      action.includes('sensitive') ||
+      action.startsWith('payroll.'))
+  ) {
+    return {
+      allowed: false,
+      reason: 'Front office and receptionist personnel are restricted to basic directory profiles and cannot access sensitive identity or payroll data',
+      denialCode: 'INSUFFICIENT_ROLE_PERMISSIONS',
+    };
+  }
+
+  // Enforce explicit responsibility scope only if matched solely through responsibility
+  if (!hasRolePermission && matchedResponsibility) {
     if (matchedResponsibility.scopeLevel === 'SECTION' && matchedResponsibility.sectionId) {
       if (resource.sectionId && resource.sectionId !== matchedResponsibility.sectionId) {
         return {
@@ -202,10 +338,18 @@ export function authorize(
     }
   }
 
-  // 8. Parent & Student Self-Service Constraints
+  // 12. Parent & Student Self-Service Constraints
   // Parent: strictly bound to verified children
-  if (actor.role === 'PARENT') {
-    if (action.endsWith('_own') || resource.type === 'STUDENT' || resource.type === 'ATTENDANCE' || resource.type === 'FEE' || resource.type === 'EXAMINATION' || resource.type === 'LEAVE') {
+  if (actor.role === 'PARENT' || actor.actorType === 'PARENT') {
+    if (
+      action.endsWith('_own') ||
+      action.startsWith('student.') ||
+      resource.type === 'STUDENT' ||
+      resource.type === 'ATTENDANCE' ||
+      resource.type === 'FEE' ||
+      resource.type === 'EXAMINATION' ||
+      resource.type === 'LEAVE'
+    ) {
       if (resource.studentId && !actor.verifiedChildIds.includes(resource.studentId)) {
         return {
           allowed: false,
@@ -217,11 +361,11 @@ export function authorize(
   }
 
   // Student: strictly bound to self
-  if (actor.role === 'STUDENT') {
-    if (resource.studentId && actor.studentProfileId && resource.studentId !== actor.studentProfileId) {
+  if (actor.role === 'STUDENT' || actor.actorType === 'STUDENT') {
+    if (!actor.studentProfileId || (resource.studentId && resource.studentId !== actor.studentProfileId)) {
       return {
         allowed: false,
-        reason: 'Students cannot access other student academic records',
+        reason: 'Student account has no linked student profile or attempted access to another student record',
         denialCode: 'OUT_OF_SCOPE',
       };
     }
@@ -233,6 +377,7 @@ export function authorize(
     action === 'attendance.mark' ||
     action === 'attendance.correct' ||
     action === 'attendance.approve' ||
+    action === 'attendance.create' ||
     action === 'examinations.enter_marks' ||
     action === 'examinations.create' ||
     action === 'examinations.publish' ||
@@ -248,10 +393,16 @@ export function authorize(
     };
   }
 
-  // 9. Sensitive HR Data Redaction
+  // 13. Sensitive HR Data Redaction
   let redactedFields: string[] | undefined;
   if (resource.type === 'STAFF') {
-    const canViewSensitiveHR = basePerms.has('staff.view_sensitive_hr') || actor.role === 'ORG_ADMIN' || actor.role === 'HR_MANAGER';
+    const canViewSensitiveHR =
+      basePerms.has('staff.view_sensitive_hr') ||
+      basePerms.has('payroll.read') ||
+      actor.role === 'SUPER_ADMIN' ||
+      actor.role === 'ORG_ADMIN' ||
+      actor.role === 'HR_MANAGER';
+
     if (!canViewSensitiveHR) {
       redactedFields = [
         'basicSalary',
@@ -268,6 +419,8 @@ export function authorize(
     allowed: true,
     reason: matchedResponsibility
       ? `Action '${action}' granted via active responsibility '${matchedResponsibility.responsibilityType}' (${matchedResponsibility.title})`
+      : customGranted
+      ? `Action '${action}' granted via user permission override`
       : `Action '${action}' granted via base functional role '${actor.role}'`,
     matchedRule: matchedResponsibility ? `RESPONSIBILITY:${matchedResponsibility.responsibilityType}` : `ROLE:${actor.role}`,
     redactedFields,
@@ -287,6 +440,22 @@ export function assertCan(
   if (!decision.allowed) {
     throw new AuthorizationError(decision.reason, decision.denialCode, 403);
   }
+}
+
+/**
+ * Enforces authorization returning the decision or throwing AuthorizationError
+ */
+export function enforceAuthorization(
+  actor: SecurityActor,
+  action: string,
+  resource: ResourceTarget,
+  options?: { now?: Date }
+): AuthorizationDecision {
+  const decision = authorize(actor, action, resource, options);
+  if (!decision.allowed) {
+    throw new AuthorizationError(decision.reason, decision.denialCode, 403);
+  }
+  return decision;
 }
 
 /**
@@ -372,19 +541,79 @@ export function getEffectivePermissions(actor: SecurityActor): EffectivePermissi
   const activeResponsibilities = actor.responsibilities.filter((r) => r.status === 'ACTIVE');
 
   return Object.values(ACTION_DEFINITIONS).map((def) => {
-    let allowed = basePerms.has('*') || basePerms.has(def.action);
-    let source: 'ROLE' | 'RESPONSIBILITY' | 'NONE' = allowed ? 'ROLE' : 'NONE';
-    let sourceName: string | undefined = allowed ? actor.role : undefined;
+    let allowed = false;
+    let source: 'ROLE' | 'RESPONSIBILITY' | 'CUSTOM' | 'NONE' = 'NONE';
+    let sourceName: string | undefined = undefined;
 
+    // 1. User custom permission overrides take highest precedence
+    if (actor.customPermissions) {
+      for (const [perm, granted] of Object.entries(actor.customPermissions)) {
+        if (matchesPermission(perm, def.action)) {
+          if (!granted) {
+            return {
+              action: def.action,
+              allowed: false,
+              accessLevel: 'NONE',
+              source: 'CUSTOM',
+              sourceName: 'USER_DENIED',
+              applicableScope: def.defaultScope,
+              isSensitive: def.isSensitive,
+              requiresFourEyesApproval: def.requiresFourEyesApproval,
+            };
+          } else {
+            allowed = true;
+            source = 'CUSTOM';
+            sourceName = 'USER_GRANTED';
+          }
+        }
+      }
+    }
+
+    // 2. Base role permissions
+    if (!allowed) {
+      if (basePerms.has('*')) {
+        allowed = true;
+        source = 'ROLE';
+        sourceName = actor.role;
+      } else {
+        for (const p of basePerms) {
+          if (matchesPermission(p, def.action)) {
+            allowed = true;
+            source = 'ROLE';
+            sourceName = actor.role;
+            break;
+          }
+        }
+      }
+    }
+
+    // 3. Active temporal responsibilities
     if (!allowed) {
       for (const resp of activeResponsibilities) {
-        const respPerms = new Set(RESPONSIBILITY_PERMISSIONS[resp.responsibilityType] || []);
-        if (respPerms.has('*') || respPerms.has(def.action)) {
+        const respPerms = RESPONSIBILITY_PERMISSIONS[resp.responsibilityType] || [];
+        if (respPerms.some((p) => matchesPermission(p, def.action))) {
           allowed = true;
           source = 'RESPONSIBILITY';
           sourceName = resp.responsibilityType;
           break;
         }
+      }
+    }
+
+    // 4. Strict Financial vs Payroll Separation
+    const isPayroll = def.action.startsWith('payroll.') || def.action === 'staff.view_sensitive_hr';
+    if (isPayroll) {
+      const isAccountant = actor.role === 'ACCOUNTANT' || actor.actorType === 'ACCOUNTANT';
+      const isTeacher = actor.role === 'TEACHER' || actor.role === 'FACULTY' || actor.actorType === 'TEACHER';
+      const isEndUser =
+        actor.role === 'PARENT' ||
+        actor.role === 'STUDENT' ||
+        actor.actorType === 'PARENT' ||
+        actor.actorType === 'STUDENT';
+      if (isAccountant || isTeacher || isEndUser) {
+        allowed = false;
+        source = 'ROLE';
+        sourceName = 'PROHIBITED';
       }
     }
 
@@ -416,7 +645,6 @@ export function sanitizeStaffRecord<T extends Record<string, any>>(
           actorOrCanView.role === 'ORG_ADMIN' ||
           actorOrCanView.role === 'PRINCIPAL' ||
           actorOrCanView.role === 'HR_MANAGER' ||
-          actorOrCanView.role === 'ACCOUNTANT' ||
           (actorOrCanView.id && staff.userId === actorOrCanView.id)
         );
 
@@ -431,6 +659,43 @@ export function sanitizeStaffRecord<T extends Record<string, any>>(
   delete sanitized.bankIfsc;
   delete sanitized.panNumber;
   delete sanitized.aadhaarNumber;
+  return sanitized;
+}
+
+/**
+ * Redacts financial and sensitive details from a student record according to actor permissions
+ */
+export function sanitizeStudentRecord<T extends Record<string, any>>(
+  student: T,
+  actor: SecurityActor
+): T {
+  const canViewFees =
+    actor.role === 'SUPER_ADMIN' ||
+    actor.role === 'ORG_ADMIN' ||
+    actor.role === 'PRINCIPAL' ||
+    actor.role === 'FINANCE_MANAGER' ||
+    actor.role === 'ACCOUNTANT' ||
+    actor.role === 'FEE_COLLECTOR' ||
+    Boolean(actor.customPermissions?.['fees.view']);
+
+  const sanitized = { ...student };
+  if (!canViewFees) {
+    delete (sanitized as any).feeAllocations;
+    delete (sanitized as any).feePayments;
+  }
+
+  // Redact confidential parent fields for front office / receptionist
+  if (actor.role === 'FRONT_OFFICE' && Array.isArray((sanitized as any).studentParents)) {
+    (sanitized as any).studentParents = (sanitized as any).studentParents.map((sp: any) => {
+      if (sp.parentGuardian) {
+        const pg = { ...sp.parentGuardian };
+        delete pg.annualIncome;
+        return { ...sp, parentGuardian: pg };
+      }
+      return sp;
+    });
+  }
+
   return sanitized;
 }
 

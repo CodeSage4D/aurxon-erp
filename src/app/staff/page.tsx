@@ -549,7 +549,7 @@ export default function StaffPage() {
                     <th style={{ padding: '12px 16px' }}>Designation</th>
                     <th style={{ padding: '12px 16px' }}>Punch In</th>
                     <th style={{ padding: '12px 16px' }}>Punch Out</th>
-                    <th style={{ padding: '12px 16px' }}>Today's Status</th>
+                    <th style={{ padding: '12px 16px' }}>Today&apos;s Status</th>
                   </tr>
                 </thead>
                 <tbody>

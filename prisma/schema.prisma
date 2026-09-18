@@ -166,6 +166,8 @@ model User {
   phone               String?
   role                String    // SUPER_ADMIN, ORG_ADMIN, PRINCIPAL, VICE_PRINCIPAL, BRANCH_HEAD, ACADEMIC_COORDINATOR, EXAM_COORDINATOR, TEACHER, FACULTY, ACCOUNTANT, FINANCE_MANAGER, HR_MANAGER, FRONT_OFFICE, LIBRARIAN, TRANSPORT_MANAGER, PARENT, STUDENT
   status              String    @default("ACTIVE") // ACTIVE, INACTIVE, SUSPENDED
+  actorType           String?   // PLATFORM, LEADERSHIP, ADMINISTRATION, ACADEMIC, FINANCE, END_USER
+  scope               String?   // ORGANIZATION, BRANCH, ASSIGNED_SECTIONS, OWN_CHILDREN, SELF, etc.
   avatarUrl           String?
   mustResetPassword   Boolean   @default(false)
   isTemporaryPassword Boolean   @default(false)
@@ -179,16 +181,32 @@ model User {
 
   subjectAssignments  SubjectAssignment[]
   parentProfile       ParentGuardian?
+  studentProfile      Student?
   timetableSlots      TimetableSlot[]
   notifications       Notification[]
   staffProfile        StaffProfile?
   staffResponsibilities StaffResponsibility[]
   approvalsRequested  ApprovalRequest[] @relation("ApprovalsRequested")
   approvalsActed      ApprovalRequest[] @relation("ApprovalsActed")
+  userPermissions     UserPermission[]
 
   @@index([organizationId])
   @@index([institutionId])
   @@index([role])
+}
+
+model UserPermission {
+  id         String   @id @default(cuid())
+  userId     String
+  permission String
+  granted    Boolean  @default(true) // true = grant override, false = explicit deny
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, permission])
+  @@index([userId])
 }
 
 model RolePermission {
@@ -387,6 +405,7 @@ model Student {
   photoUrl          String?
   status            String    @default("ACTIVE") // ACTIVE, ARCHIVED, TRANSFERRED, GRADUATED
   enrollmentDate    DateTime  @default(now())
+  userId            String?   @unique
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -396,6 +415,7 @@ model Student {
   academicSession   AcademicSession        @relation(fields: [academicSessionId], references: [id], onDelete: Cascade)
   section           Section?               @relation(fields: [sectionId], references: [id], onDelete: SetNull)
   batch             Batch?                 @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  user              User?                  @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   studentParents    StudentParent[]
   attendanceRecords AttendanceRecord[]

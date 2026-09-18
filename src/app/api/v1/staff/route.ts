@@ -223,7 +223,7 @@ export async function GET(req: Request) {
     }
 
     // Role-based field sanitization (Strict authorization check for sensitive financial/KYC data)
-    const canViewSensitive = ['SUPER_ADMIN', 'ORG_ADMIN', 'PRINCIPAL', 'HR_MANAGER', 'ACCOUNTANT'].includes(user.role);
+    const canViewSensitive = ['SUPER_ADMIN', 'ORG_ADMIN', 'PRINCIPAL', 'HR_MANAGER'].includes(user.role);
 
     const sanitizedProfiles = profiles.map((p) => {
       const sanitized = sanitizeStaffRecord(p, canViewSensitive);

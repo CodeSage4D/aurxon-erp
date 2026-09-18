@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
-import { COOKIE_NAME } from '@/lib/auth';
+import { cookies } from 'next/headers';
+import { COOKIE_NAME, revokeToken } from '@/lib/auth';
 
 export async function POST() {
+  const cookieStore = cookies();
+  const token = cookieStore.get(COOKIE_NAME)?.value;
+  if (token) {
+    revokeToken(token);
+  }
   const response = NextResponse.json(
     { success: true, message: 'Logged out successfully' },
     {

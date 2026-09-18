@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import { sanitizeStaffRecord } from '@/lib/authorization';
+import { sanitizeStaffRecord, getSecurityActor, authorize } from '@/lib/authorization';
 import { logAudit } from '@/lib/audit';
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
@@ -72,7 +72,30 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ success: false, error: 'Staff profile not found' }, { status: 404 });
     }
 
-    const canViewSensitive = ['SUPER_ADMIN', 'ORG_ADMIN', 'PRINCIPAL', 'HR_MANAGER', 'ACCOUNTANT'].includes(user.role);
+    const actor = await getSecurityActor(user);
+    if (!actor) {
+      return NextResponse.json({ success: false, error: 'User session invalid or suspended' }, { status: 401 });
+    }
+
+    const authDecision = authorize(actor, 'staff.view', {
+      type: 'STAFF',
+      organizationId: profile.organizationId,
+      institutionId: profile.institutionId || undefined,
+      branchId: profile.branchId || undefined,
+      staffId: profile.id,
+    });
+
+    if (!authDecision.allowed) {
+      return NextResponse.json(
+        { success: false, error: authDecision.reason || 'Forbidden: Insufficient permissions to view staff profile' },
+        { status: 403 }
+      );
+    }
+
+    const canViewSensitive = Boolean(
+      ['SUPER_ADMIN', 'ORG_ADMIN', 'PRINCIPAL', 'HR_MANAGER'].includes(user.role) ||
+      (profile.userId && profile.userId === user.id)
+    );
     const sanitized = sanitizeStaffRecord(profile, canViewSensitive);
 
     return NextResponse.json({

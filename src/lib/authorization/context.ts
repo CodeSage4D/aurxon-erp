@@ -10,7 +10,35 @@ export async function getSecurityActor(
   const user = providedUser || (await getCurrentUser());
   if (!user) return null;
 
-  // 1. Fetch user's active responsibilities
+  // 1. Fetch user DB record for actorType, scope, status, assignments, permissions
+  let dbUser: any = null;
+  try {
+    dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: {
+        userPermissions: true,
+        subjectAssignments: {
+          select: {
+            subjectId: true,
+            sectionId: true,
+            batchId: true,
+          },
+        },
+        studentProfile: {
+          select: { id: true },
+        },
+      },
+    });
+  } catch {
+    // Ignore error if DB inaccessible in edge context
+  }
+
+  // If user is inactive or suspended, fail closed
+  if (dbUser && dbUser.status !== 'ACTIVE') {
+    return null;
+  }
+
+  // 2. Fetch user's active responsibilities
   let responsibilities: any[] = [];
   try {
     const rawResps = await prisma.staffResponsibility.findMany({
@@ -45,9 +73,35 @@ export async function getSecurityActor(
     // Gracefully handle query if not available
   }
 
-  // 2. Fetch Parent-Child mappings if actor is PARENT
+  // 3. Extract assigned sections, classes, and subjects from SubjectAssignment & Responsibilities
+  const assignedSectionIds: string[] = [];
+  const assignedClassIds: string[] = [];
+  const assignedSubjectIds: string[] = [];
+
+  if (dbUser?.subjectAssignments) {
+    for (const sa of dbUser.subjectAssignments) {
+      if (sa.sectionId) assignedSectionIds.push(sa.sectionId);
+      if (sa.subjectId) assignedSubjectIds.push(sa.subjectId);
+    }
+  }
+
+  for (const resp of responsibilities) {
+    if (resp.sectionId) assignedSectionIds.push(resp.sectionId);
+    if (resp.classLevelId) assignedClassIds.push(resp.classLevelId);
+    if (resp.subjectId) assignedSubjectIds.push(resp.subjectId);
+  }
+
+  // 4. Custom permission overrides
+  const customPermissions: Record<string, boolean> = {};
+  if (dbUser?.userPermissions) {
+    for (const up of dbUser.userPermissions) {
+      customPermissions[up.permission] = up.granted;
+    }
+  }
+
+  // 5. Fetch Parent-Child mappings if actor is PARENT
   let verifiedChildIds: string[] = [];
-  if (user.role === 'PARENT') {
+  if (user.role === 'PARENT' || dbUser?.actorType === 'PARENT') {
     try {
       const parentRecord = await prisma.parentGuardian.findFirst({
         where: {
@@ -68,15 +122,12 @@ export async function getSecurityActor(
     }
   }
 
-  // 3. Fetch student profile ID if actor is STUDENT
-  let studentProfileId: string | null = null;
-  if (user.role === 'STUDENT') {
+  // 6. Fetch student profile ID if actor is STUDENT (strictly bound to userId relation)
+  let studentProfileId: string | null = dbUser?.studentProfile?.id || null;
+  if (!studentProfileId && (user.role === 'STUDENT' || dbUser?.actorType === 'STUDENT')) {
     try {
       const student = await prisma.student.findFirst({
-        where: {
-          organizationId: user.organizationId,
-          email: user.email,
-        },
+        where: { userId: user.id },
         select: { id: true },
       });
       studentProfileId = student?.id || null;
@@ -85,7 +136,7 @@ export async function getSecurityActor(
     }
   }
 
-  // 4. Fetch staff profile department if actor is staff/faculty
+  // 7. Fetch staff profile department if actor is staff/faculty
   let department: string | null = null;
   try {
     const staff = await prisma.staffProfile.findFirst({
@@ -104,13 +155,20 @@ export async function getSecurityActor(
     email: user.email,
     firstName: user.firstName,
     lastName: user.lastName,
-    role: user.role,
-    organizationId: user.organizationId,
-    institutionId: user.institutionId,
-    branchId: user.branchId,
+    role: dbUser?.role || user.role,
+    actorType: dbUser?.actorType || null,
+    scope: dbUser?.scope || null,
+    status: dbUser?.status || 'ACTIVE',
+    organizationId: dbUser?.organizationId || user.organizationId,
+    institutionId: dbUser?.institutionId !== undefined ? dbUser.institutionId : user.institutionId,
+    branchId: dbUser?.branchId !== undefined ? dbUser.branchId : user.branchId,
     department,
     responsibilities,
     verifiedChildIds,
     studentProfileId,
+    assignedClassIds: Array.from(new Set(assignedClassIds)),
+    assignedSectionIds: Array.from(new Set(assignedSectionIds)),
+    assignedSubjectIds: Array.from(new Set(assignedSubjectIds)),
+    customPermissions,
   };
 }

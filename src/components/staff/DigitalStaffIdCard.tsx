@@ -419,7 +419,7 @@ export default function DigitalStaffIdCard({
                   marginBottom: '16px',
                 }}
               >
-                This card remains the property of {organizationName}. If found, please return to the Principal's Administrative Office or drop in any post box.
+                This card remains the property of {organizationName}. If found, please return to the Principal&apos;s Administrative Office or drop in any post box.
               </div>
 
               {/* Digital Signature and Seal */}

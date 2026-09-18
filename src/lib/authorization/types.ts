@@ -13,7 +13,39 @@ export type ScopeLevel =
   | 'BATCH'
   | 'SUBJECT'
   | 'OWN'
-  | 'CHILD';
+  | 'CHILD'
+  | 'ASSIGNED_CLASSES'
+  | 'ASSIGNED_SECTIONS'
+  | 'ASSIGNED_SUBJECTS'
+  | 'OWN_CHILDREN'
+  | 'SELF'
+  | 'OWN_RECORDS'
+  | 'BASIC_PROFILE'
+  | 'FINANCIAL'
+  | 'RESTRICTED'
+  | 'NONE';
+
+export type ActorType =
+  | 'PLATFORM_SUPER_ADMIN'
+  | 'PLATFORM_SUPPORT'
+  | 'PRINCIPAL'
+  | 'SCHOOL_ADMIN'
+  | 'ACADEMIC_COORDINATOR'
+  | 'TEACHER'
+  | 'ACCOUNTANT'
+  | 'HR_MANAGER'
+  | 'RECEPTIONIST'
+  | 'PARENT'
+  | 'STUDENT'
+  | 'STAFF'
+  | (string & {});
+
+export type DataSensitivity =
+  | 'PUBLIC'
+  | 'INTERNAL'
+  | 'CONFIDENTIAL'
+  | 'RESTRICTED'
+  | 'HIGHLY_SENSITIVE';
 
 export type RoleCategory =
   | 'LEADERSHIP'
@@ -106,6 +138,9 @@ export interface SecurityActor {
   firstName: string;
   lastName: string;
   role: string;
+  actorType?: string | null;
+  scope?: string | null;
+  status?: string;
   organizationId: string;
   institutionId?: string | null;
   branchId?: string | null;
@@ -116,6 +151,10 @@ export interface SecurityActor {
   responsibilities: ResponsibilityAssignment[];
   verifiedChildIds: string[]; // For Parents: IDs of verified children
   studentProfileId?: string | null; // For Students: own student record ID
+  assignedClassIds?: string[];
+  assignedSectionIds?: string[];
+  assignedSubjectIds?: string[];
+  customPermissions?: Record<string, boolean>; // Overrides: permission -> granted
 }
 
 export interface ResourceTarget {
@@ -161,7 +200,7 @@ export interface EffectivePermissionInfo {
   action: string;
   allowed: boolean;
   accessLevel: AccessLevel;
-  source: 'ROLE' | 'RESPONSIBILITY' | 'PLATFORM_SUPERADMIN' | 'NONE';
+  source: 'ROLE' | 'RESPONSIBILITY' | 'PLATFORM_SUPERADMIN' | 'CUSTOM' | 'NONE';
   sourceName?: string;
   applicableScope: ScopeLevel;
   isSensitive: boolean;

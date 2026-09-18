@@ -37,8 +37,12 @@ export interface AppShellUser {
   name: string;
   email: string;
   role: string;
+  actorType?: string | null;
+  scope?: string | null;
+  permissions?: string[];
   organizationName: string;
   institutionName?: string;
+  branchName?: string;
   mustResetPassword?: boolean;
   isTemporaryPassword?: boolean;
 }
@@ -76,11 +80,25 @@ export const AppShell: React.FC<AppShellProps> = ({ user, children }) => {
     window.location.replace('/login');
   };
 
-  // Build role-aware navigation items
+  // Helper to check user effective permissions
+  const hasAccess = (requiredPerm: string): boolean => {
+    if (user.role === 'SUPER_ADMIN' || user.actorType === 'PLATFORM_SUPER_ADMIN') return true;
+    if (user.permissions && user.permissions.length > 0) {
+      if (user.permissions.includes('*')) return true;
+      return user.permissions.some(
+        (p) => p === requiredPerm || (p.endsWith('.*') && requiredPerm.startsWith(p.slice(0, -1)))
+      );
+    }
+    return true;
+  };
+
+  // Build role & permission-aware navigation items
   const getNavSections = () => {
     const role = user.role;
+    const actorType = user.actorType;
 
-    if (role === 'SUPER_ADMIN') {
+    // 1. Platform Super Admin
+    if (role === 'SUPER_ADMIN' || actorType === 'PLATFORM_SUPER_ADMIN') {
       return [
         {
           title: 'SaaS Platform Control',
@@ -88,6 +106,7 @@ export const AppShell: React.FC<AppShellProps> = ({ user, children }) => {
             { href: '/platform', label: 'Control Plane Dashboard', icon: <Server /> },
             { href: '/platform/organizations', label: 'Tenants & Campuses', icon: <Building2 /> },
             { href: '/dashboard', label: 'Institutional Workspace', icon: <LayoutDashboard /> },
+            { href: '/administration/accounts', label: 'Identity & Accounts', icon: <ShieldCheck /> },
             { href: '/audit', label: 'System Audit Trail', icon: <ShieldCheck /> },
           ],
         },
@@ -109,7 +128,8 @@ export const AppShell: React.FC<AppShellProps> = ({ user, children }) => {
       ];
     }
 
-    if (role === 'TEACHER' || role === 'FACULTY') {
+    // 2. Teacher & Faculty Workspace
+    if (role === 'TEACHER' || role === 'FACULTY' || actorType === 'TEACHER') {
       return [
         {
           title: 'Classroom & Academics',
@@ -127,7 +147,8 @@ export const AppShell: React.FC<AppShellProps> = ({ user, children }) => {
       ];
     }
 
-    if (role === 'ACCOUNTANT') {
+    // 3. Accountant & Finance (Strictly Prohibited from Staff Payroll)
+    if (role === 'ACCOUNTANT' || role === 'FINANCE_MANAGER' || actorType === 'ACCOUNTANT') {
       return [
         {
           title: 'Finance & Operations',
@@ -136,7 +157,6 @@ export const AppShell: React.FC<AppShellProps> = ({ user, children }) => {
             { href: '/fees', label: 'Fee Structures & Dues', icon: <Receipt /> },
             { href: '/fees/collect', label: 'Collect Payment', icon: <DollarSign /> },
             { href: '/finance', label: 'Income & Expenses', icon: <FileSpreadsheet /> },
-            { href: '/staff', label: 'Staff Payroll Ledger', icon: <Briefcase /> },
             { href: '/reports', label: 'Dues & Financial Reports', icon: <FileText /> },
             { href: '/students', label: 'Student Directory', icon: <Users /> },
           ],
@@ -144,7 +164,8 @@ export const AppShell: React.FC<AppShellProps> = ({ user, children }) => {
       ];
     }
 
-    if (role === 'PARENT' || role === 'STUDENT') {
+    // 4. Parent & Student Portal
+    if (role === 'PARENT' || role === 'STUDENT' || actorType === 'PARENT' || actorType === 'STUDENT') {
       return [
         {
           title: 'Student Portal',
@@ -163,12 +184,21 @@ export const AppShell: React.FC<AppShellProps> = ({ user, children }) => {
       ];
     }
 
-    // Default for PRINCIPAL & ORG_ADMIN
+    // 5. Institutional Leadership & Administrators (Principal, Org Admin, School Admin, Vice Principal)
+    const canManageAccounts =
+      hasAccess('account.read') ||
+      hasAccess('account.manage') ||
+      hasAccess('roles.view') ||
+      ['PRINCIPAL', 'ORG_ADMIN', 'IT_ADMIN', 'SCHOOL_ADMIN'].includes(role);
+
     return [
       {
         title: 'Core Administration',
         items: [
           { href: '/dashboard', label: 'Executive Dashboard', icon: <LayoutDashboard /> },
+          ...(canManageAccounts
+            ? [{ href: '/administration/accounts', label: 'Accounts & Access', icon: <Users /> }]
+            : []),
           { href: '/students', label: 'Students & SIS', icon: <Users /> },
           { href: '/admissions', label: 'Admissions Pipeline', icon: <Compass /> },
           { href: '/academics', label: 'Classes & Batches', icon: <GraduationCap /> },

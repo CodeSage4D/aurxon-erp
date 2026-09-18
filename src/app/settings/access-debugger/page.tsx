@@ -7,17 +7,19 @@ import {
   authorize,
   explainAccess,
   evaluateAccessLevel,
+} from '@/lib/authorization/engine';
+import {
   SecurityActor,
   ResourceTarget,
   Role,
   RoleCategory,
   AccessLevel,
   ActionPermission,
-  ALL_PERMISSIONS,
-} from '@/lib/authorization';
+} from '@/lib/authorization/types';
 import {
   CENTRAL_MODULE_ACCESS_MATRIX,
   getModuleAccessLevel,
+  ALL_PERMISSIONS,
 } from '@/lib/authorization/permissions-registry';
 import {
   ShieldCheck,
