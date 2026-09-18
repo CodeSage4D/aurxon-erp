@@ -6,17 +6,25 @@ import { logAudit } from '@/lib/audit';
 import { registerFallbackOrganization, registerFallbackUser } from '@/lib/auth-fallbacks';
 
 const onboardSchema = z.object({
-  name: z.string().min(2, 'Institute name is required'),
-  customSlug: z.string().optional(),
+  name: z.string().min(2, 'Institute name is required').max(150, 'Institute name cannot exceed 150 characters'),
+  customSlug: z.string().max(50, 'Slug cannot exceed 50 characters').regex(/^[a-z0-9-]*$/, 'Slug must only contain lowercase alphanumeric characters and hyphens').optional(),
   type: z.enum(['SCHOOL', 'COACHING', 'HYBRID']).default('SCHOOL'),
   board: z.enum(['CBSE', 'ICSE', 'STATE', 'NEET_JEE', 'CAMBRIDGE']).default('CBSE'),
-  city: z.string().min(2, 'City is required').default('Indore'),
-  branches: z.array(z.string()).default(['Main Campus']),
-  adminName: z.string().min(2, 'Administrator name is required'),
-  adminEmail: z.string().email('Valid administrator email is required'),
-  adminPassword: z.string().min(6, 'Password must be at least 6 characters').default('Password@123'),
-  primaryColor: z.string().default('#2270AF'),
-  logoUrl: z.string().optional().nullable(),
+  city: z.string().min(2, 'City is required').max(100, 'City cannot exceed 100 characters').default('Indore'),
+  branches: z.array(z.string().max(100)).default(['Main Campus']),
+  adminName: z.string().min(2, 'Administrator name is required').max(100, 'Administrator name cannot exceed 100 characters'),
+  adminEmail: z.string().email('Valid administrator email is required').max(120, 'Email cannot exceed 120 characters'),
+  adminPassword: z.string().min(6, 'Password must be at least 6 characters').max(100, 'Password cannot exceed 100 characters').default('Password@123'),
+  primaryColor: z.string().regex(/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/, 'Valid hexadecimal color code required (e.g. #1e3a8a)').default('#2270AF'),
+  logoUrl: z
+    .string()
+    .max(5000000, 'Logo payload exceeds maximum size limit (5MB)')
+    .refine(
+      (val) => !val || val.startsWith('data:image/') || val.startsWith('http://') || val.startsWith('https://'),
+      { message: 'Logo must be a valid image data URI or HTTP/HTTPS URL' }
+    )
+    .optional()
+    .nullable(),
   modules: z.array(z.string()).default(['ACADEMICS', 'ATTENDANCE', 'EXAMINATIONS', 'FEES', 'TRANSPORT']),
 });
 

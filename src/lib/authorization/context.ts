@@ -1,6 +1,5 @@
-// AURXON Security Context Resolver
-// Authenticates session, queries active temporal responsibilities and parent-child relations
 import { getCurrentUser, AuthUser } from '../auth';
+import { getFallbackUser } from '../auth-fallbacks';
 import prisma from '../prisma';
 import { SecurityActor } from './types';
 
@@ -33,20 +32,35 @@ export async function getSecurityActor(
     // Ignore error if DB inaccessible in edge context
   }
 
-  // If user is inactive or suspended, fail closed
-  if (dbUser && dbUser.status !== 'ACTIVE') {
-    return null;
+  // Security Hardening (Loop 03 & 33): Fail closed if user is deleted, suspended, or inactive
+  if (dbUser) {
+    if (dbUser.status !== 'ACTIVE') {
+      return null;
+    }
+  } else {
+    // If not found in DB, verify if seeded fallback user. If not in fallback, user was deleted or never existed.
+    const fallback = getFallbackUser(user.email);
+    if (!fallback) {
+      return null; // Deleted user account token replay prevented
+    }
   }
 
-  // 2. Fetch user's active responsibilities
+  // 2. Fetch user's active responsibilities (Staff and Admin roles only)
   let responsibilities: any[] = [];
-  try {
-    const rawResps = await prisma.staffResponsibility.findMany({
-      where: {
-        userId: user.id,
-        status: 'ACTIVE',
-      },
-    });
+  const isEndUserRole =
+    user.role === 'PARENT' ||
+    user.role === 'STUDENT' ||
+    dbUser?.actorType === 'PARENT' ||
+    dbUser?.actorType === 'STUDENT';
+
+  if (!isEndUserRole) {
+    try {
+      const rawResps = await prisma.staffResponsibility.findMany({
+        where: {
+          userId: user.id,
+          status: 'ACTIVE',
+        },
+      });
 
     const now = new Date();
     responsibilities = rawResps
@@ -69,8 +83,9 @@ export async function getSecurityActor(
         isTemporary: r.isTemporary,
         status: r.status,
       }));
-  } catch (err) {
-    // Gracefully handle query if not available
+    } catch (err) {
+      // Gracefully handle query if not available
+    }
   }
 
   // 3. Extract assigned sections, classes, and subjects from SubjectAssignment & Responsibilities

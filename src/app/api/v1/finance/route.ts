@@ -3,6 +3,7 @@ import { z } from 'zod';
 import prisma from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
+import { getSecurityActor, authorize } from '@/lib/authorization';
 import { logAudit } from '@/lib/audit';
 
 const transactionSchema = z.object({
@@ -18,6 +19,21 @@ export async function GET() {
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const actor = await getSecurityActor(user);
+  if (!actor) {
+    return NextResponse.json({ success: false, error: 'Unauthorized security context' }, { status: 401 });
+  }
+
+  // Enforce fee.read / finance permissions (Loop 25)
+  const decision = authorize(actor, 'fee.read', {
+    type: 'ROLE',
+    organizationId: actor.organizationId,
+  });
+
+  if (!decision.allowed && !hasPermission(actor.role, 'fees.view')) {
+    return NextResponse.json({ success: false, error: 'Forbidden: Insufficient permissions to view financial ledger' }, { status: 403 });
   }
 
   try {

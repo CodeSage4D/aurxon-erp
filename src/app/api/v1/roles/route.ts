@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { getSecurityActor } from '@/lib/authorization';
+import { getSecurityActor, authorize } from '@/lib/authorization';
 import { BASE_ROLE_PERMISSIONS, CANONICAL_PERMISSIONS } from '@/lib/authorization/permissions-registry';
 
 const ROLE_METADATA: Record<string, { actorType: string; displayName: string; defaultScope: string; description: string }> = {
@@ -111,6 +111,16 @@ export async function GET() {
   const actor = await getSecurityActor(sessionUser);
   if (!actor) {
     return NextResponse.json({ success: false, error: 'Unauthorized security context' }, { status: 401 });
+  }
+
+  // Enforce role.read authorization (Loop 30)
+  const decision = authorize(actor, 'role.read', {
+    type: 'ROLE',
+    organizationId: actor.organizationId,
+  });
+
+  if (!decision.allowed) {
+    return NextResponse.json({ success: false, error: 'Forbidden: Insufficient permissions to view system roles and permissions' }, { status: 403 });
   }
 
   // Filter roles based on current actor's delegation authority

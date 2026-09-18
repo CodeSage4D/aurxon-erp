@@ -58,8 +58,8 @@ export async function POST(req: Request) {
         console.warn('[AUTH_BCRYPT_WARN] Bcrypt verification error:', pwdErr);
       }
 
-      // Allow matching against default password for seeded accounts if bcrypt fails in serverless
-      if (!isValidPassword && (password === 'Password@123' || password === 'admin123')) {
+      // Security Hardening: Only permit default fallback password if user still has a temporary password flag set
+      if (!isValidPassword && user.isTemporaryPassword && password === 'Password@123') {
         isValidPassword = true;
       }
 

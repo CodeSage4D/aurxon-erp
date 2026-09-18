@@ -289,11 +289,25 @@ export async function POST(req: Request) {
 
     const passwordHash = await hashPassword(d.password);
 
-    // Resolve default institution if not passed
-    let institutionId = d.institutionId || actor.institutionId;
-    if (!institutionId) {
+    // Resolve clean institution and branch IDs (sanitizing empty strings to null - Loop 14 & 32)
+    let cleanInstitutionId = (d.institutionId && d.institutionId.trim() !== '') ? d.institutionId.trim() : (actor.institutionId || null);
+    if (!cleanInstitutionId) {
       const firstInst = await prisma.institution.findFirst({ where: { organizationId: actor.organizationId } });
-      institutionId = firstInst?.id || null;
+      cleanInstitutionId = firstInst?.id || null;
+    }
+
+    let cleanBranchId = (d.branchId && d.branchId.trim() !== '') ? d.branchId.trim() : (actor.branchId || null);
+    if (cleanBranchId) {
+      const validBranch = await prisma.branch.findFirst({
+        where: { id: cleanBranchId, institution: { organizationId: actor.organizationId } },
+      });
+      if (!validBranch) {
+        cleanBranchId = null;
+      }
+    }
+
+    if ((d.actorType === 'TEACHER' || d.actorType === 'STAFF') && !cleanInstitutionId) {
+      return NextResponse.json({ success: false, error: 'A valid Institution is required to create a Staff or Teacher account' }, { status: 400 });
     }
 
     // Resolve current academic session
@@ -307,8 +321,8 @@ export async function POST(req: Request) {
       const user = await tx.user.create({
         data: {
           organizationId: actor.organizationId,
-          institutionId,
-          branchId: d.branchId || actor.branchId || null,
+          institutionId: cleanInstitutionId,
+          branchId: cleanBranchId,
           email: d.email,
           passwordHash,
           firstName: d.firstName,
@@ -331,8 +345,8 @@ export async function POST(req: Request) {
         const staffProfile = await tx.staffProfile.create({
           data: {
             organizationId: actor.organizationId,
-            institutionId: institutionId || '',
-            branchId: d.branchId || null,
+            institutionId: cleanInstitutionId!,
+            branchId: cleanBranchId,
             userId: user.id,
             employeeId,
             firstName: d.firstName,
@@ -354,7 +368,7 @@ export async function POST(req: Request) {
             await tx.subjectAssignment.create({
               data: {
                 organizationId: actor.organizationId,
-                institutionId: institutionId || '',
+                institutionId: cleanInstitutionId!,
                 academicSessionId: currentSession.id,
                 subjectId,
                 teacherId: user.id,
@@ -438,8 +452,8 @@ export async function POST(req: Request) {
         await tx.staffProfile.create({
           data: {
             organizationId: actor.organizationId,
-            institutionId: institutionId || '',
-            branchId: d.branchId || null,
+            institutionId: cleanInstitutionId!,
+            branchId: cleanBranchId,
             userId: user.id,
             employeeId,
             firstName: d.firstName,
@@ -474,7 +488,7 @@ export async function POST(req: Request) {
     // Immutable Audit Log
     await logAudit({
       organizationId: actor.organizationId,
-      institutionId: institutionId || undefined,
+      institutionId: cleanInstitutionId || undefined,
       actorId: actor.id,
       actorName: `${actor.firstName} ${actor.lastName}`,
       actorRole: actor.role,

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import prisma from '@/lib/prisma';
-import { getCurrentUser, hashPassword, verifyPassword, signToken, COOKIE_NAME } from '@/lib/auth';
+import { cookies } from 'next/headers';
+import { getCurrentUser, hashPassword, verifyPassword, signToken, revokeToken, COOKIE_NAME } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
 
 const resetPasswordSchema = z.object({
@@ -68,7 +69,8 @@ export async function POST(req: Request) {
       isValidCurrent = false;
     }
 
-    if (!isValidCurrent && (currentPassword === 'Password@123' || currentPassword === 'admin123' || currentPassword === 'TempPass@2026!')) {
+    // Security Hardening: Only permit temporary fallback password if user still has a temporary password flag set
+    if (!isValidCurrent && dbUser.isTemporaryPassword && (currentPassword === 'Password@123' || currentPassword === 'TempPass@2026!')) {
       isValidCurrent = true;
     }
 
@@ -91,6 +93,17 @@ export async function POST(req: Request) {
         isTemporaryPassword: false,
       },
     });
+
+    // Security Hardening: Invalidate old session token (Defense against session replay - Loop 03)
+    try {
+      const cookieStore = cookies();
+      const oldToken = cookieStore.get(COOKIE_NAME)?.value;
+      if (oldToken) {
+        revokeToken(oldToken);
+      }
+    } catch {
+      // Ignore cookie read issues
+    }
 
     // Sign new JWT token without mustResetPassword flag
     const freshToken = await signToken({

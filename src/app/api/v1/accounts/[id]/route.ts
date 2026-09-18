@@ -244,6 +244,32 @@ export async function PATCH(
       }
     }
 
+    // Last Administrator Protection (Loop 06): Prevent reaching 0 active administrators
+    const isTargetAdmin = ['ORG_ADMIN', 'PRINCIPAL', 'SUPER_ADMIN'].includes(existing.role);
+    const willBeDemoted = d.role && d.role !== existing.role && !['ORG_ADMIN', 'PRINCIPAL', 'SUPER_ADMIN'].includes(d.role);
+    const willBeSuspendedOrDeactivated = d.status && d.status !== 'ACTIVE';
+
+    if (isTargetAdmin && (willBeDemoted || willBeSuspendedOrDeactivated)) {
+      const remainingAdmins = await prisma.user.count({
+        where: {
+          organizationId: existing.organizationId,
+          id: { not: existing.id },
+          role: { in: ['ORG_ADMIN', 'PRINCIPAL', 'SUPER_ADMIN'] },
+          status: 'ACTIVE',
+        },
+      });
+
+      if (remainingAdmins === 0) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Operation Denied: Cannot suspend, deactivate, or demote the last remaining active Administrator/Principal of the organization (Last Administrator Protection).',
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     const auditActions: string[] = [];
 
     if (d.status && d.status !== existing.status) {
@@ -322,3 +348,92 @@ export async function PATCH(
     return NextResponse.json({ success: false, error: 'Failed to update account' }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const sessionUser = await getCurrentUser();
+  if (!sessionUser) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const actor = await getSecurityActor(sessionUser);
+  if (!actor) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { id } = params;
+  const existing = await prisma.user.findUnique({ where: { id } });
+  if (!existing || (actor.role !== 'SUPER_ADMIN' && existing.organizationId !== actor.organizationId)) {
+    return NextResponse.json({ success: false, error: 'Account not found' }, { status: 404 });
+  }
+
+  // Enforce account.delete permission
+  const decision = authorize(actor, 'account.delete', {
+    type: 'ROLE',
+    organizationId: existing.organizationId,
+  });
+
+  if (!decision.allowed) {
+    return NextResponse.json({ success: false, error: 'Forbidden: Insufficient permissions to delete accounts' }, { status: 403 });
+  }
+
+  // Self-deletion prevention (Loop 06)
+  if (existing.id === actor.id) {
+    return NextResponse.json({ success: false, error: 'Operation Denied: Users cannot delete their own active account.' }, { status: 400 });
+  }
+
+  // Last Administrator Protection (Loop 06): Prevent reaching 0 active administrators
+  if (['ORG_ADMIN', 'PRINCIPAL', 'SUPER_ADMIN'].includes(existing.role)) {
+    const remainingAdmins = await prisma.user.count({
+      where: {
+        organizationId: existing.organizationId,
+        id: { not: existing.id },
+        role: { in: ['ORG_ADMIN', 'PRINCIPAL', 'SUPER_ADMIN'] },
+        status: 'ACTIVE',
+      },
+    });
+
+    if (remainingAdmins === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Operation Denied: Cannot delete the last remaining active Administrator/Principal of the organization (Last Administrator Protection).',
+        },
+        { status: 400 }
+      );
+    }
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      // Clean up relations safely before account deletion
+      await tx.userPermission.deleteMany({ where: { userId: id } });
+      await tx.staffResponsibility.updateMany({ where: { userId: id }, data: { status: 'REVOKED' } });
+      await tx.subjectAssignment.deleteMany({ where: { teacherId: id } });
+      await tx.user.delete({ where: { id } });
+    });
+
+    await logAudit({
+      organizationId: actor.organizationId,
+      institutionId: existing.institutionId || undefined,
+      actorId: actor.id,
+      actorName: `${actor.firstName} ${actor.lastName}`,
+      actorRole: actor.role,
+      resource: 'ACCOUNT',
+      action: 'account.deleted',
+      recordId: id,
+      details: { email: existing.email, role: existing.role },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Account deleted successfully',
+    });
+  } catch (error: any) {
+    console.error('[ACCOUNT_DELETE_ERROR]', error);
+    return NextResponse.json({ success: false, error: 'Failed to delete account' }, { status: 500 });
+  }
+}
+
