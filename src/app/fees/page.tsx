@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import AppShell from '@/components/layout/AppShell';
 import DataTable, { Column } from '@/components/ui/DataTable';
 import MetricCard from '@/components/ui/MetricCard';
@@ -258,13 +259,21 @@ export default function FeesPage() {
   return (
     <AppShell user={user}>
       <div className="page-container">
-        <div className="page-header">
+        <div className="page-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
           <div>
             <h1 className="page-title">Fees & Revenue Management</h1>
             <p className="page-subtitle">
               Fee schedules, student ledger accounts, payment collections, and official printable receipts
             </p>
           </div>
+          <Link
+            href="/fees/collect"
+            className="btn btn-primary"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 18px', fontWeight: 700 }}
+          >
+            <CreditCard size={16} />
+            <span>Open Collection Terminal</span>
+          </Link>
         </div>
 
         {/* Top Metric Cards */}
