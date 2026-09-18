@@ -82,7 +82,7 @@ export default function CreateAccountWizard() {
           fetch('/api/v1/auth/me'),
           fetch('/api/v1/roles'),
           fetch('/api/v1/students?status=ACTIVE'),
-          fetch('/api/v1/academics'),
+          fetch('/api/v1/academics/classes'),
         ]);
 
         if (meRes.ok) {

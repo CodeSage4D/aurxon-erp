@@ -132,7 +132,7 @@ export default function AccountDetailPage() {
 
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-lg">
-                {identity.firstName[0]}{identity.lastName[0]}
+                {(identity.firstName?.[0] || identity.name?.[0] || 'U')}{(identity.lastName?.[0] || '')}
               </div>
               <div>
                 <div className="flex items-center gap-2">

@@ -305,32 +305,35 @@ export default function LeaveManagementPage() {
             <div className="space-y-6">
               {/* Balances Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                {staffData?.balances?.map((b: any) => (
-                  <div
-                    key={b.leaveType}
-                    className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                          {b.leaveType}
-                        </span>
-                        <span className="w-2 h-2 rounded-full bg-[#2270AF]" />
+                {staffData?.balances && staffData.balances.length > 0 ? (
+                  staffData.balances.map((b: any) => (
+                    <div
+                      key={b.leaveType}
+                      className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                            {b.leaveType}
+                          </span>
+                          <span className="w-2 h-2 rounded-full bg-[#2270AF]" />
+                        </div>
+                        <div className="text-2xl font-black text-[#192D55] mt-2">
+                          {b.availableDays} <span className="text-xs font-normal text-slate-400">/ {b.totalAllocated}d</span>
+                        </div>
                       </div>
-                      <div className="text-2xl font-black text-[#192D55] mt-2">
-                        {b.availableDays} <span className="text-xs font-normal text-slate-400">/ {b.totalAllocated}d</span>
+                      <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                        <span>Used: <strong className="text-slate-700">{b.usedDays}</strong></span>
+                        {b.pendingDays > 0 && (
+                          <span className="text-amber-600 font-medium">Pending: {b.pendingDays}</span>
+                        )}
                       </div>
                     </div>
-                    <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                      <span>Used: <strong className="text-slate-700">{b.usedDays}</strong></span>
-                      {b.pendingDays > 0 && (
-                        <span className="text-amber-600 font-medium">Pending: {b.pendingDays}</span>
-                      )}
-                    </div>
-                  </div>
-                )) || (
-                  <div className="col-span-full py-6 text-center text-slate-400 text-sm bg-white rounded-2xl border">
-                    Loading faculty leave balances...
+                  ))
+                ) : (
+                  <div className="col-span-full py-8 text-center text-slate-500 text-sm bg-white rounded-2xl border border-dashed border-slate-200">
+                    <Briefcase className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                    {loading ? 'Loading faculty leave balances...' : 'No leave quota allocated for this role or user profile.'}
                   </div>
                 )}
               </div>
@@ -364,73 +367,75 @@ export default function LeaveManagementPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-slate-700">
-                      {staffData?.myRequests?.map((req: any) => (
-                        <tr key={req.id} className="hover:bg-slate-50/70 transition-colors">
-                          <td className="py-4 px-6 font-semibold text-[#192D55]">
-                            <div className="flex items-center gap-2">
-                              <span className="w-2 h-2 rounded-full bg-[#2270AF]" />
-                              {req.leaveType}
-                              {req.emergency && (
-                                <span className="bg-rose-100 text-rose-700 text-[10px] font-bold px-1.5 py-0.5 rounded">
-                                  EMERGENCY
-                                </span>
+                      {staffData?.myRequests && staffData.myRequests.length > 0 ? (
+                        staffData.myRequests.map((req: any) => (
+                          <tr key={req.id} className="hover:bg-slate-50/70 transition-colors">
+                            <td className="py-4 px-6 font-semibold text-[#192D55]">
+                              <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-[#2270AF]" />
+                                {req.leaveType}
+                                {req.emergency && (
+                                  <span className="bg-rose-100 text-rose-700 text-[10px] font-bold px-1.5 py-0.5 rounded">
+                                    EMERGENCY
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-4 px-6">
+                              <div className="font-medium text-slate-900">
+                                {new Date(req.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} —{' '}
+                                {new Date(req.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </div>
+                              <div className="text-xs text-slate-400">
+                                {req.totalDays} Day{req.totalDays > 1 ? 's' : ''} {req.halfDay ? `(${req.halfDayPeriod})` : ''}
+                              </div>
+                            </td>
+                            <td className="py-4 px-6 max-w-xs">
+                              <p className="truncate text-slate-600">{req.reason}</p>
+                              {req.reviewRemarks && (
+                                <p className="text-xs text-blue-600 mt-0.5 truncate">Remarks: {req.reviewRemarks}</p>
                               )}
-                            </div>
-                          </td>
-                          <td className="py-4 px-6">
-                            <div className="font-medium text-slate-900">
-                              {new Date(req.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} —{' '}
-                              {new Date(req.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                            </div>
-                            <div className="text-xs text-slate-400">
-                              {req.totalDays} Day{req.totalDays > 1 ? 's' : ''} {req.halfDay ? `(${req.halfDayPeriod})` : ''}
-                            </div>
-                          </td>
-                          <td className="py-4 px-6 max-w-xs">
-                            <p className="truncate text-slate-600">{req.reason}</p>
-                            {req.reviewRemarks && (
-                              <p className="text-xs text-blue-600 mt-0.5 truncate">Remarks: {req.reviewRemarks}</p>
-                            )}
-                          </td>
-                          <td className="py-4 px-6">
-                            <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
-                              <Clock className="w-3 h-3 text-slate-500" />
-                              {req.currentReviewStep}
-                            </span>
-                          </td>
-                          <td className="py-4 px-6">
-                            <span
-                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
-                                req.status === 'APPROVED'
-                                  ? 'bg-emerald-100 text-emerald-800'
-                                  : req.status === 'REJECTED'
-                                  ? 'bg-rose-100 text-rose-800'
-                                  : req.status === 'UNDER_REVIEW'
-                                  ? 'bg-blue-100 text-blue-800'
-                                  : 'bg-amber-100 text-amber-800'
-                              }`}
-                            >
-                              {req.status === 'APPROVED' && <CheckCircle2 className="w-3 h-3 text-emerald-600" />}
-                              {req.status === 'REJECTED' && <XCircle className="w-3 h-3 text-rose-600" />}
-                              {req.status === 'PENDING' && <Clock className="w-3 h-3 text-amber-600" />}
-                              {req.status}
-                            </span>
-                          </td>
-                          <td className="py-4 px-6 text-right">
-                            {(req.status === 'PENDING' || req.status === 'UNDER_REVIEW') && (
-                              <button
-                                onClick={() => handleReviewAction(req.id, 'CANCEL')}
-                                className="text-xs font-semibold text-rose-600 hover:text-rose-800 hover:underline"
+                            </td>
+                            <td className="py-4 px-6">
+                              <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                                <Clock className="w-3 h-3 text-slate-500" />
+                                {req.currentReviewStep}
+                              </span>
+                            </td>
+                            <td className="py-4 px-6">
+                              <span
+                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
+                                  req.status === 'APPROVED'
+                                    ? 'bg-emerald-100 text-emerald-800'
+                                    : req.status === 'REJECTED'
+                                    ? 'bg-rose-100 text-rose-800'
+                                    : req.status === 'UNDER_REVIEW'
+                                    ? 'bg-blue-100 text-blue-800'
+                                    : 'bg-amber-100 text-amber-800'
+                                }`}
                               >
-                                Cancel
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      )) || (
+                                {req.status === 'APPROVED' && <CheckCircle2 className="w-3 h-3 text-emerald-600" />}
+                                {req.status === 'REJECTED' && <XCircle className="w-3 h-3 text-rose-600" />}
+                                {req.status === 'PENDING' && <Clock className="w-3 h-3 text-amber-600" />}
+                                {req.status}
+                              </span>
+                            </td>
+                            <td className="py-4 px-6 text-right">
+                              {(req.status === 'PENDING' || req.status === 'UNDER_REVIEW') && (
+                                <button
+                                  onClick={() => handleReviewAction(req.id, 'CANCEL')}
+                                  className="text-xs font-semibold text-rose-600 hover:text-rose-800 hover:underline"
+                                >
+                                  Cancel
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
                         <tr>
                           <td colSpan={6} className="py-8 text-center text-slate-400 text-sm">
-                            No leave applications found.
+                            {loading ? 'Loading requests...' : 'No leave applications found.'}
                           </td>
                         </tr>
                       )}
@@ -461,89 +466,92 @@ export default function LeaveManagementPage() {
 
               {/* Pending Requests Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {staffData?.pendingInstitutionalRequests?.map((req: any) => (
-                  <div
-                    key={req.id}
-                    className={`bg-white rounded-2xl border p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between ${
-                      selectedRequest?.id === req.id ? 'border-[#2270AF] ring-2 ring-blue-100' : 'border-slate-200/80'
-                    }`}
-                  >
-                    <div>
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#2270AF] to-[#9E3BB3] text-white flex items-center justify-center font-bold text-sm shadow-sm">
-                            {req.staff?.fullName?.charAt(0) || 'F'}
+                {staffData?.pendingInstitutionalRequests && staffData.pendingInstitutionalRequests.length > 0 ? (
+                  staffData.pendingInstitutionalRequests.map((req: any) => (
+                    <div
+                      key={req.id}
+                      className={`bg-white rounded-2xl border p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between ${
+                        selectedRequest?.id === req.id ? 'border-[#2270AF] ring-2 ring-blue-100' : 'border-slate-200/80'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#2270AF] to-[#9E3BB3] text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                              {req.staff?.fullName?.charAt(0) || 'F'}
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-[#192D55] text-base">{req.staff?.fullName}</h4>
+                              <p className="text-xs text-slate-500">
+                                {req.staff?.employeeId} • {req.staff?.designation} ({req.staff?.department})
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className="font-bold text-[#192D55] text-base">{req.staff?.fullName}</h4>
-                            <p className="text-xs text-slate-500">
-                              {req.staff?.employeeId} • {req.staff?.designation} ({req.staff?.department})
-                            </p>
-                          </div>
-                        </div>
 
-                        <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded-full">
-                          {req.leaveType}
-                        </span>
-                      </div>
-
-                      {/* Dates and Reason */}
-                      <div className="mt-4 p-3 bg-slate-50 rounded-xl space-y-1">
-                        <div className="flex items-center justify-between text-xs text-slate-700">
-                          <span className="font-medium">Leave Period:</span>
-                          <span className="font-bold text-[#192D55]">
-                            {new Date(req.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} —{' '}
-                            {new Date(req.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}{' '}
-                            ({req.totalDays} Days)
+                          <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded-full">
+                            {req.leaveType}
                           </span>
                         </div>
-                        <div className="text-xs text-slate-600 pt-1 border-t border-slate-200/60">
-                          <strong>Reason:</strong> {req.reason}
+
+                        {/* Dates and Reason */}
+                        <div className="mt-4 p-3 bg-slate-50 rounded-xl space-y-1">
+                          <div className="flex items-center justify-between text-xs text-slate-700">
+                            <span className="font-medium">Leave Period:</span>
+                            <span className="font-bold text-[#192D55]">
+                              {new Date(req.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} —{' '}
+                              {new Date(req.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}{' '}
+                              ({req.totalDays} Days)
+                            </span>
+                          </div>
+                          <div className="text-xs text-slate-600 pt-1 border-t border-slate-200/60">
+                            <strong>Reason:</strong> {req.reason}
+                          </div>
+                        </div>
+
+                        {/* Routing Step Badge */}
+                        <div className="mt-3 flex items-center justify-between text-xs">
+                          <span className="text-slate-500 font-medium flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5 text-[#2270AF]" />
+                            Current Step:
+                          </span>
+                          <span className="font-bold text-[#2270AF] bg-blue-50 px-2.5 py-0.5 rounded-md">
+                            {req.currentReviewStep}
+                          </span>
                         </div>
                       </div>
 
-                      {/* Routing Step Badge */}
-                      <div className="mt-3 flex items-center justify-between text-xs">
-                        <span className="text-slate-500 font-medium flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5 text-[#2270AF]" />
-                          Current Step:
-                        </span>
-                        <span className="font-bold text-[#2270AF] bg-blue-50 px-2.5 py-0.5 rounded-md">
-                          {req.currentReviewStep}
-                        </span>
+                      {/* Action Footer */}
+                      <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between">
+                        <button
+                          onClick={() => setSelectedRequest(req)}
+                          className="text-xs font-bold text-[#2270AF] hover:underline flex items-center gap-1"
+                        >
+                          Inspect Impact & Decision
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleReviewAction(req.id, 'REJECT')}
+                            className="bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
+                          >
+                            Reject
+                          </button>
+                          <button
+                            onClick={() => handleReviewAction(req.id, 'APPROVE')}
+                            className="bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm transition-colors"
+                          >
+                            Approve
+                          </button>
+                        </div>
                       </div>
                     </div>
-
-                    {/* Action Footer */}
-                    <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between">
-                      <button
-                        onClick={() => setSelectedRequest(req)}
-                        className="text-xs font-bold text-[#2270AF] hover:underline flex items-center gap-1"
-                      >
-                        Inspect Impact & Decision
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleReviewAction(req.id, 'REJECT')}
-                          className="bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
-                        >
-                          Reject
-                        </button>
-                        <button
-                          onClick={() => handleReviewAction(req.id, 'APPROVE')}
-                          className="bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm transition-colors"
-                        >
-                          Approve
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )) || (
-                  <div className="col-span-full py-12 text-center text-slate-400 text-sm bg-white rounded-2xl border">
+                  ))
+                ) : (
+                  <div className="col-span-full py-12 text-center text-slate-400 text-sm bg-white rounded-2xl border border-dashed border-slate-200">
                     <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2 opacity-80" />
-                    No pending leave approvals in your queue.
+                    <p className="font-semibold text-slate-700">No pending leave approvals in your queue</p>
+                    <p className="text-xs text-slate-400 mt-1">All institutional faculty leave requests have been reviewed.</p>
                   </div>
                 )}
               </div>
@@ -711,69 +719,77 @@ export default function LeaveManagementPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-slate-700">
-                      {studentLeaves.map((req) => (
-                        <tr key={req.id} className="hover:bg-slate-50/70 transition-colors">
-                          <td className="py-4 px-6 font-semibold text-[#192D55]">
-                            <div>{req.student?.firstName} {req.student?.lastName}</div>
-                            <div className="text-xs text-slate-400">
-                              {req.student?.admissionNumber} • Section {req.student?.section?.name || 'A'}
-                            </div>
-                          </td>
-                          <td className="py-4 px-6">
-                            <div className="font-medium text-slate-800">
-                              {new Date(req.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} —{' '}
-                              {new Date(req.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                            </div>
-                            <div className="text-xs text-slate-400">{req.totalDays} Days ({req.leaveType})</div>
-                          </td>
-                          <td className="py-4 px-6">
-                            {req.hasExamConflict ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-bold">
-                                <AlertTriangle className="w-3 h-3 text-amber-600" />
-                                {req.examConflictDetails || 'Exam Overlap'}
-                              </span>
-                            ) : (
-                              <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
-                                <CheckCircle2 className="w-3.5 h-3.5" /> No Conflicts
-                              </span>
-                            )}
-                          </td>
-                          <td className="py-4 px-6 max-w-xs truncate text-slate-600">
-                            {req.reason}
-                          </td>
-                          <td className="py-4 px-6">
-                            <span
-                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
-                                req.status === 'APPROVED'
-                                  ? 'bg-emerald-100 text-emerald-800'
-                                  : req.status === 'REJECTED'
-                                  ? 'bg-rose-100 text-rose-800'
-                                  : 'bg-amber-100 text-amber-800'
-                              }`}
-                            >
-                              {req.status}
-                            </span>
-                          </td>
-                          <td className="py-4 px-6 text-right">
-                            {req.status === 'PENDING' && (
-                              <div className="flex items-center justify-end gap-2">
-                                <button
-                                  onClick={() => handleStudentLeaveAction(req.id, 'REJECT')}
-                                  className="text-xs text-rose-600 hover:text-rose-800 font-bold px-2 py-1"
-                                >
-                                  Reject
-                                </button>
-                                <button
-                                  onClick={() => handleStudentLeaveAction(req.id, 'APPROVE')}
-                                  className="text-xs bg-emerald-600 text-white font-bold px-3 py-1.5 rounded-lg shadow-sm hover:bg-emerald-700"
-                                >
-                                  Approve
-                                </button>
+                      {studentLeaves && studentLeaves.length > 0 ? (
+                        studentLeaves.map((req) => (
+                          <tr key={req.id} className="hover:bg-slate-50/70 transition-colors">
+                            <td className="py-4 px-6 font-semibold text-[#192D55]">
+                              <div>{req.student?.firstName} {req.student?.lastName}</div>
+                              <div className="text-xs text-slate-400">
+                                {req.student?.admissionNumber} • Section {req.student?.section?.name || 'A'}
                               </div>
-                            )}
+                            </td>
+                            <td className="py-4 px-6">
+                              <div className="font-medium text-slate-800">
+                                {new Date(req.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} —{' '}
+                                {new Date(req.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                              </div>
+                              <div className="text-xs text-slate-400">{req.totalDays} Days ({req.leaveType})</div>
+                            </td>
+                            <td className="py-4 px-6">
+                              {req.hasExamConflict ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-bold">
+                                  <AlertTriangle className="w-3 h-3 text-amber-600" />
+                                  {req.examConflictDetails || 'Exam Overlap'}
+                                </span>
+                              ) : (
+                                <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
+                                  <CheckCircle2 className="w-3.5 h-3.5" /> No Conflicts
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-4 px-6 max-w-xs truncate text-slate-600">
+                              {req.reason}
+                            </td>
+                            <td className="py-4 px-6">
+                              <span
+                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
+                                  req.status === 'APPROVED'
+                                    ? 'bg-emerald-100 text-emerald-800'
+                                    : req.status === 'REJECTED'
+                                    ? 'bg-rose-100 text-rose-800'
+                                    : 'bg-amber-100 text-amber-800'
+                                }`}
+                              >
+                                {req.status}
+                              </span>
+                            </td>
+                            <td className="py-4 px-6 text-right">
+                              {req.status === 'PENDING' && (
+                                <div className="flex items-center justify-end gap-2">
+                                  <button
+                                    onClick={() => handleStudentLeaveAction(req.id, 'REJECT')}
+                                    className="text-xs text-rose-600 hover:text-rose-800 font-bold px-2 py-1"
+                                  >
+                                    Reject
+                                  </button>
+                                  <button
+                                    onClick={() => handleStudentLeaveAction(req.id, 'APPROVE')}
+                                    className="text-xs bg-emerald-600 text-white font-bold px-3 py-1.5 rounded-lg shadow-sm hover:bg-emerald-700"
+                                  >
+                                    Approve
+                                  </button>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={6} className="py-8 text-center text-slate-400 text-sm">
+                            {loading ? 'Loading student leaves...' : 'No student leave applications pending review.'}
                           </td>
                         </tr>
-                      ))}
+                      )}
                     </tbody>
                   </table>
                 </div>

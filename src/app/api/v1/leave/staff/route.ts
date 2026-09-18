@@ -53,7 +53,12 @@ export async function GET(req: NextRequest) {
 
     // Resolve target staff profile
     let staffProfile = await prisma.staffProfile.findFirst({
-      where: { userId: actor.id },
+      where: {
+        OR: [
+          { userId: actor.id },
+          ...(actor.email ? [{ email: actor.email }] : []),
+        ],
+      },
       include: {
         leaveBalances: true,
         leaveRequests: {
@@ -62,6 +67,17 @@ export async function GET(req: NextRequest) {
         },
       },
     });
+
+    if (staffProfile && !staffProfile.userId) {
+      try {
+        await prisma.staffProfile.update({
+          where: { id: staffProfile.id },
+          data: { userId: actor.id },
+        });
+      } catch {
+        // Ignore unique constraint or edge conflict
+      }
+    }
 
     // Auto-seed default quotas for the faculty member if empty
     if (staffProfile && staffProfile.leaveBalances.length === 0) {
@@ -178,13 +194,29 @@ export async function POST(req: NextRequest) {
     const data = parsed.data;
 
     // Find staff profile for actor
-    const staffProfile = await prisma.staffProfile.findFirst({
-      where: { userId: actor.id },
+    let staffProfile = await prisma.staffProfile.findFirst({
+      where: {
+        OR: [
+          { userId: actor.id },
+          ...(actor.email ? [{ email: actor.email }] : []),
+        ],
+      },
       include: {
         leaveBalances: true,
         leaveRequests: true,
       },
     });
+
+    if (staffProfile && !staffProfile.userId) {
+      try {
+        await prisma.staffProfile.update({
+          where: { id: staffProfile.id },
+          data: { userId: actor.id },
+        });
+      } catch {
+        // Ignore unique constraint or edge conflict
+      }
+    }
 
     if (!staffProfile) {
       return NextResponse.json(
