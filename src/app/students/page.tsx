@@ -14,7 +14,11 @@ import {
   Clock,
   Download,
   Eye,
+  FileText,
+  Upload,
 } from 'lucide-react';
+
+import { INDIAN_STATES_AND_UTS } from '@/lib/data/indian-states';
 
 export default function StudentsPage() {
   const [user, setUser] = useState<any>(null);
@@ -25,7 +29,13 @@ export default function StudentsPage() {
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
-  const [profileTab, setProfileTab] = useState<'overview' | 'attendance' | 'fees' | 'exams'>('overview');
+  const [profileTab, setProfileTab] = useState<'overview' | 'attendance' | 'fees' | 'exams' | 'documents'>('overview');
+
+  // Document upload state
+  const [docUploadType, setDocUploadType] = useState('BIRTH_CERTIFICATE');
+  const [docUploadTitle, setDocUploadTitle] = useState('');
+  const [docUploadUrl, setDocUploadUrl] = useState('');
+  const [docSubmitting, setDocSubmitting] = useState(false);
 
   // New Student Form state
   const [sections, setSections] = useState<any[]>([]);
@@ -36,6 +46,17 @@ export default function StudentsPage() {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
+    fatherName: '',
+    motherName: '',
+    fatherOccupation: '',
+    motherOccupation: '',
+    guardianPhone: '',
+    aadharNumber: '',
+    religion: 'HINDU',
+    casteCategory: 'GENERAL',
+    previousSchool: '',
+    tcNumber: '',
+    schoolBoard: 'CBSE',
     dob: '2010-06-15',
     gender: 'MALE',
     branchId: '',
@@ -44,6 +65,11 @@ export default function StudentsPage() {
     contactPhone: '',
     email: '',
     address: '',
+    city: 'Delhi',
+    state: 'Delhi NCR',
+    pincode: '',
+    category: 'GENERAL',
+    bloodGroup: '',
     parentName: '',
     parentPhone: '',
     parentRelation: 'FATHER',

@@ -9,6 +9,17 @@ import { getSecurityActor, getScopedStudentQuery } from '@/lib/authorization';
 const createStudentSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
+  fatherName: z.string().optional().nullable(),
+  motherName: z.string().optional().nullable(),
+  fatherOccupation: z.string().optional().nullable(),
+  motherOccupation: z.string().optional().nullable(),
+  guardianPhone: z.string().optional().nullable(),
+  aadharNumber: z.string().optional().nullable(),
+  religion: z.string().optional().nullable(),
+  casteCategory: z.string().optional().nullable(),
+  previousSchool: z.string().optional().nullable(),
+  tcNumber: z.string().optional().nullable(),
+  schoolBoard: z.string().default('CBSE'),
   dob: z.string().min(1, 'Date of birth is required'),
   gender: z.enum(['MALE', 'FEMALE', 'OTHER']),
   branchId: z.string().optional().nullable(),
@@ -17,6 +28,9 @@ const createStudentSchema = z.object({
   contactPhone: z.string().min(5, 'Valid phone required'),
   email: z.string().email().optional().or(z.literal('')),
   address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  pincode: z.string().optional(),
   category: z.string().default('GENERAL'),
   bloodGroup: z.string().optional(),
   parentName: z.string().min(1, 'Parent/Guardian name is required'),
@@ -59,7 +73,9 @@ export async function GET(req: Request) {
     whereClause.OR = [
       { firstName: { contains: search } },
       { lastName: { contains: search } },
+      { fatherName: { contains: search } },
       { admissionNumber: { contains: search } },
+      { aadharNumber: { contains: search } },
     ];
   }
 
@@ -83,6 +99,7 @@ export async function GET(req: Request) {
         section: { include: { classLevel: true } },
         batch: { include: { course: true } },
         studentParents: { include: { parent: true } },
+        studentDocuments: true,
         feeAllocations: { select: { netAmount: true, paidAmount: true, balanceAmount: true, status: true } },
       },
       orderBy: { admissionNumber: 'asc' },
@@ -134,6 +151,21 @@ export async function POST(req: Request) {
     const org = await prisma.organization.findUnique({ where: { id: user.organizationId } });
     const admissionNumber = `${org?.code || 'ADM'}-${new Date().getFullYear()}-${String(count + 1).padStart(4, '0')}`;
 
+    // Section-wise / Batch-wise roll number generation (Class-wise roll numbers requirement)
+    let sectionRollCount = 0;
+    if (d.sectionId) {
+      sectionRollCount = await prisma.student.count({
+        where: { organizationId: user.organizationId, sectionId: d.sectionId },
+      });
+    } else if (d.batchId) {
+      sectionRollCount = await prisma.student.count({
+        where: { organizationId: user.organizationId, batchId: d.batchId },
+      });
+    } else {
+      sectionRollCount = count;
+    }
+    const rollNumber = String(sectionRollCount + 1);
+
     // Transactional creation of student + parent
     const result = await prisma.$transaction(async (tx) => {
       // 1. Create student
@@ -144,14 +176,28 @@ export async function POST(req: Request) {
           branchId: d.branchId || user.branchId || null,
           academicSessionId: session.id,
           admissionNumber,
-          rollNumber: String(count + 1),
+          rollNumber,
           firstName: d.firstName,
           lastName: d.lastName,
+          fatherName: d.fatherName || null,
+          motherName: d.motherName || null,
+          fatherOccupation: d.fatherOccupation || null,
+          motherOccupation: d.motherOccupation || null,
+          guardianPhone: d.guardianPhone || null,
+          aadharNumber: d.aadharNumber || null,
+          religion: d.religion || null,
+          casteCategory: d.casteCategory || d.category || 'GENERAL',
+          previousSchool: d.previousSchool || null,
+          tcNumber: d.tcNumber || null,
+          schoolBoard: d.schoolBoard || 'CBSE',
           dob: new Date(d.dob),
           gender: d.gender,
           contactPhone: d.contactPhone,
           email: d.email || null,
           address: d.address || null,
+          city: d.city || null,
+          state: d.state || null,
+          pincode: d.pincode || null,
           category: d.category,
           bloodGroup: d.bloodGroup || null,
           sectionId: d.sectionId || null,
@@ -203,3 +249,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, error: 'Failed to create student record' }, { status: 500 });
   }
 }
+

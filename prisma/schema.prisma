@@ -60,6 +60,7 @@ model Organization {
   auditLogs           AuditLog[]
   staffProfiles       StaffProfile[]
   staffDocuments      StaffDocument[]
+  studentDocuments    StudentDocument[]
   staffLeaveRequests     StaffLeaveRequest[]
   staffAttendanceRecords StaffAttendanceRecord[]
   studentLeaveRequests   StudentLeaveRequest[]
@@ -391,6 +392,17 @@ model Student {
   rollNumber        String?
   firstName         String
   lastName          String
+  fatherName        String?
+  motherName        String?
+  fatherOccupation  String?
+  motherOccupation  String?
+  guardianPhone     String?
+  aadharNumber      String?
+  religion          String?   // HINDU, MUSLIM, CHRISTIAN, SIKH, JAIN, BUDDHIST, OTHER
+  casteCategory     String?   // GENERAL, OBC, SC, ST, EWS
+  previousSchool    String?
+  tcNumber          String?
+  schoolBoard       String?   @default("CBSE")
   dob               DateTime
   gender            String    // MALE, FEMALE, OTHER
   bloodGroup        String?
@@ -423,6 +435,7 @@ model Student {
   feeAllocations    StudentFeeAllocation[]
   feePayments       FeePayment[]
   leaveRequests     StudentLeaveRequest[]
+  studentDocuments  StudentDocument[]
 
   @@unique([organizationId, admissionNumber])
   @@index([organizationId, institutionId])
@@ -982,6 +995,30 @@ model StaffDocument {
   @@index([staffId])
   @@index([organizationId, status])
 }
+
+model StudentDocument {
+  id                String    @id @default(cuid())
+  studentId         String
+  organizationId    String
+  documentType      String    // "BIRTH_CERTIFICATE", "AADHAR_CARD", "TRANSFER_CERTIFICATE", "CASTE_CERTIFICATE", "INCOME_CERTIFICATE", "MARKSHEET", "PASSPORT_PHOTO", "OTHER"
+  title             String
+  fileUrl           String
+  fileSize          Int?
+  mimeType          String?
+  status            String    @default("SUBMITTED") // "NOT_SUBMITTED", "SUBMITTED", "VERIFIED", "REJECTED"
+  rejectionReason   String?
+  verifiedByUserId  String?
+  verifiedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  student           Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([organizationId, status])
+}
+
 
 model StaffCareerEvent {
   id            String   @id @default(cuid())

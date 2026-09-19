@@ -7,7 +7,19 @@ import { logAudit } from '@/lib/audit';
 
 const createExamSchema = z.object({
   name: z.string().min(1, 'Exam name is required'),
-  examType: z.enum(['PERIODIC_TEST', 'HALF_YEARLY', 'ANNUAL', 'MOCK_TEST']),
+  examType: z.enum([
+    'UNIT_TEST_1',
+    'PERIODIC_TEST_1',
+    'HALF_YEARLY',
+    'UNIT_TEST_2',
+    'PERIODIC_TEST_2',
+    'ANNUAL',
+    'PRE_BOARD_1',
+    'PRE_BOARD_2',
+    'MOCK_TEST',
+    'BOARD_EXAM',
+    'PERIODIC_TEST', // Legacy backward-compatibility
+  ]),
   startDate: z.string().min(10),
   endDate: z.string().min(10),
   status: z.enum(['DRAFT', 'SCHEDULED', 'ONGOING', 'COMPLETED', 'PUBLISHED']).default('SCHEDULED'),

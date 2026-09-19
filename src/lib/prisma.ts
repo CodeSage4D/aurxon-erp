@@ -9,14 +9,28 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
+const createPrismaClient = () => {
+  const client = new PrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
   });
+
+  // Enable WAL mode, busy timeout and foreign keys for SQLite concurrency & performance safety
+  client.$queryRawUnsafe(`PRAGMA journal_mode = WAL;`)
+    .then(() => client.$executeRawUnsafe(`PRAGMA busy_timeout = 10000;`))
+    .then(() => client.$executeRawUnsafe(`PRAGMA foreign_keys = ON;`))
+    .then(() => client.$queryRawUnsafe(`PRAGMA synchronous = NORMAL;`))
+    .catch((err) => {
+      console.warn('Prisma SQLite PRAGMA initialization non-critical warning:', err.message);
+    });
+
+  return client;
+};
+
+export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma;
 }
 
 export default prisma;
+

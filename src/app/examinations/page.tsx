@@ -427,6 +427,7 @@ export default function ExaminationsPage() {
               </div>
 
               {/* Student Details */}
+              {/* Student Details */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', padding: '12px', backgroundColor: 'var(--surface-subtle)', borderRadius: '8px', marginBottom: '16px', fontSize: '13px' }}>
                 <div>
                   <span style={{ color: 'var(--text-muted)' }}>Student Name: </span>
@@ -437,12 +438,28 @@ export default function ExaminationsPage() {
                   <strong>{reportCardData.student.classSection}</strong>
                 </div>
                 <div>
+                  <span style={{ color: 'var(--text-muted)' }}>Father&apos;s Name: </span>
+                  <strong>{reportCardData.student.fatherName || 'N/A'}</strong>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--text-muted)' }}>Mother&apos;s Name: </span>
+                  <strong>{reportCardData.student.motherName || 'N/A'}</strong>
+                </div>
+                <div>
                   <span style={{ color: 'var(--text-muted)' }}>Admission No: </span>
                   <span style={{ fontFamily: 'var(--font-mono)' }}>{reportCardData.student.admissionNumber}</span>
                 </div>
                 <div>
                   <span style={{ color: 'var(--text-muted)' }}>Roll Number: </span>
-                  <strong>{reportCardData.student.rollNumber || '1'}</strong>
+                  <strong>{reportCardData.student.rollNumber || 'N/A'}</strong>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--text-muted)' }}>Aadhar No: </span>
+                  <span style={{ fontFamily: 'monospace' }}>{reportCardData.student.aadharNumber || 'N/A'}</span>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--text-muted)' }}>Date of Birth: </span>
+                  <strong>{reportCardData.student.dob}</strong>
                 </div>
               </div>
 
@@ -454,44 +471,53 @@ export default function ExaminationsPage() {
                     <th>Max Marks</th>
                     <th>Pass Marks</th>
                     <th>Marks Scored</th>
-                    <th>Grade</th>
+                    <th>CBSE Grade</th>
+                    <th>Grade Point</th>
                   </tr>
                 </thead>
                 <tbody>
                   {reportCardData.subjects.map((sub: any, i: number) => (
                     <tr key={i}>
-                      <td style={{ fontWeight: 600 }}>{sub.subjectName}</td>
+                      <td style={{ fontWeight: 600 }}>{sub.subjectName} ({sub.subjectCode})</td>
                       <td>{sub.maxMarks}</td>
                       <td>{sub.passMarks}</td>
                       <td style={{ fontWeight: 700, color: sub.isPass ? 'var(--text-main)' : '#dc2626' }}>
                         {sub.marksObtained}
                       </td>
                       <td><Badge variant={sub.isPass ? 'success' : 'danger'}>{sub.grade}</Badge></td>
+                      <td style={{ fontWeight: 600 }}>{sub.gradePoint !== undefined ? sub.gradePoint.toFixed(1) : '-'}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
 
               {/* Summary Results */}
-              <div style={{ padding: '14px', border: '1px solid var(--border-default)', borderRadius: '8px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', textAlign: 'center', backgroundColor: 'var(--surface-subtle)' }}>
+              <div style={{ padding: '14px', border: '1px solid var(--border-default)', borderRadius: '8px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', textAlign: 'center', backgroundColor: 'var(--surface-subtle)' }}>
                 <div>
                   <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Total Marks</div>
-                  <div style={{ fontSize: '16px', fontWeight: 700 }}>
+                  <div style={{ fontSize: '15px', fontWeight: 700 }}>
                     {reportCardData.summary.totalMarksObtained} / {reportCardData.summary.totalMaxMarks}
                   </div>
                 </div>
 
                 <div>
                   <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Percentage</div>
-                  <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--primary)' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--primary)' }}>
                     {reportCardData.summary.percentage}
                   </div>
                 </div>
 
                 <div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Result Status</div>
-                  <div style={{ fontSize: '15px', fontWeight: 700, color: reportCardData.summary.resultStatus === 'PASSED' ? '#059669' : '#dc2626' }}>
-                    {reportCardData.summary.resultStatus}
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>CGPA</div>
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#2563eb' }}>
+                    {reportCardData.summary.cgpa || 'N/A'}
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Result / Division</div>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: reportCardData.summary.resultStatus === 'PASSED' ? '#059669' : '#dc2626' }}>
+                    {reportCardData.summary.resultStatus} ({reportCardData.summary.division})
                   </div>
                 </div>
               </div>
@@ -530,16 +556,22 @@ export default function ExaminationsPage() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Exam Type *</label>
+              <label className="form-label">Indian Exam Category / Type *</label>
               <select
                 className="form-select"
                 value={newExamData.examType}
                 onChange={(e) => setNewExamData({ ...newExamData, examType: e.target.value })}
               >
-                <option value="PERIODIC_TEST">Periodic Unit Test</option>
-                <option value="HALF_YEARLY">Half Yearly Examination</option>
-                <option value="ANNUAL">Annual Final Examination</option>
-                <option value="MOCK_TEST">Competitive Mock Test (JEE/NEET)</option>
+                <option value="UNIT_TEST_1">Unit Test I (Formative)</option>
+                <option value="PERIODIC_TEST_1">Periodic Test I (PT-1)</option>
+                <option value="HALF_YEARLY">Half Yearly / Mid-Term Exam</option>
+                <option value="UNIT_TEST_2">Unit Test II (Formative)</option>
+                <option value="PERIODIC_TEST_2">Periodic Test II (PT-2)</option>
+                <option value="ANNUAL">Annual / Final Examination</option>
+                <option value="PRE_BOARD_1">Pre-Board Examination I</option>
+                <option value="PRE_BOARD_2">Pre-Board Examination II</option>
+                <option value="MOCK_TEST">NEET / JEE Mock Test</option>
+                <option value="BOARD_EXAM">Board Public Examination</option>
               </select>
             </div>
 
