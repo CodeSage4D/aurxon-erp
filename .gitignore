@@ -11,5 +11,8 @@ dist
 .env.local
 .env*.local
 *.db-journal
+*.db-wal
+*.db-shm
 !prisma/dev.db
 coverage
+
