@@ -16,3 +16,12 @@ dist
 !prisma/dev.db
 coverage
 
+# Android Build Outputs
+.gradle
+android/.gradle
+android/**/build
+android/**/*.apk
+android/**/*.aar
+android/local.properties
+.idea
+*.iml
