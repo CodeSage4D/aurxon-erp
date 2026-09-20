@@ -613,6 +613,7 @@ export const BASE_ROLE_PERMISSIONS: Record<string, string[]> = {
     'students.view_sensitive',
     'students.create',
     'students.update',
+    'students.archive',
     'attendance.view',
     'attendance.approve',
     'examinations.view',
@@ -1265,7 +1266,7 @@ export const CANONICAL_PERMISSIONS = [
 export const PERMISSION_ALIASES: Record<string, string[]> = {
   'student.read': ['students.view', 'students.view_own', 'student.view', 'student.view_own'],
   'student.create': ['students.create', 'admissions.create'],
-  'student.update': ['students.update'],
+  'student.update': ['students.update', 'students.edit'],
   'student.archive': ['students.archive', 'students.delete'],
   'guardian.read': ['guardians.view', 'parents.view'],
   'guardian.create': ['guardians.create', 'parents.create'],
