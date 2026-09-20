@@ -88,13 +88,32 @@ export async function PATCH(
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
   }
 
-  if (!hasPermission(user.role, 'student.update')) {
-    return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
-  }
+  const existing = await prisma.student.findUnique({
+    where: { id: params.id },
+    include: { section: true },
+  });
 
-  const existing = await prisma.student.findUnique({ where: { id: params.id } });
   if (!existing || existing.organizationId !== user.organizationId) {
     return NextResponse.json({ success: false, error: 'Student not found' }, { status: 404 });
+  }
+
+  const actor = await getSecurityActor(user);
+  if (!actor) {
+    return NextResponse.json({ success: false, error: 'User session invalid or suspended' }, { status: 403 });
+  }
+
+  const authDecision = authorize(actor, 'students.edit', {
+    type: 'STUDENT',
+    organizationId: existing.organizationId,
+    institutionId: existing.institutionId || undefined,
+    branchId: existing.branchId || undefined,
+    sectionId: existing.sectionId || undefined,
+    classLevelId: existing.section?.classLevelId || undefined,
+    studentId: existing.id,
+  });
+
+  if (!authDecision.allowed) {
+    return NextResponse.json({ success: false, error: authDecision.reason || 'Forbidden' }, { status: 403 });
   }
 
   try {
@@ -139,13 +158,32 @@ export async function DELETE(
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
   }
 
-  if (!hasPermission(user.role, 'student.archive')) {
-    return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
-  }
+  const existing = await prisma.student.findUnique({
+    where: { id: params.id },
+    include: { section: true },
+  });
 
-  const existing = await prisma.student.findUnique({ where: { id: params.id } });
   if (!existing || existing.organizationId !== user.organizationId) {
     return NextResponse.json({ success: false, error: 'Student not found' }, { status: 404 });
+  }
+
+  const actor = await getSecurityActor(user);
+  if (!actor) {
+    return NextResponse.json({ success: false, error: 'User session invalid or suspended' }, { status: 403 });
+  }
+
+  const authDecision = authorize(actor, 'students.archive', {
+    type: 'STUDENT',
+    organizationId: existing.organizationId,
+    institutionId: existing.institutionId || undefined,
+    branchId: existing.branchId || undefined,
+    sectionId: existing.sectionId || undefined,
+    classLevelId: existing.section?.classLevelId || undefined,
+    studentId: existing.id,
+  });
+
+  if (!authDecision.allowed) {
+    return NextResponse.json({ success: false, error: authDecision.reason || 'Forbidden' }, { status: 403 });
   }
 
   const archived = await prisma.student.update({

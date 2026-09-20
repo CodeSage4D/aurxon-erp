@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import prisma from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
-import { hasPermission } from '@/lib/permissions';
+import { getSecurityActor, authorize } from '@/lib/authorization';
 import { logAudit } from '@/lib/audit';
 
 const uploadDocumentSchema = z.object({
@@ -31,9 +31,32 @@ export async function GET(
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
   }
 
-  const student = await prisma.student.findUnique({ where: { id: params.id } });
+  const student = await prisma.student.findUnique({
+    where: { id: params.id },
+    include: { section: true },
+  });
+
   if (!student || student.organizationId !== user.organizationId) {
     return NextResponse.json({ success: false, error: 'Student not found' }, { status: 404 });
+  }
+
+  const actor = await getSecurityActor(user);
+  if (!actor) {
+    return NextResponse.json({ success: false, error: 'User session invalid or suspended' }, { status: 403 });
+  }
+
+  const authDecision = authorize(actor, 'students.view', {
+    type: 'STUDENT',
+    organizationId: student.organizationId,
+    institutionId: student.institutionId || undefined,
+    branchId: student.branchId || undefined,
+    sectionId: student.sectionId || undefined,
+    classLevelId: student.section?.classLevelId || undefined,
+    studentId: student.id,
+  });
+
+  if (!authDecision.allowed) {
+    return NextResponse.json({ success: false, error: authDecision.reason || 'Forbidden' }, { status: 403 });
   }
 
   const documents = await prisma.studentDocument.findMany({
@@ -41,7 +64,13 @@ export async function GET(
     orderBy: { createdAt: 'desc' },
   });
 
-  return NextResponse.json({ success: true, documents });
+  // Map protected download URLs to prevent direct unauthenticated static URL exposure
+  const protectedDocs = documents.map((doc) => ({
+    ...doc,
+    downloadUrl: `/api/v1/documents/${doc.id}/download?type=student`,
+  }));
+
+  return NextResponse.json({ success: true, documents: protectedDocs });
 }
 
 export async function POST(
@@ -53,13 +82,32 @@ export async function POST(
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
   }
 
-  if (!hasPermission(user.role, 'student.update')) {
-    return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
-  }
+  const student = await prisma.student.findUnique({
+    where: { id: params.id },
+    include: { section: true },
+  });
 
-  const student = await prisma.student.findUnique({ where: { id: params.id } });
   if (!student || student.organizationId !== user.organizationId) {
     return NextResponse.json({ success: false, error: 'Student not found' }, { status: 404 });
+  }
+
+  const actor = await getSecurityActor(user);
+  if (!actor) {
+    return NextResponse.json({ success: false, error: 'User session invalid or suspended' }, { status: 403 });
+  }
+
+  const authDecision = authorize(actor, 'students.edit', {
+    type: 'STUDENT',
+    organizationId: student.organizationId,
+    institutionId: student.institutionId || undefined,
+    branchId: student.branchId || undefined,
+    sectionId: student.sectionId || undefined,
+    classLevelId: student.section?.classLevelId || undefined,
+    studentId: student.id,
+  });
+
+  if (!authDecision.allowed) {
+    return NextResponse.json({ success: false, error: authDecision.reason || 'Forbidden' }, { status: 403 });
   }
 
   try {
@@ -78,7 +126,7 @@ export async function POST(
         fileUrl: parsed.data.fileUrl,
         fileSize: parsed.data.fileSize || null,
         mimeType: parsed.data.mimeType || null,
-        status: 'VERIFIED', // Auto-verified when uploaded by authorized staff
+        status: 'VERIFIED',
         verifiedByUserId: user.id,
         verifiedAt: new Date(),
       },
@@ -96,7 +144,13 @@ export async function POST(
       details: { studentId: params.id, documentType: doc.documentType, title: doc.title },
     });
 
-    return NextResponse.json({ success: true, document: doc }, { status: 201 });
+    return NextResponse.json({
+      success: true,
+      document: {
+        ...doc,
+        downloadUrl: `/api/v1/documents/${doc.id}/download?type=student`,
+      },
+    }, { status: 201 });
   } catch (error) {
     console.error('[STUDENT_DOC_UPLOAD_ERROR]', error);
     return NextResponse.json({ success: false, error: 'Failed to upload document' }, { status: 500 });

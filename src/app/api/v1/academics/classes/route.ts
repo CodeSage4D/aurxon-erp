@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
+import { getSecurityActor, authorize } from '@/lib/authorization';
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -48,19 +49,34 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
   }
 
+  const actor = await getSecurityActor(user);
+  if (!actor) {
+    return NextResponse.json({ success: false, error: 'User session invalid or suspended' }, { status: 403 });
+  }
+
+  let instId = user.institutionId;
+  if (!instId) {
+    const inst = await prisma.institution.findFirst({ where: { organizationId: user.organizationId } });
+    instId = inst?.id;
+  }
+
+  if (!instId) {
+    return NextResponse.json({ success: false, error: 'Institution not found' }, { status: 400 });
+  }
+
+  const authDecision = authorize(actor, 'academics.manage', {
+    type: 'ACADEMICS',
+    organizationId: user.organizationId,
+    institutionId: instId,
+  });
+
+  if (!authDecision.allowed) {
+    return NextResponse.json({ success: false, error: authDecision.reason || 'Forbidden' }, { status: 403 });
+  }
+
   try {
     const body = await req.json();
     const { name, sectionName = 'Section A', roomNumber } = body;
-
-    let instId = user.institutionId;
-    if (!instId) {
-      const inst = await prisma.institution.findFirst({ where: { organizationId: user.organizationId } });
-      instId = inst?.id;
-    }
-
-    if (!instId) {
-      return NextResponse.json({ success: false, error: 'Institution not found' }, { status: 400 });
-    }
 
     const classLevel = await prisma.classLevel.create({
       data: {
