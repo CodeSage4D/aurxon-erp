@@ -7,9 +7,26 @@ class SessionManager private constructor() {
     private var activeSession: UserSession? = null
     private var availableChildren: List<ChildProfile> = emptyList()
     private var selectedChildIndex: Int = 0
+    private var currentSchool: com.aurxon.shared.model.SavedSchool? = null
+    private val savedSchools: MutableList<com.aurxon.shared.model.SavedSchool> = mutableListOf()
 
     companion object {
         val instance: SessionManager by lazy { SessionManager() }
+    }
+
+    fun setCurrentSchool(school: com.aurxon.shared.model.SavedSchool) {
+        this.currentSchool = school
+        if (savedSchools.none { it.slug == school.slug }) {
+            savedSchools.add(school)
+        }
+    }
+
+    fun getCurrentSchool(): com.aurxon.shared.model.SavedSchool? {
+        return currentSchool
+    }
+
+    fun getSavedSchools(): List<com.aurxon.shared.model.SavedSchool> {
+        return savedSchools
     }
 
     fun saveSession(session: UserSession) {

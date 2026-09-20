@@ -101,3 +101,22 @@ data class LeaveApplicationResponse(
     val status: String = "PENDING",
     val error: String? = null
 )
+
+data class OrganizationSearchResult(
+    val name: String,
+    val slug: String,
+    val code: String,
+    val city: String,
+    val organizationType: String,
+    val board: String,
+    val logoUrl: String? = null
+)
+
+data class SavedSchool(
+    val organizationId: String,
+    val name: String,
+    val slug: String,
+    val code: String,
+    val city: String,
+    val board: String
+)

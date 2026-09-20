@@ -1,0 +1,315 @@
+[
+  {
+    "featureId": "PORTAL.DISCOVERY",
+    "module": "Portal",
+    "webRoute": "/s/[slug]",
+    "apiEndpoint": "/api/v1/portal/search",
+    "httpMethod": "GET",
+    "roles": [
+      "PUBLIC",
+      "ALL"
+    ],
+    "permissions": [],
+    "scope": "GLOBAL",
+    "businessRules": "Search and auto-predict active registered schools by name, city, or slug. Returns verified branding.",
+    "androidApp": "BOTH",
+    "androidScreen": "SchoolDiscoveryScreen",
+    "implementationStatus": "IMPLEMENTED",
+    "verificationStatus": "VERIFIED"
+  },
+  {
+    "featureId": "PORTAL.RESOLVE",
+    "module": "Portal",
+    "webRoute": "/s/[slug]",
+    "apiEndpoint": "/api/v1/portal/{slug}",
+    "httpMethod": "GET",
+    "roles": [
+      "PUBLIC",
+      "ALL"
+    ],
+    "permissions": [],
+    "scope": "ORGANIZATION",
+    "businessRules": "Resolves organization, institution, branding colors, campuses, and active session.",
+    "androidApp": "BOTH",
+    "androidScreen": "SchoolDiscoveryScreen",
+    "implementationStatus": "IMPLEMENTED",
+    "verificationStatus": "VERIFIED"
+  },
+  {
+    "featureId": "AUTH.LOGIN",
+    "module": "Authentication",
+    "webRoute": "/login",
+    "apiEndpoint": "/api/v1/auth/login",
+    "httpMethod": "POST",
+    "roles": [
+      "PARENT",
+      "STUDENT",
+      "TEACHER",
+      "PRINCIPAL",
+      "ACCOUNTANT",
+      "ADMIN"
+    ],
+    "permissions": [],
+    "scope": "ORGANIZATION",
+    "businessRules": "Validates email and password, returns JWT session token and initial user identity.",
+    "androidApp": "BOTH",
+    "androidScreen": "LoginScreen",
+    "implementationStatus": "IMPLEMENTED",
+    "verificationStatus": "VERIFIED"
+  },
+  {
+    "featureId": "AUTH.SESSION_RESTORE",
+    "module": "Authentication",
+    "webRoute": "/dashboard",
+    "apiEndpoint": "/api/v1/auth/me",
+    "httpMethod": "GET",
+    "roles": [
+      "ALL"
+    ],
+    "permissions": [],
+    "scope": "USER",
+    "businessRules": "Restores authoritative user context, roles, effective permissions, and institutional boundaries from JWT.",
+    "androidApp": "BOTH",
+    "androidScreen": "Splash / AutoSession",
+    "implementationStatus": "IMPLEMENTED",
+    "verificationStatus": "VERIFIED"
+  },
+  {
+    "featureId": "AUTH.LOGOUT",
+    "module": "Authentication",
+    "webRoute": "/login",
+    "apiEndpoint": "/api/v1/auth/logout",
+    "httpMethod": "POST",
+    "roles": [
+      "ALL"
+    ],
+    "permissions": [],
+    "scope": "USER",
+    "businessRules": "Invalidates server session and clears local encrypted token. Back navigation blocked.",
+    "androidApp": "BOTH",
+    "androidScreen": "TopAppBar Exit Action",
+    "implementationStatus": "IMPLEMENTED",
+    "verificationStatus": "VERIFIED"
+  },
+  {
+    "featureId": "PARENT.CHILD_SWITCH",
+    "module": "Parent",
+    "webRoute": "/dashboard",
+    "apiEndpoint": "/api/v1/students",
+    "httpMethod": "GET",
+    "roles": [
+      "PARENT"
+    ],
+    "permissions": [
+      "student.read_own"
+    ],
+    "scope": "VERIFIED_CHILDREN",
+    "businessRules": "Parent can switch between verified children; all child-scoped data changes instantly with no cross-child leakage.",
+    "androidApp": "AURXON_EDU",
+    "androidScreen": "ParentMainDashboard",
+    "implementationStatus": "IMPLEMENTED",
+    "verificationStatus": "VERIFIED"
+  },
+  {
+    "featureId": "ATTENDANCE.VIEW_OWN",
+    "module": "Attendance",
+    "webRoute": "/attendance",
+    "apiEndpoint": "/api/v1/attendance",
+    "httpMethod": "GET",
+    "roles": [
+      "PARENT",
+      "STUDENT"
+    ],
+    "permissions": [
+      "attendance.read_own"
+    ],
+    "scope": "SELF_OR_CHILD",
+    "businessRules": "Returns overall percentage, total days, present days, absent days, and recent history. Read-only for parents and students.",
+    "androidApp": "AURXON_EDU",
+    "androidScreen": "ChildAttendanceScreen",
+    "implementationStatus": "IMPLEMENTED",
+    "verificationStatus": "VERIFIED"
+  },
+  {
+    "featureId": "ATTENDANCE.MARK_SECTION",
+    "module": "Attendance",
+    "webRoute": "/attendance",
+    "apiEndpoint": "/api/v1/attendance",
+    "httpMethod": "POST",
+    "roles": [
+      "TEACHER",
+      "CLASS_TEACHER",
+      "ADMIN"
+    ],
+    "permissions": [
+      "attendance.mark"
+    ],
+    "scope": "ASSIGNED_SECTION",
+    "businessRules": "Marks daily section roll-call with PRESENT, ABSENT, LATE, HALF_DAY, LEAVE status flags. Updates official database records.",
+    "androidApp": "AURXON_STAFF",
+    "androidScreen": "TeacherAttendanceScreen",
+    "implementationStatus": "IMPLEMENTED",
+    "verificationStatus": "VERIFIED"
+  },
+  {
+    "featureId": "EXAMINATION.RESULTS_VIEW",
+    "module": "Examinations",
+    "webRoute": "/examinations",
+    "apiEndpoint": "/api/v1/examinations",
+    "httpMethod": "GET",
+    "roles": [
+      "PARENT",
+      "STUDENT",
+      "TEACHER",
+      "PRINCIPAL"
+    ],
+    "permissions": [
+      "exam.read"
+    ],
+    "scope": "SELF_OR_INSTITUTION",
+    "businessRules": "Displays published examination results, subject marks obtained, max marks, and CBSE grades.",
+    "androidApp": "BOTH",
+    "androidScreen": "ChildResultsScreen / PrincipalView",
+    "implementationStatus": "IMPLEMENTED",
+    "verificationStatus": "VERIFIED"
+  },
+  {
+    "featureId": "LEAVE.STUDENT_APPLY",
+    "module": "Leave",
+    "webRoute": "/leave",
+    "apiEndpoint": "/api/v1/leave/student",
+    "httpMethod": "POST",
+    "roles": [
+      "STUDENT",
+      "PARENT"
+    ],
+    "permissions": [
+      "leave.create_student"
+    ],
+    "scope": "SELF_OR_CHILD",
+    "businessRules": "Configurable by school policy. If studentLeaveApplicationEnabled is true, submits leave with type, dates, reason. Pending staff approval.",
+    "androidApp": "AURXON_EDU",
+    "androidScreen": "ApplyLeaveScreen",
+    "implementationStatus": "IMPLEMENTED",
+    "verificationStatus": "VERIFIED"
+  },
+  {
+    "featureId": "LEAVE.STAFF_APPLY",
+    "module": "Leave",
+    "webRoute": "/leave",
+    "apiEndpoint": "/api/v1/leave/staff",
+    "httpMethod": "POST",
+    "roles": [
+      "TEACHER",
+      "STAFF"
+    ],
+    "permissions": [
+      "leave.create_staff"
+    ],
+    "scope": "SELF",
+    "businessRules": "Staff submits casual/medical leave request with dates and justification. Awaiting principal approval.",
+    "androidApp": "AURXON_STAFF",
+    "androidScreen": "StaffLeaveScreen",
+    "implementationStatus": "IMPLEMENTED",
+    "verificationStatus": "VERIFIED"
+  },
+  {
+    "featureId": "LEAVE.APPROVAL_QUEUE",
+    "module": "Leave",
+    "webRoute": "/leave",
+    "apiEndpoint": "/api/v1/leave/staff/{id}",
+    "httpMethod": "PATCH",
+    "roles": [
+      "PRINCIPAL",
+      "ADMIN"
+    ],
+    "permissions": [
+      "leave.approve"
+    ],
+    "scope": "INSTITUTION",
+    "businessRules": "Principal approves or rejects pending staff and student leave requests. Updates attendance integration.",
+    "androidApp": "AURXON_STAFF",
+    "androidScreen": "PrincipalApprovalsScreen",
+    "implementationStatus": "IMPLEMENTED",
+    "verificationStatus": "VERIFIED"
+  },
+  {
+    "featureId": "FEES.VIEW_DUES",
+    "module": "Finance",
+    "webRoute": "/fees",
+    "apiEndpoint": "/api/v1/fees",
+    "httpMethod": "GET",
+    "roles": [
+      "PARENT",
+      "ACCOUNTANT",
+      "PRINCIPAL"
+    ],
+    "permissions": [
+      "fees.read"
+    ],
+    "scope": "CHILD_OR_INSTITUTION",
+    "businessRules": "Computes server-authoritative balance, overdue days, and late fees according to late fee policy.",
+    "androidApp": "BOTH",
+    "androidScreen": "ChildFeeScreen / AccountantView",
+    "implementationStatus": "IMPLEMENTED",
+    "verificationStatus": "VERIFIED"
+  },
+  {
+    "featureId": "FEES.COLLECT_PAYMENT",
+    "module": "Finance",
+    "webRoute": "/fees/collect",
+    "apiEndpoint": "/api/v1/fees/collect",
+    "httpMethod": "POST",
+    "roles": [
+      "ACCOUNTANT",
+      "ADMIN"
+    ],
+    "permissions": [
+      "fees.collect"
+    ],
+    "scope": "INSTITUTION",
+    "businessRules": "Processes fee payments, generates deterministic receipt numbers, updates ledger and outstanding balances.",
+    "androidApp": "AURXON_STAFF",
+    "androidScreen": "AccountantCollectScreen",
+    "implementationStatus": "IMPLEMENTED",
+    "verificationStatus": "VERIFIED"
+  },
+  {
+    "featureId": "COMMUNICATION.NOTICES",
+    "module": "Communication",
+    "webRoute": "/communication",
+    "apiEndpoint": "/api/v1/communication",
+    "httpMethod": "GET",
+    "roles": [
+      "ALL"
+    ],
+    "permissions": [
+      "notices.read"
+    ],
+    "scope": "INSTITUTION",
+    "businessRules": "Displays school-wide circulars, notices, examination schedules, and urgent alerts.",
+    "androidApp": "BOTH",
+    "androidScreen": "NoticesScreen",
+    "implementationStatus": "IMPLEMENTED",
+    "verificationStatus": "VERIFIED"
+  },
+  {
+    "featureId": "DOCUMENTS.PROTECTED_DOWNLOAD",
+    "module": "Documents",
+    "webRoute": "/students",
+    "apiEndpoint": "/api/v1/documents/{id}/download",
+    "httpMethod": "GET",
+    "roles": [
+      "ALL_AUTHORIZED"
+    ],
+    "permissions": [
+      "documents.download"
+    ],
+    "scope": "RESOURCE_OWNER",
+    "businessRules": "Gated download gateway verifying HMAC-SHA256 expiring token (15-minute TTL). Prevents unauthorized access.",
+    "androidApp": "BOTH",
+    "androidScreen": "DocumentViewer",
+    "implementationStatus": "IMPLEMENTED",
+    "verificationStatus": "VERIFIED"
+  }
+]

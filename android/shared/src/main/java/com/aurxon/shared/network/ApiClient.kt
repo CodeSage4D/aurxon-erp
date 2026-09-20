@@ -129,4 +129,48 @@ object ApiClient {
             AuthMeResponse(success = false, error = "Network connection failed: ${e.localizedMessage}")
         }
     }
+
+    /**
+     * Executes GET against /api/v1/portal/search for institutional discovery
+     */
+    fun searchSchools(query: String = ""): List<OrganizationSearchResult> {
+        return try {
+            val encodedQ = java.net.URLEncoder.encode(query.trim(), "UTF-8")
+            val url = URL("${getBaseUrl()}/portal/search?q=$encodedQ")
+            val conn = url.openConnection() as HttpURLConnection
+            conn.requestMethod = "GET"
+            conn.setRequestProperty("Accept", "application/json")
+            conn.connectTimeout = 6000
+            conn.readTimeout = 6000
+
+            val statusCode = conn.responseCode
+            val inputStream = if (statusCode in 200..299) conn.inputStream else conn.errorStream
+            val reader = BufferedReader(InputStreamReader(inputStream))
+            val responseStr = reader.readText()
+            reader.close()
+
+            val json = JSONObject(responseStr)
+            val results = mutableListOf<OrganizationSearchResult>()
+            if (json.optBoolean("success", false)) {
+                val arr = json.optJSONArray("results") ?: JSONArray()
+                for (i in 0 until arr.length()) {
+                    val obj = arr.getJSONObject(i)
+                    results.add(
+                        OrganizationSearchResult(
+                            name = obj.getString("name"),
+                            slug = obj.getString("slug"),
+                            code = obj.getString("code"),
+                            city = obj.getString("city"),
+                            organizationType = obj.optString("organizationType", "School"),
+                            board = obj.optString("board", "CBSE Affiliated"),
+                            logoUrl = if (obj.isNull("logoUrl")) null else obj.optString("logoUrl")
+                        )
+                    )
+                }
+            }
+            results
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
 }
