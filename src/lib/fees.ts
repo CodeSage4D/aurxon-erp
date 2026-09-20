@@ -6,16 +6,24 @@
 
 export interface FeeCalculationPolicy {
   lateFeeEnabled: boolean;
+  calculationType: 'FIXED_DAILY' | 'PERCENTAGE' | 'TIERED';
   lateFeeRatePerDay: number; // e.g. ₹50/day
+  percentageRate?: number;   // e.g. 1.5% per month
   gracePeriodDays: number;   // e.g. 5 days after due date
   maxLateFeeAmount: number;  // e.g. ₹2000 cap
+  applicableFeeTypes?: string[]; // e.g. ['TUITION', 'DEVELOPMENT']
+  effectiveFrom?: string;
+  effectiveTo?: string;
 }
 
 export const DEFAULT_FEE_POLICY: FeeCalculationPolicy = {
   lateFeeEnabled: true,
+  calculationType: 'FIXED_DAILY',
   lateFeeRatePerDay: 50,
+  percentageRate: 0,
   gracePeriodDays: 5,
   maxLateFeeAmount: 2000,
+  applicableFeeTypes: ['TUITION', 'TRANSPORT', 'ANNUAL'],
 };
 
 export interface AllocationFeeSummary {
@@ -87,7 +95,12 @@ export function calculateLateFeeAndBalance(
         daysOverdue > mergedPolicy.gracePeriodDays
       ) {
         const billableDays = daysOverdue - mergedPolicy.gracePeriodDays;
-        const uncappedFee = billableDays * mergedPolicy.lateFeeRatePerDay;
+        let uncappedFee = 0;
+        if (mergedPolicy.calculationType === 'PERCENTAGE' && mergedPolicy.percentageRate) {
+          uncappedFee = baseBalance * (mergedPolicy.percentageRate / 100) * (billableDays / 30);
+        } else {
+          uncappedFee = billableDays * mergedPolicy.lateFeeRatePerDay;
+        }
         lateFeeApplied = Math.min(uncappedFee, mergedPolicy.maxLateFeeAmount);
       }
     }
