@@ -23,6 +23,7 @@ async function main() {
   await prisma.admissionInquiry.deleteMany();
   await prisma.studentParent.deleteMany();
   await prisma.parentGuardian.deleteMany();
+  await prisma.studentEnrollmentHistory.deleteMany();
   await prisma.student.deleteMany();
   await prisma.subjectAssignment.deleteMany();
   await prisma.subject.deleteMany();

@@ -65,6 +65,7 @@ model Organization {
   staffAttendanceRecords StaffAttendanceRecord[]
   studentLeaveRequests   StudentLeaveRequest[]
   approvalRequests       ApprovalRequest[]
+  enrollmentHistory      StudentEnrollmentHistory[]
 }
 
 model ModuleEntitlement {
@@ -126,6 +127,7 @@ model Institution {
   announcements      Announcement[]
   auditLogs          AuditLog[]
   staffProfiles      StaffProfile[]
+  enrollmentHistory  StudentEnrollmentHistory[]
 
   @@unique([organizationId, code])
   @@index([organizationId])
@@ -245,6 +247,7 @@ model AcademicSession {
   timetableSlots     TimetableSlot[]
   exams              Exam[]
   feeStructures      FeeStructure[]
+  enrollmentHistory  StudentEnrollmentHistory[]
 
   @@index([organizationId, institutionId])
 }
@@ -436,10 +439,35 @@ model Student {
   feePayments       FeePayment[]
   leaveRequests     StudentLeaveRequest[]
   studentDocuments  StudentDocument[]
+  enrollmentHistory StudentEnrollmentHistory[]
 
   @@unique([organizationId, admissionNumber])
   @@index([organizationId, institutionId])
   @@index([status])
+}
+
+model StudentEnrollmentHistory {
+  id                String   @id @default(cuid())
+  organizationId    String
+  institutionId     String
+  academicSessionId String
+  studentId         String
+  classLevelId      String?
+  sectionId         String?
+  batchId           String?
+  rollNumber        String?
+  status            String   @default("PROMOTED") // PROMOTED, DETAINED, TRANSFERRED, GRADUATED, REPEATING
+  promotedAt        DateTime @default(now())
+  remarks           String?
+  createdById       String
+
+  organization    Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  institution     Institution     @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  academicSession AcademicSession @relation(fields: [academicSessionId], references: [id], onDelete: Cascade)
+  student         Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, institutionId])
+  @@index([studentId, academicSessionId])
 }
 
 model ParentGuardian {
