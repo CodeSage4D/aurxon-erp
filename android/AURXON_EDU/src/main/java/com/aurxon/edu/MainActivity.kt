@@ -371,7 +371,10 @@ fun ParentMainDashboard(onLogout: () -> Unit) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         Text(text = "SELECT CHILD RECORD:", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = AurxonBlue)
                         Spacer(modifier = Modifier.height(6.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
                             children.forEachIndexed { index, child ->
                                 val isSelected = selectedChild?.id == child.id
                                 FilterChip(
@@ -392,11 +395,13 @@ fun ParentMainDashboard(onLogout: () -> Unit) {
                 }
             }
 
-            when (selectedTab) {
-                0 -> ParentHomeScreen(selectedChild)
-                1 -> ChildAttendanceScreen(selectedChild)
-                2 -> ChildResultsScreen(selectedChild)
-                3 -> ApplyLeaveScreen(policy.parentLeaveApplicationEnabled)
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                when (selectedTab) {
+                    0 -> ParentHomeScreen(selectedChild)
+                    1 -> ChildAttendanceScreen(selectedChild)
+                    2 -> ChildResultsScreen(selectedChild)
+                    3 -> ApplyLeaveScreen(policy.parentLeaveApplicationEnabled)
+                }
             }
         }
     }
