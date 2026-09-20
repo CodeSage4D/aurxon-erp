@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#0A0F1D</color>
+    <color name="staff_gold">#F59E0B</color>
+    <color name="staff_navy">#0F172A</color>
+    <color name="staff_purple">#7C3AED</color>
+    <color name="staff_emerald">#10B981</color>
+</resources>

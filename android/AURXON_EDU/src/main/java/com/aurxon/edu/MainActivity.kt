@@ -479,9 +479,38 @@ fun ParentMainDashboard(
     onLogout: () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(0) }
-    val children = remember { SessionManager.instance.getChildren() }
+    var childrenList by remember { mutableStateOf(SessionManager.instance.getChildren()) }
     var selectedChild by remember { mutableStateOf(SessionManager.instance.getSelectedChild()) }
+    var announcements by remember { mutableStateOf<List<AnnouncementDto>>(emptyList()) }
+    var isRefreshing by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
     val policy = remember { InstitutionPolicy(studentLeaveApplicationEnabled = true, parentLeaveApplicationEnabled = true) }
+
+    fun refreshData() {
+        val session = SessionManager.instance.getActiveSession() ?: return
+        isRefreshing = true
+        scope.launch(Dispatchers.IO) {
+            val dbRes = ApiClient.fetchDashboard(session.authToken)
+            val students = if (dbRes.children.isNotEmpty()) dbRes.children else ApiClient.fetchStudents(session.authToken)
+            withContext(Dispatchers.Main) {
+                isRefreshing = false
+                if (students.isNotEmpty()) {
+                    SessionManager.instance.setChildren(students)
+                    childrenList = students
+                    if (selectedChild == null || !students.any { it.id == selectedChild?.id }) {
+                        selectedChild = students.first()
+                    }
+                }
+                if (dbRes.announcements.isNotEmpty()) {
+                    announcements = dbRes.announcements
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        refreshData()
+    }
 
     Scaffold(
         topBar = {
@@ -493,8 +522,15 @@ fun ParentMainDashboard(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { refreshData() }) {
+                        if (isRefreshing) {
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), color = AurxonBlue, strokeWidth = 2.dp)
+                        } else {
+                            Icon(Icons.Default.Refresh, contentDescription = "Refresh Data", tint = AurxonBlue)
+                        }
+                    }
                     IconButton(onClick = onSwitchSchool) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Switch School", tint = AurxonBlue)
+                        Icon(Icons.Default.Place, contentDescription = "Switch School", tint = AurxonBlue)
                     }
                     IconButton(onClick = onLogout) {
                         Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Sign Out", tint = NavyPrimary)
@@ -544,22 +580,23 @@ fun ParentMainDashboard(
                 .fillMaxSize()
                 .background(Color(0xFFF8FAFC))
         ) {
-            if (children.isNotEmpty()) {
+            if (childrenList.isNotEmpty()) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(12.dp),
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Text(text = "SELECT CHILD RECORD:", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = AurxonBlue)
+                    Column(modifier = Modifier.padding(10.dp)) {
+                        Text(text = "SELECT REGISTERED WARD:", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = AurxonBlue)
                         Spacer(modifier = Modifier.height(6.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            children.forEachIndexed { index, child ->
+                            childrenList.forEachIndexed { index, child ->
                                 val isSelected = selectedChild?.id == child.id
                                 FilterChip(
                                     selected = isSelected,
@@ -581,7 +618,7 @@ fun ParentMainDashboard(
 
             Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 when (selectedTab) {
-                    0 -> ParentHomeScreen(selectedChild)
+                    0 -> ParentHomeScreen(selectedChild, announcements, onNavigate = { tabIdx -> selectedTab = tabIdx })
                     1 -> ChildAttendanceScreen(selectedChild)
                     2 -> ChildResultsScreen(selectedChild)
                     3 -> ChildFeeScreen(selectedChild)
@@ -593,49 +630,151 @@ fun ParentMainDashboard(
 }
 
 @Composable
-fun ParentHomeScreen(child: ChildProfile?) {
-    LazyColumn(modifier = Modifier.padding(16.dp)) {
+fun ParentHomeScreen(
+    child: ChildProfile?,
+    announcements: List<AnnouncementDto>,
+    onNavigate: (Int) -> Unit = {}
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = AurxonBlue)
+                colors = CardDefaults.cardColors(containerColor = AurxonBlue),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(text = child?.name ?: "Student", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    Text(text = "${child?.className} - Section ${child?.sectionName} | Roll No: ${child?.rollNumber}", color = Color.White.copy(alpha = 0.8f), fontSize = 13.sp)
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(text = child?.name ?: "Student", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                            Text(text = "${child?.className} - Sec ${child?.sectionName} | Adm No: ${child?.rollNumber}", color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(Color.White.copy(alpha = 0.2f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = (child?.name?.firstOrNull() ?: 'S').toString(),
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 20.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+                    HorizontalDivider(color = Color.White.copy(alpha = 0.2f))
                     Spacer(modifier = Modifier.height(12.dp))
+
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(text = "Attendance: ${child?.attendancePercentage}%", color = Color.White, fontWeight = FontWeight.Bold)
-                        Text(text = if (child?.pendingFeeAmount == 0.0) "Fees Paid ✓" else "Dues: ₹${child?.pendingFeeAmount}", color = AccentGold, fontWeight = FontWeight.Bold)
+                        Column {
+                            Text(text = "ATTENDANCE", color = Color.White.copy(alpha = 0.7f), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text(text = "${child?.attendancePercentage ?: 95.0}%", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        }
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(text = "FEE BALANCE", color = Color.White.copy(alpha = 0.7f), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text(
+                                text = if ((child?.pendingFeeAmount ?: 0.0) <= 0.0) "All Clear ✓" else "₹${child?.pendingFeeAmount}",
+                                color = if ((child?.pendingFeeAmount ?: 0.0) <= 0.0) Color(0xFF6EE7B7) else AccentGold,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            )
+                        }
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(text = "TODAY'S SCHEDULE & NOTICES", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = NavyPrimary)
-            Spacer(modifier = Modifier.height(8.dp))
         }
 
-        items(listOf(
-            "Period 1: Mathematics (08:30 - 09:15 AM) • Room 102",
-            "Period 2: Physics (09:15 - 10:00 AM) • Lab 3",
-            "Notice: CBSE Half-Yearly Exam Date Sheet Released",
-            "Notice: Annual Sports Day Registration Open"
-        )) { item ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Info, contentDescription = null, tint = AurxonBlue)
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(text = item, fontSize = 13.sp, color = NavyPrimary)
+                Button(
+                    onClick = { onNavigate(1) },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = IceBlue),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Attendance", color = AurxonBlue, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+                Button(
+                    onClick = { onNavigate(2) },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = IceBlue),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Report Card", color = AurxonBlue, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+                Button(
+                    onClick = { onNavigate(3) },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = IceBlue),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Fee Ledger", color = AurxonBlue, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
+        item {
+            Text(text = "INSTITUTIONAL ANNOUNCEMENTS", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = NavyPrimary)
+        }
+
+        if (announcements.isNotEmpty()) {
+            items(announcements) { ann ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Info, contentDescription = null, tint = AurxonBlue, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(text = ann.title, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = NavyPrimary)
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(text = ann.content, fontSize = 12.sp, color = Color.DarkGray)
+                    }
+                }
+            }
+        } else {
+            items(listOf(
+                "Term-1 Comprehensive Assessments: Schedule finalized for secondary sections.",
+                "Parent-Teacher Conference: Hybrid conference scheduled for Saturday.",
+                "Sports Day 2026: Inter-house trials begin next Tuesday."
+            )) { notice ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Info, contentDescription = null, tint = AurxonBlue, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(text = notice, fontSize = 12.sp, color = NavyPrimary)
+                    }
                 }
             }
         }
     }
 }
+
 
 @Composable
 fun ChildAttendanceScreen(child: ChildProfile?) {

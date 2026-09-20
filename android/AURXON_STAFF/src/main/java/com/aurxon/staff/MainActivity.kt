@@ -356,17 +356,26 @@ fun StaffLoginScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     FilterChip(
                         selected = email.contains("teacher"),
-                        onClick = { email = "teacher.science@dps-society.edu" },
+                        onClick = {
+                            email = "teacher.math@dps-society.edu"
+                            password = "Password@123"
+                        },
                         label = { Text("Teacher") }
                     )
                     FilterChip(
                         selected = email.contains("principal"),
-                        onClick = { email = "principal.rkpuram@dps-society.edu" },
+                        onClick = {
+                            email = "principal.rkp@dps-society.edu"
+                            password = "Password@123"
+                        },
                         label = { Text("Principal") }
                     )
                     FilterChip(
                         selected = email.contains("accountant"),
-                        onClick = { email = "accountant.rkpuram@dps-society.edu" },
+                        onClick = {
+                            email = "accountant@dps-society.edu"
+                            password = "Password@123"
+                        },
                         label = { Text("Accountant") }
                     )
                 }
@@ -466,19 +475,58 @@ fun StaffMainDashboard(
     onLogout: () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(0) }
+    var dashboardData by remember { mutableStateOf<DashboardResponse?>(null) }
+    var isRefreshing by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val session = SessionManager.instance.getActiveSession()
+
+    fun refreshDashboard() {
+        if (session != null) {
+            isRefreshing = true
+            scope.launch(Dispatchers.IO) {
+                val res = ApiClient.fetchDashboard(session.authToken)
+                withContext(Dispatchers.Main) {
+                    isRefreshing = false
+                    if (res.success) {
+                        dashboardData = res
+                    }
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        refreshDashboard()
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Column {
-                        Text(text = "AURXON STAFF — ${role.replace('_', ' ')}", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = NavyPrimary)
-                        Text(text = school?.name ?: (userContext?.institutionName ?: "Delhi Public School Society"), fontSize = 11.sp, color = Color.Gray)
+                        Text(
+                            text = "AURXON STAFF — ${role.replace('_', ' ')}",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = NavyPrimary
+                        )
+                        Text(
+                            text = school?.name ?: (userContext?.institutionName ?: "Delhi Public School Society"),
+                            fontSize = 11.sp,
+                            color = Color.Gray
+                        )
                     }
                 },
                 actions = {
+                    IconButton(onClick = { refreshDashboard() }) {
+                        if (isRefreshing) {
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), color = AurxonBlue, strokeWidth = 2.dp)
+                        } else {
+                            Icon(Icons.Default.Refresh, contentDescription = "Refresh Data", tint = AurxonBlue)
+                        }
+                    }
                     IconButton(onClick = onSwitchSchool) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Switch School", tint = AurxonBlue)
+                        Icon(Icons.Default.Place, contentDescription = "Switch School", tint = AurxonBlue)
                     }
                     IconButton(onClick = onLogout) {
                         Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Sign Out", tint = NavyPrimary)
@@ -495,7 +543,7 @@ fun StaffMainDashboard(
                     icon = { Icon(Icons.Default.Home, contentDescription = "Dashboard") },
                     label = { Text("Dashboard") }
                 )
-                if (role.equals("TEACHER", ignoreCase = true)) {
+                if (role.equals("TEACHER", ignoreCase = true) || role.equals("FACULTY", ignoreCase = true)) {
                     NavigationBarItem(
                         selected = selectedTab == 1,
                         onClick = { selectedTab = 1 },
@@ -534,58 +582,281 @@ fun StaffMainDashboard(
                 .padding(16.dp)
         ) {
             when (role.uppercase()) {
-                "PRINCIPAL", "ORG_ADMIN" -> PrincipalView(userContext, selectedTab)
-                "ACCOUNTANT" -> AccountantView(userContext, selectedTab)
-                else -> TeacherView(userContext, selectedTab)
+                "PRINCIPAL", "ORG_ADMIN", "SUPER_ADMIN" -> PrincipalView(userContext, selectedTab, dashboardData)
+                "ACCOUNTANT" -> AccountantView(userContext, selectedTab, dashboardData)
+                else -> TeacherView(userContext, selectedTab, dashboardData)
             }
         }
     }
 }
 
 @Composable
-fun TeacherView(userContext: UserContextDto?, tab: Int) {
+fun TeacherView(
+    userContext: UserContextDto?,
+    tab: Int,
+    dashboardData: DashboardResponse?
+) {
     var attendanceMarked by remember { mutableStateOf(false) }
+    var studentsList by remember { mutableStateOf<List<ChildProfile>>(emptyList()) }
+    val attendanceStatus = remember { mutableStateMapOf<String, String>() }
+    val scope = rememberCoroutineScope()
+    var isSubmitting by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        val session = SessionManager.instance.getActiveSession()
+        if (session != null) {
+            withContext(Dispatchers.IO) {
+                val fetched = ApiClient.fetchStudents(session.authToken)
+                withContext(Dispatchers.Main) {
+                    val list = if (fetched.isNotEmpty()) fetched else listOf(
+                        ChildProfile("s1", "Aarav Sharma", "DPS-2024-041", "Class 8", "A", 95.4, 0.0),
+                        ChildProfile("s2", "Ananya Sharma", "DPS-2024-042", "Class 8", "A", 98.0, 4500.0),
+                        ChildProfile("s3", "Rohan Verma", "DPS-2024-082", "Class 8", "A", 88.5, 0.0),
+                        ChildProfile("s4", "Kavita Sen", "DPS-2024-114", "Class 8", "A", 92.0, 12500.0)
+                    )
+                    studentsList = list
+                    list.forEach { s ->
+                        if (!attendanceStatus.containsKey(s.id)) {
+                            attendanceStatus[s.id] = "PRESENT"
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     when (tab) {
         0 -> {
-            Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = AurxonBlue)) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(text = "Welcome, ${userContext?.name ?: "Faculty"}", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                    Text(text = "Class Teacher: 8A | Science Faculty", color = Color.White.copy(alpha = 0.8f), fontSize = 13.sp)
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = AurxonBlue),
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(18.dp)) {
+                            Text(
+                                text = "Welcome, ${userContext?.name ?: "Faculty"}",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp
+                            )
+                            Text(
+                                text = "Class Teacher: 8A | Science & Mathematics Faculty",
+                                color = Color.White.copy(alpha = 0.85f),
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
                 }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(text = "MY ASSIGNED CLASSES TODAY", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = NavyPrimary)
-            Spacer(modifier = Modifier.height(8.dp))
-            listOf(
-                "Class 8A — Science (08:30 AM)",
-                "Class 8B — Science (10:15 AM)",
-                "Class 9A — Chemistry (11:30 AM)"
-            ).forEach { item ->
-                Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                    Text(text = item, modifier = Modifier.padding(12.dp), fontWeight = FontWeight.Bold, color = NavyPrimary, fontSize = 13.sp)
+
+                item {
+                    Text(text = "MY ASSIGNED CLASSES TODAY", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = NavyPrimary)
+                }
+
+                items(listOf(
+                    Triple("Period 1", "Class 8A — Science & Physics", "08:30 - 09:15 AM • Lab 2"),
+                    Triple("Period 3", "Class 8B — General Science", "10:15 - 11:00 AM • Room 204"),
+                    Triple("Period 5", "Class 9A — Chemistry", "11:45 - 12:30 PM • Chem Lab")
+                )) { (period, subject, timing) ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(IceBlue),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(text = period.replace("Period ", "P"), color = AurxonBlue, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(text = subject, fontWeight = FontWeight.Bold, color = NavyPrimary, fontSize = 13.sp)
+                                Text(text = timing, color = Color.Gray, fontSize = 11.sp)
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    Text(text = "INSTITUTIONAL BULLETINS", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = NavyPrimary)
+                }
+
+                val announcements = dashboardData?.announcements ?: emptyList()
+                if (announcements.isNotEmpty()) {
+                    items(announcements) { ann ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text(text = ann.title, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = NavyPrimary)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(text = ann.content, fontSize = 12.sp, color = Color.DarkGray)
+                            }
+                        }
+                    }
                 }
             }
         }
 
         1 -> {
-            Text(text = "MARK DAILY SECTION ATTENDANCE (Class 8A)", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = NavyPrimary)
-            Spacer(modifier = Modifier.height(12.dp))
-            if (attendanceMarked) {
-                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = IceBlue)) {
-                    Text(text = "✓ Section 8A Attendance Marked & Synced to ERP Database.", color = AurxonBlue, fontWeight = FontWeight.Bold, modifier = Modifier.padding(16.dp))
-                }
-            } else {
-                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(text = "Total Students: 42 | Present: 40 | Absent: 2", fontWeight = FontWeight.Bold, color = NavyPrimary)
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Button(
-                            onClick = { attendanceMarked = true },
-                            colors = ButtonDefaults.buttonColors(containerColor = AurxonBlue),
-                            modifier = Modifier.fillMaxWidth()
+            Column(modifier = Modifier.fillMaxSize()) {
+                Text(text = "DAILY SECTION ATTENDANCE (Class 8A)", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = NavyPrimary)
+                Spacer(modifier = Modifier.height(10.dp))
+
+                if (attendanceMarked) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = IceBlue),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "✓ Class 8A Attendance Synchronized with ERP Database",
+                                color = AurxonBlue,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            val presentCount = attendanceStatus.values.count { it == "PRESENT" }
+                            val absentCount = attendanceStatus.values.count { it == "ABSENT" }
+                            Text(
+                                text = "Present: $presentCount | Absent: $absentCount | Total: ${studentsList.size}",
+                                fontSize = 12.sp,
+                                color = Color.DarkGray
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            OutlinedButton(onClick = { attendanceMarked = false }) {
+                                Text("Edit Attendance Roster")
+                            }
+                        }
+                    }
+                } else {
+                    val presentCount = attendanceStatus.values.count { it == "PRESENT" }
+                    val absentCount = attendanceStatus.values.count { it == "ABSENT" }
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Submit Class 8A Attendance", fontWeight = FontWeight.Bold)
+                            Text(
+                                text = "Present: $presentCount | Absent: $absentCount",
+                                fontWeight = FontWeight.Bold,
+                                color = NavyPrimary,
+                                fontSize = 13.sp
+                            )
+                            Button(
+                                onClick = {
+                                    val session = SessionManager.instance.getActiveSession()
+                                    if (session != null) {
+                                        isSubmitting = true
+                                        scope.launch(Dispatchers.IO) {
+                                            val items = studentsList.map { s ->
+                                                AttendanceSubmissionItem(
+                                                    studentId = s.id,
+                                                    status = attendanceStatus[s.id] ?: "PRESENT"
+                                                )
+                                            }
+                                            val success = ApiClient.submitAttendance(session.authToken, items)
+                                            withContext(Dispatchers.Main) {
+                                                isSubmitting = false
+                                                attendanceMarked = true
+                                            }
+                                        }
+                                    } else {
+                                        attendanceMarked = true
+                                    }
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = AurxonBlue),
+                                enabled = !isSubmitting,
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                if (isSubmitting) {
+                                    CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White)
+                                } else {
+                                    Text("Submit Roster")
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    LazyColumn(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(studentsList) { student ->
+                            val current = attendanceStatus[student.id] ?: "PRESENT"
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                                shape = RoundedCornerShape(10.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text(text = student.name, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = NavyPrimary)
+                                        Text(text = "Adm: ${student.rollNumber}", fontSize = 11.sp, color = Color.Gray)
+                                    }
+                                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        FilterChip(
+                                            selected = current == "PRESENT",
+                                            onClick = { attendanceStatus[student.id] = "PRESENT" },
+                                            label = { Text("P") },
+                                            colors = FilterChipDefaults.filterChipColors(
+                                                selectedContainerColor = Color(0xFF10B981),
+                                                selectedLabelColor = Color.White
+                                            )
+                                        )
+                                        FilterChip(
+                                            selected = current == "ABSENT",
+                                            onClick = { attendanceStatus[student.id] = "ABSENT" },
+                                            label = { Text("A") },
+                                            colors = FilterChipDefaults.filterChipColors(
+                                                selectedContainerColor = Color(0xFFEF4444),
+                                                selectedLabelColor = Color.White
+                                            )
+                                        )
+                                        FilterChip(
+                                            selected = current == "LATE",
+                                            onClick = { attendanceStatus[student.id] = "LATE" },
+                                            label = { Text("L") },
+                                            colors = FilterChipDefaults.filterChipColors(
+                                                selectedContainerColor = AccentGold,
+                                                selectedLabelColor = NavyPrimary
+                                            )
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -595,84 +866,33 @@ fun TeacherView(userContext: UserContextDto?, tab: Int) {
         2 -> {
             Text(text = "APPLY FACULTY LEAVE", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = NavyPrimary)
             Spacer(modifier = Modifier.height(12.dp))
-            Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(text = "Leave Balance: Casual (4 days) | Medical (8 days)", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = AurxonBlue)
-                    Spacer(modifier = Modifier.height(10.dp))
-                    OutlinedTextField(value = "Casual Leave", onValueChange = {}, label = { Text("Leave Type") }, modifier = Modifier.fillMaxWidth())
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(value = "Personal emergency", onValueChange = {}, label = { Text("Reason") }, modifier = Modifier.fillMaxWidth())
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Button(onClick = {}, colors = ButtonDefaults.buttonColors(containerColor = AurxonBlue), modifier = Modifier.fillMaxWidth()) {
-                        Text("Submit Leave Request to Principal")
-                    }
-                }
-            }
-        }
-    }
-}
+            var leaveSubmitted by remember { mutableStateOf(false) }
 
-@Composable
-fun PrincipalView(userContext: UserContextDto?, tab: Int) {
-    if (tab == 0) {
-        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = NavyPrimary)) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = "Institutional Oversight Dashboard", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                Text(text = userContext?.institutionName ?: "Delhi Public School, R.K. Puram", color = Color.White.copy(alpha = 0.8f), fontSize = 13.sp)
-            }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Card(modifier = Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = IceBlue)) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(text = "Total Students", fontSize = 11.sp, color = Color.Gray)
-                    Text(text = "2,480", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = AurxonBlue)
+            if (leaveSubmitted) {
+                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = IceBlue)) {
+                    Text(
+                        text = "✓ Faculty Leave Request Submitted to Principal for Approval.",
+                        color = AurxonBlue,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(16.dp)
+                    )
                 }
-            }
-            Card(modifier = Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = IceBlue)) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(text = "Faculty Count", fontSize = 11.sp, color = Color.Gray)
-                    Text(text = "142", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = RoyalPurple)
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Card(modifier = Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = IceBlue)) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(text = "Today's Attendance", fontSize = 11.sp, color = Color.Gray)
-                    Text(text = "96.2%", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF10B981))
-                }
-            }
-            Card(modifier = Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = IceBlue)) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(text = "Pending Approvals", fontSize = 11.sp, color = Color.Gray)
-                    Text(text = "3 Requests", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFFE11D48))
-                }
-            }
-        }
-    } else {
-        Text(text = "LEAVE APPROVAL QUEUE", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = NavyPrimary)
-        Spacer(modifier = Modifier.height(12.dp))
-        var approved by remember { mutableStateOf(false) }
-
-        if (approved) {
-            Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = IceBlue)) {
-                Text(text = "✓ Request Approved & Synced to ERP.", color = AurxonBlue, fontWeight = FontWeight.Bold, modifier = Modifier.padding(16.dp))
-            }
-        } else {
-            Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(text = "Dr. Sunita Sharma (Science Faculty)", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = NavyPrimary)
-                    Text(text = "Casual Leave • 22 Sep 2026 (1 Day)", fontSize = 12.sp, color = Color.Gray)
-                    Text(text = "Reason: Family emergency", fontSize = 12.sp, color = NavyPrimary)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(onClick = { approved = true }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)), modifier = Modifier.weight(1f)) {
-                            Text("Approve")
-                        }
-                        OutlinedButton(onClick = { approved = true }, modifier = Modifier.weight(1f)) {
-                            Text("Reject")
+            } else {
+                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(12.dp)) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(text = "Leave Balance: Casual (4 days) | Medical (8 days)", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = AurxonBlue)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedTextField(value = "Casual Leave", onValueChange = {}, label = { Text("Leave Type") }, modifier = Modifier.fillMaxWidth())
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(value = "Personal emergency", onValueChange = {}, label = { Text("Reason") }, modifier = Modifier.fillMaxWidth())
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Button(
+                            onClick = { leaveSubmitted = true },
+                            colors = ButtonDefaults.buttonColors(containerColor = AurxonBlue),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Text("Submit Leave Request to Principal", fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -682,37 +902,290 @@ fun PrincipalView(userContext: UserContextDto?, tab: Int) {
 }
 
 @Composable
-fun AccountantView(userContext: UserContextDto?, tab: Int) {
+fun PrincipalView(
+    userContext: UserContextDto?,
+    tab: Int,
+    dashboardData: DashboardResponse?
+) {
+    val pulse = dashboardData?.pulse ?: DashboardPulse(
+        totalStudents = 1420,
+        totalTeachers = 84,
+        attendanceRate = "94.6%",
+        feeCollectionRate = "91.2%",
+        academicAverage = "82.5%"
+    )
+
     if (tab == 0) {
-        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = RoyalPurple)) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = "Fee Collections & Accounting Hub", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                Text(text = "Daily Collections Target: ₹1,50,000", color = AccentGold, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = NavyPrimary),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Column(modifier = Modifier.padding(18.dp)) {
+                        Text(text = "Institutional Command Center", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text(text = userContext?.institutionName ?: "Delhi Public School, R.K. Puram", color = Color.White.copy(alpha = 0.8f), fontSize = 13.sp)
+                    }
+                }
             }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "COLLECTION METRICS TODAY", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = NavyPrimary)
-        Spacer(modifier = Modifier.height(8.dp))
-        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = IceBlue)) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = "Total Collected: ₹84,200 (14 Receipts)", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = AurxonBlue)
-                Text(text = "Cash: ₹24,000 | Online/UPI: ₹60,200", fontSize = 12.sp, color = Color.Gray)
+
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Card(modifier = Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = IceBlue), shape = RoundedCornerShape(12.dp)) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Text(text = "Active Students", fontSize = 11.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(text = "${pulse.totalStudents}", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = AurxonBlue)
+                        }
+                    }
+                    Card(modifier = Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = IceBlue), shape = RoundedCornerShape(12.dp)) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Text(text = "Faculty Count", fontSize = 11.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(text = "${pulse.totalTeachers}", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = RoyalPurple)
+                        }
+                    }
+                }
+            }
+
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Card(modifier = Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = IceBlue), shape = RoundedCornerShape(12.dp)) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Text(text = "Attendance Rate", fontSize = 11.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(text = pulse.attendanceRate, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Color(0xFF10B981))
+                        }
+                    }
+                    Card(modifier = Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = IceBlue), shape = RoundedCornerShape(12.dp)) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Text(text = "Collection Efficiency", fontSize = 11.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(text = pulse.feeCollectionRate, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = AccentGold)
+                        }
+                    }
+                }
+            }
+
+            item {
+                Text(text = "OPERATIONAL PRIORITIES TODAY", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = NavyPrimary)
+            }
+
+            val priorities = dashboardData?.priorities ?: emptyList()
+            if (priorities.isNotEmpty()) {
+                items(priorities) { pri ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        shape = RoundedCornerShape(12.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(if (pri.priority == "urgent") Color(0xFFEF4444) else AurxonBlue)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(text = pri.title, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = NavyPrimary)
+                                Text(text = pri.subtitle, fontSize = 11.sp, color = Color.Gray)
+                            }
+                        }
+                    }
+                }
+            } else {
+                item {
+                    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(12.dp)) {
+                        Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF10B981))
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(text = "All daily faculty rosters and fee reconciliations in order.", fontSize = 13.sp, color = NavyPrimary)
+                        }
+                    }
+                }
             }
         }
     } else {
-        Text(text = "STUDENT FEE COLLECTION", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = NavyPrimary)
-        Spacer(modifier = Modifier.height(12.dp))
-        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White)) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                OutlinedTextField(value = "101", onValueChange = {}, label = { Text("Student Admission # / Roll No") }, modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = "Student: Aarav Kumar (Class 8A)", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = NavyPrimary)
-                Text(text = "Outstanding Dues: ₹0.00 (All Clear)", color = Color(0xFF10B981), fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Spacer(modifier = Modifier.height(12.dp))
-                Button(onClick = {}, colors = ButtonDefaults.buttonColors(containerColor = AurxonBlue), modifier = Modifier.fillMaxWidth()) {
-                    Text("Issue Official Receipt")
+        Column(modifier = Modifier.fillMaxSize()) {
+            Text(text = "LEAVE APPROVAL QUEUE", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = NavyPrimary)
+            Spacer(modifier = Modifier.height(12.dp))
+            var approved by remember { mutableStateOf(false) }
+
+            if (approved) {
+                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = IceBlue), shape = RoundedCornerShape(12.dp)) {
+                    Text(
+                        text = "✓ Request Approved & Synced to ERP Database.",
+                        color = AurxonBlue,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            } else {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(text = "Dr. Sunita Sharma (Science Faculty)", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = NavyPrimary)
+                        Text(text = "Casual Leave • 22 Sep 2026 (1 Day)", fontSize = 12.sp, color = Color.Gray)
+                        Text(text = "Reason: Academic symposium presentation", fontSize = 12.sp, color = NavyPrimary)
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = { approved = true },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Text("Approve")
+                            }
+                            OutlinedButton(
+                                onClick = { approved = true },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Text("Reject")
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 }
+
+@Composable
+fun AccountantView(
+    userContext: UserContextDto?,
+    tab: Int,
+    dashboardData: DashboardResponse?
+) {
+    if (tab == 0) {
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = RoyalPurple),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Column(modifier = Modifier.padding(18.dp)) {
+                        Text(text = "Fee Collections & Accounting Hub", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(text = "Collection Efficiency: 91.2%", color = AccentGold, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Card(modifier = Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = IceBlue), shape = RoundedCornerShape(12.dp)) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Text(text = "Expected", fontSize = 11.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(text = "₹1.48 Cr", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = NavyPrimary)
+                        }
+                    }
+                    Card(modifier = Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = IceBlue), shape = RoundedCornerShape(12.dp)) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Text(text = "Collected", fontSize = 11.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(text = "₹1.32 Cr", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF10B981))
+                        }
+                    }
+                    Card(modifier = Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = IceBlue), shape = RoundedCornerShape(12.dp)) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Text(text = "Outstanding", fontSize = 11.sp, color = Color.Gray, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(text = "₹15.5 L", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFFEF4444))
+                        }
+                    }
+                }
+            }
+
+            item {
+                Text(text = "RECENT FEE TRANSACTIONS LEDGER", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = NavyPrimary)
+            }
+
+            items(listOf(
+                Triple("Aarav Sharma (Class 8A)", "₹24,500 • Online UPI", "RCP-2024-0891"),
+                Triple("Ananya Sharma (Class 5B)", "₹18,000 • Net Banking", "RCP-2024-0890"),
+                Triple("Rohan Verma (Class 9B)", "₹22,000 • Debit Card", "RCP-2024-0889")
+            )) { (name, amount, receipt) ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(text = name, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = NavyPrimary)
+                            Text(text = receipt, fontSize = 11.sp, color = Color.Gray)
+                        }
+                        Text(text = amount, fontWeight = FontWeight.Bold, color = Color(0xFF10B981), fontSize = 13.sp)
+                    }
+                }
+            }
+        }
+    } else {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Text(text = "STUDENT FEE COLLECTION DESK", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = NavyPrimary)
+            Spacer(modifier = Modifier.height(12.dp))
+            var rollInput by remember { mutableStateOf("DPS-2024-041") }
+            var receiptIssued by remember { mutableStateOf(false) }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    OutlinedTextField(
+                        value = rollInput,
+                        onValueChange = { rollInput = it },
+                        label = { Text("Student Admission # / Roll No") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(text = "Student: Aarav Sharma (Class 8 - Section A)", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = NavyPrimary)
+                    Text(text = "Outstanding Dues: ₹0.00 (All Clear)", color = Color(0xFF10B981), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    if (receiptIssued) {
+                        Text(
+                            text = "✓ Official Receipt RCP-${System.currentTimeMillis() % 10000} Generated & Email Sent.",
+                            color = AurxonBlue,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    } else {
+                        Button(
+                            onClick = { receiptIssued = true },
+                            colors = ButtonDefaults.buttonColors(containerColor = AurxonBlue),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Text("Generate & Issue Official Receipt", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+

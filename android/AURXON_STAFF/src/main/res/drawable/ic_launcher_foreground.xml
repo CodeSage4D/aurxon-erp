@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Ambient Golden Glow -->
+    <path
+        android:pathData="M 54,26 C 68,26 78,36 78,54 C 78,72 68,82 54,82 C 40,82 30,72 30,54 C 30,36 40,26 54,26 Z"
+        android:fillColor="#1AF59E0B" />
+
+    <!-- Heraldic Shield Backplate -->
+    <path
+        android:pathData="M 54,27 L 75,37 C 75,60 65,74 54,81 C 43,74 33,60 33,37 Z"
+        android:strokeWidth="1.5"
+        android:strokeColor="#66F59E0B"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="54"
+                android:startY="27"
+                android:endX="54"
+                android:endY="81"
+                android:type="linear">
+                <item android:color="#F01E293B" android:offset="0.0" />
+                <item android:color="#F8090D16" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Classical Pediment (Top Triangular Temple Roof) -->
+    <path
+        android:pathData="M 54,34 L 70,41 L 38,41 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="38"
+                android:startY="34"
+                android:endX="70"
+                android:endY="41"
+                android:type="linear">
+                <item android:color="#FFFDE68A" android:offset="0.0" />
+                <item android:color="#FFF59E0B" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Architrave / Top Beam -->
+    <path
+        android:pathData="M 40,42 L 68,42"
+        android:strokeWidth="1.8"
+        android:strokeColor="#FFFBBF24"
+        android:strokeLineCap="round" />
+
+    <!-- Neoclassical Columns (4 Pillars) -->
+    <!-- Pillar 1 -->
+    <path
+        android:pathData="M 43,44 L 43,64"
+        android:strokeWidth="2.2"
+        android:strokeColor="#FFE2E8F0"
+        android:strokeLineCap="round" />
+    <!-- Pillar 2 -->
+    <path
+        android:pathData="M 50,44 L 50,64"
+        android:strokeWidth="2.2"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeLineCap="round" />
+    <!-- Pillar 3 -->
+    <path
+        android:pathData="M 58,44 L 58,64"
+        android:strokeWidth="2.2"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeLineCap="round" />
+    <!-- Pillar 4 -->
+    <path
+        android:pathData="M 65,44 L 65,64"
+        android:strokeWidth="2.2"
+        android:strokeColor="#FFE2E8F0"
+        android:strokeLineCap="round" />
+
+    <!-- Foundation Stylobate / Plinth Base -->
+    <path
+        android:pathData="M 40,65 L 68,65"
+        android:strokeWidth="2"
+        android:strokeColor="#FFFBBF24"
+        android:strokeLineCap="round" />
+
+    <!-- Laurel Wreath Left Side Leaves -->
+    <path
+        android:pathData="M 35,46 C 33,52 34,60 38,66"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FFF59E0B"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M 33,48 L 35,46 L 36,49 Z"
+        android:fillColor="#FFFBBF24" />
+    <path
+        android:pathData="M 32,54 L 34,53 L 34,56 Z"
+        android:fillColor="#FFFBBF24" />
+    <path
+        android:pathData="M 34,61 L 36,60 L 37,63 Z"
+        android:fillColor="#FFFBBF24" />
+
+    <!-- Laurel Wreath Right Side Leaves -->
+    <path
+        android:pathData="M 73,46 C 75,52 74,60 70,66"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FFF59E0B"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M 75,48 L 73,46 L 72,49 Z"
+        android:fillColor="#FFFBBF24" />
+    <path
+        android:pathData="M 76,54 L 74,53 L 74,56 Z"
+        android:fillColor="#FFFBBF24" />
+    <path
+        android:pathData="M 74,61 L 72,60 L 71,63 Z"
+        android:fillColor="#FFFBBF24" />
+
+    <!-- Crown / Governance Star at Peak -->
+    <path
+        android:pathData="M 54,23 L 55.2,26.5 L 58.5,27.5 L 55.2,28.5 L 54,32 L 52.8,28.5 L 49.5,27.5 L 52.8,26.5 Z"
+        android:fillColor="#FFFBBF24" />
+
+    <!-- Executive Emblem Ribbon at Bottom -->
+    <path
+        android:pathData="M 45,71.5 L 63,71.5"
+        android:strokeWidth="2.2"
+        android:strokeColor="#FFA855F7"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M 48,74.5 L 60,74.5"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FFF59E0B"
+        android:strokeLineCap="round" />
+</vector>

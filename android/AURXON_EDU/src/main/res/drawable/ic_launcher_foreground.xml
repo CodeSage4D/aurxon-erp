@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Soft Ambient Glow Beneath Crest -->
+    <path
+        android:pathData="M 54,26 C 68,26 78,36 78,54 C 78,72 68,82 54,82 C 40,82 30,72 30,54 C 30,36 40,26 54,26 Z"
+        android:fillColor="#1A38BDF8" />
+
+    <!-- Outer Crest Shield Outline -->
+    <path
+        android:pathData="M 54,27 L 76,37 C 76,60 66,74 54,81 C 42,74 32,60 32,37 Z"
+        android:strokeWidth="1.5"
+        android:strokeColor="#6638BDF8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="54"
+                android:startY="27"
+                android:endX="54"
+                android:endY="81"
+                android:type="linear">
+                <item android:color="#F01E293B" android:offset="0.0" />
+                <item android:color="#F50F172A" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Inner Shield Accent Rim -->
+    <path
+        android:pathData="M 54,31 L 72,39 C 72,58 64,69 54,76 C 44,69 36,58 36,39 Z"
+        android:strokeWidth="1"
+        android:strokeColor="#3306B6D4" />
+
+    <!-- Graduation Cap (Mortarboard) Rhombus -->
+    <path
+        android:pathData="M 54,35 L 69,42 L 54,49 L 39,42 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="39"
+                android:startY="35"
+                android:endX="69"
+                android:endY="49"
+                android:type="linear">
+                <item android:color="#FFFFFFFF" android:offset="0.0" />
+                <item android:color="#FFE0F2FE" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Cap Skull Cap Underneath -->
+    <path
+        android:pathData="M 45,45.5 L 45,51 C 45,54.5 49,57 54,57 C 59,57 63,54.5 63,51 L 63,45.5 L 54,49.5 Z"
+        android:fillColor="#FF38BDF8" />
+
+    <!-- Cap Tassel & Golden Charm -->
+    <path
+        android:pathData="M 54,42 L 67,46.5 L 67,54"
+        android:strokeWidth="1.2"
+        android:strokeColor="#FFFBBF24"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M 66,54 L 68,54 L 67.5,57 L 66.5,57 Z"
+        android:fillColor="#FFF59E0B" />
+
+    <!-- Open Book of Knowledge (Pages Spreading Left & Right) -->
+    <!-- Left Page -->
+    <path
+        android:pathData="M 53,60 C 47,58.5 42,59 38,62 L 38,71 C 42,68 47,67.5 53,69 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="38"
+                android:startY="60"
+                android:endX="53"
+                android:endY="71"
+                android:type="linear">
+                <item android:color="#FF38BDF8" android:offset="0.0" />
+                <item android:color="#FF1D4ED8" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Right Page -->
+    <path
+        android:pathData="M 55,60 C 61,58.5 66,59 70,62 L 70,71 C 66,68 61,67.5 55,69 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="70"
+                android:startY="60"
+                android:endX="55"
+                android:endY="71"
+                android:type="linear">
+                <item android:color="#FF38BDF8" android:offset="0.0" />
+                <item android:color="#FF1D4ED8" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Book Spine -->
+    <path
+        android:pathData="M 54,59.5 L 54,70"
+        android:strokeWidth="1.2"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeLineCap="round" />
+
+    <!-- Radiant Gold Apex Star (Excellence & Learning) -->
+    <path
+        android:pathData="M 54,23 L 55.2,26.5 L 58.5,27.5 L 55.2,28.5 L 54,32 L 52.8,28.5 L 49.5,27.5 L 52.8,26.5 Z"
+        android:fillColor="#FFFBBF24" />
+
+    <!-- "EDU" Badge at Bottom -->
+    <path
+        android:pathData="M 45,74.5 L 63,74.5"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FF38BDF8"
+        android:strokeLineCap="round" />
+</vector>

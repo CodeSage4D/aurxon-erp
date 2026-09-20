@@ -173,4 +173,203 @@ object ApiClient {
             emptyList()
         }
     }
+
+    /**
+     * Fetches authoritative role-based operational dashboard metrics
+     */
+    fun fetchDashboard(authToken: String): DashboardResponse {
+        return try {
+            val url = URL("${getBaseUrl()}/dashboard")
+            val conn = url.openConnection() as HttpURLConnection
+            conn.requestMethod = "GET"
+            conn.setRequestProperty("Accept", "application/json")
+            conn.setRequestProperty("Authorization", "Bearer $authToken")
+            conn.setRequestProperty("Cookie", "aurxon_session=$authToken")
+            conn.connectTimeout = 8000
+            conn.readTimeout = 8000
+
+            val statusCode = conn.responseCode
+            val inputStream = if (statusCode in 200..299) conn.inputStream else conn.errorStream
+            val reader = BufferedReader(InputStreamReader(inputStream))
+            val responseStr = reader.readText()
+            reader.close()
+
+            val json = JSONObject(responseStr)
+            if (json.optBoolean("success", false)) {
+                val role = json.optString("role", "")
+                val pulseObj = json.optJSONObject("pulse")
+                val pulse = if (pulseObj != null) {
+                    DashboardPulse(
+                        totalStudents = pulseObj.optInt("totalStudents", 0),
+                        totalTeachers = pulseObj.optInt("totalTeachers", 0),
+                        attendanceRate = pulseObj.optString("attendanceRate", "0%"),
+                        feeCollectionRate = pulseObj.optString("feeCollectionRate", "0%"),
+                        academicAverage = pulseObj.optString("academicAverage", "0%"),
+                        expectedFees = pulseObj.optDouble("expectedFees", 0.0),
+                        collectedFees = pulseObj.optDouble("collectedFees", 0.0),
+                        outstandingFees = pulseObj.optDouble("outstandingFees", 0.0)
+                    )
+                } else null
+
+                val priArr = json.optJSONArray("priorities") ?: JSONArray()
+                val priorities = mutableListOf<PriorityActionItem>()
+                for (i in 0 until priArr.length()) {
+                    val p = priArr.getJSONObject(i)
+                    priorities.add(
+                        PriorityActionItem(
+                            id = p.optString("id"),
+                            title = p.optString("title"),
+                            subtitle = p.optString("subtitle"),
+                            priority = p.optString("priority", "info"),
+                            href = p.optString("href", ""),
+                            actionText = p.optString("actionText", "")
+                        )
+                    )
+                }
+
+                val annArr = json.optJSONArray("announcements") ?: JSONArray()
+                val announcements = mutableListOf<AnnouncementDto>()
+                for (i in 0 until annArr.length()) {
+                    val a = annArr.getJSONObject(i)
+                    announcements.add(
+                        AnnouncementDto(
+                            id = a.optString("id"),
+                            title = a.optString("title"),
+                            content = a.optString("content"),
+                            publishedAt = a.optString("publishedAt")
+                        )
+                    )
+                }
+
+                val chArr = json.optJSONArray("children") ?: JSONArray()
+                val children = mutableListOf<ChildProfile>()
+                for (i in 0 until chArr.length()) {
+                    val c = chArr.getJSONObject(i)
+                    val rawRate = c.optString("attendanceRate", "95%").replace("%", "").toDoubleOrNull() ?: 95.0
+                    children.add(
+                        ChildProfile(
+                            id = c.optString("id"),
+                            name = c.optString("name"),
+                            rollNumber = c.optString("admissionNumber", "101"),
+                            className = c.optString("classSection", "Class 8"),
+                            sectionName = "A",
+                            attendancePercentage = rawRate,
+                            pendingFeeAmount = c.optDouble("outstandingFees", 0.0)
+                        )
+                    )
+                }
+
+                DashboardResponse(
+                    success = true,
+                    role = role,
+                    pulse = pulse,
+                    priorities = priorities,
+                    announcements = announcements,
+                    children = children
+                )
+            } else {
+                DashboardResponse(success = false, error = json.optString("error", "Failed to fetch dashboard"))
+            }
+        } catch (e: Exception) {
+            DashboardResponse(success = false, error = e.localizedMessage)
+        }
+    }
+
+    /**
+     * Fetches students accessible to the authenticated role
+     */
+    fun fetchStudents(authToken: String): List<ChildProfile> {
+        return try {
+            val url = URL("${getBaseUrl()}/students")
+            val conn = url.openConnection() as HttpURLConnection
+            conn.requestMethod = "GET"
+            conn.setRequestProperty("Accept", "application/json")
+            conn.setRequestProperty("Authorization", "Bearer $authToken")
+            conn.setRequestProperty("Cookie", "aurxon_session=$authToken")
+            conn.connectTimeout = 8000
+            conn.readTimeout = 8000
+
+            val statusCode = conn.responseCode
+            val inputStream = if (statusCode in 200..299) conn.inputStream else conn.errorStream
+            val reader = BufferedReader(InputStreamReader(inputStream))
+            val responseStr = reader.readText()
+            reader.close()
+
+            val json = JSONObject(responseStr)
+            val list = mutableListOf<ChildProfile>()
+            if (json.optBoolean("success", false)) {
+                val arr = json.optJSONArray("students") ?: JSONArray()
+                for (i in 0 until arr.length()) {
+                    val s = arr.getJSONObject(i)
+                    val secObj = s.optJSONObject("section")
+                    val clsObj = secObj?.optJSONObject("classLevel")
+                    val cName = clsObj?.optString("name") ?: "Class 8"
+                    val sName = secObj?.optString("name") ?: "A"
+
+                    var pendingFees = 0.0
+                    val feesArr = s.optJSONArray("feeAllocations")
+                    if (feesArr != null) {
+                        for (j in 0 until feesArr.length()) {
+                            pendingFees += feesArr.getJSONObject(j).optDouble("balanceAmount", 0.0)
+                        }
+                    }
+
+                    list.add(
+                        ChildProfile(
+                            id = s.getString("id"),
+                            name = "${s.optString("firstName")} ${s.optString("lastName")}".trim(),
+                            rollNumber = s.optString("admissionNumber", s.optString("rollNumber", "101")),
+                            className = cName,
+                            sectionName = sName,
+                            attendancePercentage = 95.0,
+                            pendingFeeAmount = pendingFees
+                        )
+                    )
+                }
+            }
+            list
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    /**
+     * Submits student attendance roster to backend
+     */
+    fun submitAttendance(authToken: String, records: List<AttendanceSubmissionItem>): Boolean {
+        return try {
+            val url = URL("${getBaseUrl()}/attendance")
+            val conn = url.openConnection() as HttpURLConnection
+            conn.requestMethod = "POST"
+            conn.setRequestProperty("Content-Type", "application/json")
+            conn.setRequestProperty("Accept", "application/json")
+            conn.setRequestProperty("Authorization", "Bearer $authToken")
+            conn.setRequestProperty("Cookie", "aurxon_session=$authToken")
+            conn.doOutput = true
+            conn.connectTimeout = 8000
+            conn.readTimeout = 8000
+
+            val root = JSONObject()
+            val arr = JSONArray()
+            for (rec in records) {
+                val item = JSONObject()
+                item.put("studentId", rec.studentId)
+                item.put("status", rec.status)
+                if (rec.remarks != null) item.put("remarks", rec.remarks)
+                arr.put(item)
+            }
+            root.put("records", arr)
+
+            val writer = OutputStreamWriter(conn.outputStream)
+            writer.write(root.toString())
+            writer.flush()
+            writer.close()
+
+            val statusCode = conn.responseCode
+            statusCode in 200..299
+        } catch (e: Exception) {
+            false
+        }
+    }
 }
+

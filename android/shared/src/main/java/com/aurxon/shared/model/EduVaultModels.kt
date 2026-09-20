@@ -120,3 +120,66 @@ data class SavedSchool(
     val city: String,
     val board: String
 )
+
+data class AttendanceRecordDto(
+    val id: String,
+    val studentId: String,
+    val studentName: String,
+    val status: String,
+    val date: String
+)
+
+data class AttendanceSubmissionItem(
+    val studentId: String,
+    val status: String,
+    val remarks: String? = null
+)
+
+data class FeeAllocationDto(
+    val id: String,
+    val feeHead: String,
+    val grossAmount: Double,
+    val paidAmount: Double,
+    val balanceAmount: Double,
+    val status: String,
+    val dueDate: String? = null
+)
+
+data class AnnouncementDto(
+    val id: String,
+    val title: String,
+    val content: String,
+    val publishedAt: String
+)
+
+data class DashboardPulse(
+    val totalStudents: Int = 0,
+    val totalTeachers: Int = 0,
+    val attendanceRate: String = "0%",
+    val feeCollectionRate: String = "0%",
+    val academicAverage: String = "0%",
+    val expectedFees: Double = 0.0,
+    val collectedFees: Double = 0.0,
+    val outstandingFees: Double = 0.0
+)
+
+data class PriorityActionItem(
+    val id: String,
+    val title: String,
+    val subtitle: String,
+    val priority: String,
+    val href: String = "",
+    val actionText: String = ""
+)
+
+data class DashboardResponse(
+    val success: Boolean,
+    val role: String = "",
+    val pulse: DashboardPulse? = null,
+    val priorities: List<PriorityActionItem> = emptyList(),
+    val announcements: List<AnnouncementDto> = emptyList(),
+    val children: List<ChildProfile> = emptyList(),
+    val timetableToday: List<TimetableItem> = emptyList(),
+    val error: String? = null
+)
+

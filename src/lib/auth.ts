@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { SignJWT, jwtVerify } from 'jose';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'aurxon-enterprise-secure-jwt-secret-key-2026-production-ready'
@@ -61,11 +61,33 @@ export async function verifyToken(token: string): Promise<AuthUser | null> {
 
 export async function getCurrentUser(): Promise<AuthUser | null> {
   try {
-    const cookieStore = cookies();
-    const token = cookieStore.get(COOKIE_NAME)?.value;
+    let token: string | undefined;
+
+    // 1. Check Authorization Bearer header first (REST API / Mobile Native)
+    try {
+      const headerStore = headers();
+      const authHeader = headerStore.get('authorization') || headerStore.get('Authorization');
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7).trim();
+      }
+    } catch {
+      // Ignore if headers() unavailable in edge context
+    }
+
+    // 2. Check aurxon_session cookie (Web Browser sessions)
+    if (!token) {
+      try {
+        const cookieStore = cookies();
+        token = cookieStore.get(COOKIE_NAME)?.value;
+      } catch {
+        // Ignore if cookies() unavailable
+      }
+    }
+
     if (!token) return null;
     return await verifyToken(token);
   } catch {
     return null;
   }
 }
+
