@@ -48,4 +48,4 @@ adb shell am start -n com.aurxon.edu/com.aurxon.edu.MainActivity
 echo ""
 echo "🎉 DEPLOYMENT COMPLETE!"
 echo "Both AURXON EDU and AURXON STAFF are installed and ready on your Samsung Galaxy S23."
-echo "Connected live to ERP backend at: https://aurxon-erp.netlify.app/api/v1"
+echo "Connected live to ERP backend at: https://aurxon-erp.vercel.app/api/v1 (fallback: netlify)"

@@ -10,12 +10,13 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 object ApiClient {
-    // Configurable API URLs
-    var activeEnvironment: String = "PRODUCTION_NETLIFY"
+    // Configurable API URLs - Bound to Vercel production by default
+    var activeEnvironment: String = "PRODUCTION_VERCEL"
 
+    const val VERCEL_PRODUCTION_URL = "https://aurxon-erp.vercel.app/api/v1"
+    const val NETLIFY_PRODUCTION_URL = "https://aurxon-erp.netlify.app/api/v1"
     const val LOCAL_EMULATOR_URL = "http://10.0.2.2:3000/api/v1"
     const val LOCAL_WIFI_URL = "http://192.168.1.100:3000/api/v1"
-    const val NETLIFY_PRODUCTION_URL = "https://aurxon-erp.netlify.app/api/v1"
     const val PRODUCTION_CANONICAL_URL = "https://aurxon.io/api/v1"
 
     fun getBaseUrl(): String {
@@ -23,8 +24,75 @@ object ApiClient {
             "LOCAL_EMULATOR" -> LOCAL_EMULATOR_URL
             "LOCAL_WIFI" -> LOCAL_WIFI_URL
             "PRODUCTION_CANONICAL" -> PRODUCTION_CANONICAL_URL
-            else -> NETLIFY_PRODUCTION_URL
+            "PRODUCTION_NETLIFY" -> NETLIFY_PRODUCTION_URL
+            else -> VERCEL_PRODUCTION_URL
         }
+    }
+
+    /**
+     * Resilient HTTP dispatcher: connects primarily to Vercel (aurxon-erp.vercel.app),
+     * with graceful automatic fallback to Netlify if Vercel deployment is pending.
+     */
+    private fun executeHttp(
+        endpoint: String,
+        method: String,
+        body: String? = null,
+        authToken: String? = null
+    ): Pair<Int, String> {
+        val primary = getBaseUrl()
+        val candidateBases = if (primary == VERCEL_PRODUCTION_URL) {
+            listOf(VERCEL_PRODUCTION_URL, NETLIFY_PRODUCTION_URL)
+        } else {
+            listOf(primary)
+        }
+
+        var lastCode = 500
+        var lastBody = ""
+
+        for (base in candidateBases) {
+            try {
+                val url = URL("$base$endpoint")
+                val conn = url.openConnection() as HttpURLConnection
+                conn.requestMethod = method
+                conn.setRequestProperty("Accept", "application/json")
+                if (body != null) {
+                    conn.setRequestProperty("Content-Type", "application/json")
+                    conn.doOutput = true
+                }
+                if (authToken != null) {
+                    conn.setRequestProperty("Authorization", "Bearer $authToken")
+                    conn.setRequestProperty("Cookie", "aurxon_session=$authToken")
+                }
+                conn.connectTimeout = 6000
+                conn.readTimeout = 6000
+
+                if (body != null) {
+                    val writer = OutputStreamWriter(conn.outputStream)
+                    writer.write(body)
+                    writer.flush()
+                    writer.close()
+                }
+
+                val code = conn.responseCode
+                val stream = if (code in 200..299) conn.inputStream else conn.errorStream
+                val responseText = stream?.bufferedReader()?.use { it.readText() } ?: ""
+
+                // If Vercel returned 404 (deployment not found yet), seamlessly try fallback
+                if (code == 404 && base == VERCEL_PRODUCTION_URL && candidateBases.size > 1) {
+                    lastCode = code
+                    lastBody = responseText
+                    continue
+                }
+
+                return Pair(code, responseText)
+            } catch (e: Exception) {
+                lastBody = e.localizedMessage ?: "Network error"
+                if (base == VERCEL_PRODUCTION_URL && candidateBases.size > 1) {
+                    continue
+                }
+            }
+        }
+        return Pair(lastCode, lastBody)
     }
 
     /**
@@ -32,31 +100,11 @@ object ApiClient {
      */
     fun login(req: LoginRequest): LoginResponse {
         return try {
-            val url = URL("${getBaseUrl()}/auth/login")
-            val conn = url.openConnection() as HttpURLConnection
-            conn.requestMethod = "POST"
-            conn.setRequestProperty("Content-Type", "application/json")
-            conn.setRequestProperty("Accept", "application/json")
-            conn.doOutput = true
-            conn.connectTimeout = 8000
-            conn.readTimeout = 8000
-
             val jsonBody = JSONObject().apply {
                 put("email", req.email)
                 put("password", req.password)
             }
-
-            val writer = OutputStreamWriter(conn.outputStream)
-            writer.write(jsonBody.toString())
-            writer.flush()
-            writer.close()
-
-            val statusCode = conn.responseCode
-            val inputStream = if (statusCode in 200..299) conn.inputStream else conn.errorStream
-            val reader = BufferedReader(InputStreamReader(inputStream))
-            val responseStr = reader.readText()
-            reader.close()
-
+            val (statusCode, responseStr) = executeHttp("/auth/login", "POST", body = jsonBody.toString())
             val json = JSONObject(responseStr)
             if (json.optBoolean("success", false)) {
                 val token = json.optString("token", "")
@@ -83,21 +131,7 @@ object ApiClient {
      */
     fun fetchUserContext(authToken: String): AuthMeResponse {
         return try {
-            val url = URL("${getBaseUrl()}/auth/me")
-            val conn = url.openConnection() as HttpURLConnection
-            conn.requestMethod = "GET"
-            conn.setRequestProperty("Accept", "application/json")
-            conn.setRequestProperty("Authorization", "Bearer $authToken")
-            conn.setRequestProperty("Cookie", "aurxon_session=$authToken")
-            conn.connectTimeout = 8000
-            conn.readTimeout = 8000
-
-            val statusCode = conn.responseCode
-            val inputStream = if (statusCode in 200..299) conn.inputStream else conn.errorStream
-            val reader = BufferedReader(InputStreamReader(inputStream))
-            val responseStr = reader.readText()
-            reader.close()
-
+            val (statusCode, responseStr) = executeHttp("/auth/me", "GET", authToken = authToken)
             val json = JSONObject(responseStr)
             if (json.optBoolean("success", false)) {
                 val userObj = json.getJSONObject("user")
@@ -136,19 +170,7 @@ object ApiClient {
     fun searchSchools(query: String = ""): List<OrganizationSearchResult> {
         return try {
             val encodedQ = java.net.URLEncoder.encode(query.trim(), "UTF-8")
-            val url = URL("${getBaseUrl()}/portal/search?q=$encodedQ")
-            val conn = url.openConnection() as HttpURLConnection
-            conn.requestMethod = "GET"
-            conn.setRequestProperty("Accept", "application/json")
-            conn.connectTimeout = 6000
-            conn.readTimeout = 6000
-
-            val statusCode = conn.responseCode
-            val inputStream = if (statusCode in 200..299) conn.inputStream else conn.errorStream
-            val reader = BufferedReader(InputStreamReader(inputStream))
-            val responseStr = reader.readText()
-            reader.close()
-
+            val (statusCode, responseStr) = executeHttp("/portal/search?q=$encodedQ", "GET")
             val json = JSONObject(responseStr)
             val results = mutableListOf<OrganizationSearchResult>()
             if (json.optBoolean("success", false)) {
@@ -179,21 +201,7 @@ object ApiClient {
      */
     fun fetchDashboard(authToken: String): DashboardResponse {
         return try {
-            val url = URL("${getBaseUrl()}/dashboard")
-            val conn = url.openConnection() as HttpURLConnection
-            conn.requestMethod = "GET"
-            conn.setRequestProperty("Accept", "application/json")
-            conn.setRequestProperty("Authorization", "Bearer $authToken")
-            conn.setRequestProperty("Cookie", "aurxon_session=$authToken")
-            conn.connectTimeout = 8000
-            conn.readTimeout = 8000
-
-            val statusCode = conn.responseCode
-            val inputStream = if (statusCode in 200..299) conn.inputStream else conn.errorStream
-            val reader = BufferedReader(InputStreamReader(inputStream))
-            val responseStr = reader.readText()
-            reader.close()
-
+            val (statusCode, responseStr) = executeHttp("/dashboard", "GET", authToken = authToken)
             val json = JSONObject(responseStr)
             if (json.optBoolean("success", false)) {
                 val role = json.optString("role", "")
@@ -280,21 +288,7 @@ object ApiClient {
      */
     fun fetchStudents(authToken: String): List<ChildProfile> {
         return try {
-            val url = URL("${getBaseUrl()}/students")
-            val conn = url.openConnection() as HttpURLConnection
-            conn.requestMethod = "GET"
-            conn.setRequestProperty("Accept", "application/json")
-            conn.setRequestProperty("Authorization", "Bearer $authToken")
-            conn.setRequestProperty("Cookie", "aurxon_session=$authToken")
-            conn.connectTimeout = 8000
-            conn.readTimeout = 8000
-
-            val statusCode = conn.responseCode
-            val inputStream = if (statusCode in 200..299) conn.inputStream else conn.errorStream
-            val reader = BufferedReader(InputStreamReader(inputStream))
-            val responseStr = reader.readText()
-            reader.close()
-
+            val (statusCode, responseStr) = executeHttp("/students", "GET", authToken = authToken)
             val json = JSONObject(responseStr)
             val list = mutableListOf<ChildProfile>()
             if (json.optBoolean("success", false)) {
@@ -338,17 +332,6 @@ object ApiClient {
      */
     fun submitAttendance(authToken: String, records: List<AttendanceSubmissionItem>): Boolean {
         return try {
-            val url = URL("${getBaseUrl()}/attendance")
-            val conn = url.openConnection() as HttpURLConnection
-            conn.requestMethod = "POST"
-            conn.setRequestProperty("Content-Type", "application/json")
-            conn.setRequestProperty("Accept", "application/json")
-            conn.setRequestProperty("Authorization", "Bearer $authToken")
-            conn.setRequestProperty("Cookie", "aurxon_session=$authToken")
-            conn.doOutput = true
-            conn.connectTimeout = 8000
-            conn.readTimeout = 8000
-
             val root = JSONObject()
             val arr = JSONArray()
             for (rec in records) {
@@ -359,13 +342,7 @@ object ApiClient {
                 arr.put(item)
             }
             root.put("records", arr)
-
-            val writer = OutputStreamWriter(conn.outputStream)
-            writer.write(root.toString())
-            writer.flush()
-            writer.close()
-
-            val statusCode = conn.responseCode
+            val (statusCode, _) = executeHttp("/attendance", "POST", body = root.toString(), authToken = authToken)
             statusCode in 200..299
         } catch (e: Exception) {
             false
