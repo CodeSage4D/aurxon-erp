@@ -20,6 +20,38 @@ import {
 
 import { INDIAN_STATES_AND_UTS } from '@/lib/data/indian-states';
 
+const initialStudentFormData = {
+  firstName: '',
+  lastName: '',
+  fatherName: '',
+  motherName: '',
+  fatherOccupation: '',
+  motherOccupation: '',
+  guardianPhone: '',
+  aadharNumber: '',
+  religion: 'HINDU',
+  casteCategory: 'GENERAL',
+  previousSchool: '',
+  tcNumber: '',
+  schoolBoard: 'CBSE',
+  dob: '2010-06-15',
+  gender: 'MALE',
+  branchId: '',
+  sectionId: '',
+  batchId: '',
+  contactPhone: '',
+  email: '',
+  address: '',
+  city: 'Delhi',
+  state: 'Delhi NCR',
+  pincode: '',
+  category: 'GENERAL',
+  bloodGroup: '',
+  parentName: '',
+  parentPhone: '',
+  parentRelation: 'FATHER',
+};
+
 export default function StudentsPage() {
   const [user, setUser] = useState<any>(null);
   const [students, setStudents] = useState<any[]>([]);
@@ -43,37 +75,7 @@ export default function StudentsPage() {
   const [branches, setBranches] = useState<any[]>([]);
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    fatherName: '',
-    motherName: '',
-    fatherOccupation: '',
-    motherOccupation: '',
-    guardianPhone: '',
-    aadharNumber: '',
-    religion: 'HINDU',
-    casteCategory: 'GENERAL',
-    previousSchool: '',
-    tcNumber: '',
-    schoolBoard: 'CBSE',
-    dob: '2010-06-15',
-    gender: 'MALE',
-    branchId: '',
-    sectionId: '',
-    batchId: '',
-    contactPhone: '',
-    email: '',
-    address: '',
-    city: 'Delhi',
-    state: 'Delhi NCR',
-    pincode: '',
-    category: 'GENERAL',
-    bloodGroup: '',
-    parentName: '',
-    parentPhone: '',
-    parentRelation: 'FATHER',
-  });
+  const [formData, setFormData] = useState(initialStudentFormData);
 
   const loadStudents = async () => {
     try {
@@ -162,19 +164,9 @@ export default function StudentsPage() {
 
       setCreateOpen(false);
       setFormData({
-        firstName: '',
-        lastName: '',
-        dob: '2010-06-15',
-        gender: 'MALE',
+        ...initialStudentFormData,
         branchId: branches[0]?.id || '',
         sectionId: sections[0]?.id || '',
-        batchId: '',
-        contactPhone: '',
-        email: '',
-        address: '',
-        parentName: '',
-        parentPhone: '',
-        parentRelation: 'FATHER',
       });
       await loadStudents();
     } catch {

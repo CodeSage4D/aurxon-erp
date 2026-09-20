@@ -48,8 +48,9 @@ export default function AttendancePage() {
           fetch('/api/v1/academics/classes'),
         ]);
 
+        let meJson: any = null;
         if (meRes.ok) {
-          const meJson = await meRes.json();
+          meJson = await meRes.json();
           setUser(meJson.user);
         } else {
           window.location.href = '/login';
@@ -59,9 +60,15 @@ export default function AttendancePage() {
         let initialSection = '';
         if (clsRes.ok) {
           const clsJson = await clsRes.json();
-          setSections(clsJson.sections || []);
-          if (clsJson.sections?.length > 0) {
-            initialSection = clsJson.sections[0].id;
+          const fetchedSections = clsJson.sections || [];
+          setSections(fetchedSections);
+
+          if (fetchedSections.length > 0) {
+            const assignedSecId = meJson?.user?.assignedSectionIds?.[0];
+            const matchingAssigned = assignedSecId
+              ? fetchedSections.find((s: any) => s.id === assignedSecId)
+              : null;
+            initialSection = matchingAssigned ? matchingAssigned.id : fetchedSections[0].id;
             setSelectedSectionId(initialSection);
           }
         }
